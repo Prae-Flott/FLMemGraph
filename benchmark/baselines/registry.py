@@ -39,7 +39,7 @@ BASELINES = {
     "InterFusion": {"category": "②", "type": "deep_reconstruction", "status": "planned"},
     # ------------------------------------------------------------- ③ --
     "GDN": {"category": "③", "type": "graph_structure", "status": "implemented",
-             "module": "test_gdn.gdn_model.GDN",
+             "module": "src.gdn_model.GDN",
              "note": "This project's own graph-attention forecaster -- run as the mandatory "
                       "'no memory, no federation' structure-only ablation baseline."},
     "AnomalyTransformer": {"category": "③", "type": "transformer", "status": "planned",
@@ -68,9 +68,9 @@ BASELINES = {
     "FEDPM": {"category": "④", "type": "federated_forecast_memory", "status": "external",
                "paper": "arXiv:2604.04475",
                "note": "The paper this project's memory module is adapted from -- see "
-                        "test_gdn_physi/gdn_memory_model.py."},
+                        "src/gdn_memory_model.py."},
     "ours_gdn_memory": {"category": "④", "type": "federated_uad", "status": "implemented",
-                          "module": "test_gdn_physi.train_fl_memory_gdn",
+                          "module": "src.train_fl_memory_gdn",
                           "note": "This project's own memory+structure+federation system."},
 }
 

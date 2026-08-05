@@ -36,8 +36,7 @@ import torch
 from sklearn import metrics as sk_metrics
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "test_gdn"))  # local copy, see dataset.py's comment
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # gdn_model.py now lives alongside this script in src/
 from gdn_model import GDN  # noqa: E402
 from kinematics import (  # noqa: E402
     fit_kinematic_params,

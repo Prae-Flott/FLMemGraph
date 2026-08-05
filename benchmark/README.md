@@ -1,6 +1,6 @@
 # benchmark/
 
-Baseline + public-dataset scaffold for evaluating `test_gdn_physi/`'s
+Baseline + public-dataset scaffold for evaluating `src/`'s
 "记忆检索 + 物理验证" federated fault-detection system
 (`mem_phys_prompt_zh.md`), built out per that design doc's Sec 8 plan.
 
@@ -11,9 +11,10 @@ Baseline + public-dataset scaffold for evaluating `test_gdn_physi/`'s
 - Baselines: PCA reconstruction (`baselines/traditional.py`),
   IsolationForest (`baselines/traditional.py`), GDN
   (`baselines/gdn_baseline.py`, lightweight variant -- use
-  `test_gdn/train_gdn.py` directly for the tuned number)
+  FL-bench's `test_gdn/train_gdn.py` directly for the tuned number, not
+  carried into this repo, only `gdn_model.py` and its checkpoint were)
 - This project's own federated memory+structure system:
-  `test_gdn_physi/train_fl_memory_gdn.py` (not wired into
+  `src/train_fl_memory_gdn.py` (not wired into
   `run_benchmark.py` yet since it needs the per-client, not pooled, data
   loader -- run it separately)
 
@@ -53,7 +54,7 @@ multi-week effort, not a single session's work. This scaffold prioritizes:
 3. The **mandatory ablations** (Sec 8.4) that don't need new external
    data: GDN alone (no memory, no federation) is implemented as a
    baseline; the memory+structure ablations (d-only / r-only / d+r) are
-   already built into `test_gdn_physi/train_fl_memory_gdn.py`'s own
+   already built into `src/train_fl_memory_gdn.py`'s own
    evaluation, not duplicated here.
 
 ## Extending this

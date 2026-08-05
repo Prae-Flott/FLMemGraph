@@ -15,10 +15,10 @@ and results at each stage.
 ```
 FLMemGraph/
 ├── data/robo3er/        robo3er dataset (data.npy, targets.npy, metadata.json, partition.pkl)
-├── test_gdn/             GDN model class + a pooled-baseline checkpoint (no memory, no federation)
-├── test_gdn_physi/       the actual system: kinematics residual, feature groups,
-│                         discrete prototypical memory, latent-space structure head,
-│                         federated cross-robot memory alignment, decision logic
+├── src/                  all project code: gdn_model.py (GDN class, no memory/federation),
+│                         kinematics residual, feature groups, discrete prototypical memory,
+│                         latent-space structure head, federated cross-robot memory alignment,
+│                         decision logic, and every train_*.py entry point
 ├── benchmark/            baseline methods + public-dataset registry (mostly scaffolded,
 │                         see benchmark/README.md for what's actually implemented)
 ├── checkpoints/          trained model weights + evaluation reports from every run
@@ -28,7 +28,7 @@ FLMemGraph/
 
 ## Where things stand (2026-08-05)
 
-- **Single-robot, physics-residual GDN** (`test_gdn_physi/train_gdn_physics.py`):
+- **Single-robot, physics-residual GDN** (`src/train_gdn_physics.py`):
   best `stuck` result in the project's history (AUROC ~0.72-0.74) via a
   differential-drive kinematic residual that sidesteps the shrinkage bias
   every prior forecasting-based method hit on that fault type.
@@ -51,13 +51,13 @@ FLMemGraph/
 
 ```bash
 # single-robot physics-residual GDN
-python3 test_gdn_physi/train_gdn_physics.py
+python3 src/train_gdn_physics.py
 
 # + discrete memory
-python3 test_gdn_physi/train_gdn_memory.py
+python3 src/train_gdn_memory.py
 
 # federated multi-robot system
-python3 test_gdn_physi/train_fl_memory_gdn.py
+python3 src/train_fl_memory_gdn.py
 
 # baseline comparison harness
 python3 benchmark/run_benchmark.py
