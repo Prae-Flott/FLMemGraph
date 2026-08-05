@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Large data -- data/robo3er/data.npy alone is ~98MB, right at GitHub's
+# 100MB hard limit, and the rest of this directory (raw CSVs, .bak files)
+# adds up to 1GB+. Keep data out of git entirely; docs/PROJECT_OVERVIEW.md
+# documents how to regenerate/re-copy it from FL-bench.
+data/
+
+# Trained model weights -- large binaries, don't belong in git history.
+# Evaluation reports (*.json, *.csv) ARE tracked -- they're small and are
+# exactly the "project progress" record this checkpoints/ folder is for.
+checkpoints/*.pth
+checkpoints/*.pt
+checkpoints/*.ckpt
+
+# OS / editor cruft
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Secrets -- never commit these even if they show up locally
+.env
+*.pem
+*_token.txt

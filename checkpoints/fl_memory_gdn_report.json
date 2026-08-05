@@ -1,0 +1,100 @@
+{
+  "config": {
+    "rounds": 5,
+    "local_epochs": 20,
+    "num_prototypes": 256,
+    "beta": 0.25,
+    "lambda": 0.5,
+    "gamma": 0.5,
+    "delta": 0.5
+  },
+  "alignment_log": [
+    {
+      "num_components": 919,
+      "num_multi_client_clusters": 57,
+      "num_shared_prototypes": 57,
+      "num_personalized_prototypes_per_client": 199,
+      "round": 1
+    },
+    {
+      "num_components": 940,
+      "num_multi_client_clusters": 63,
+      "num_shared_prototypes": 63,
+      "num_personalized_prototypes_per_client": 193,
+      "round": 2
+    },
+    {
+      "num_components": 923,
+      "num_multi_client_clusters": 64,
+      "num_shared_prototypes": 64,
+      "num_personalized_prototypes_per_client": 192,
+      "round": 3
+    },
+    {
+      "num_components": 878,
+      "num_multi_client_clusters": 66,
+      "num_shared_prototypes": 66,
+      "num_personalized_prototypes_per_client": 190,
+      "round": 4
+    },
+    {
+      "num_components": 879,
+      "num_multi_client_clusters": 67,
+      "num_shared_prototypes": 67,
+      "num_personalized_prototypes_per_client": 189,
+      "round": 5
+    }
+  ],
+  "clients": {
+    "robot00_merged_data": {
+      "robot_name": "robot00_merged_data",
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 25,
+          "auroc_d": 0.0,
+          "auroc_r": 0.0,
+          "auroc_d+r": 0.0
+        },
+        "Low battery": {
+          "n": 74,
+          "auroc_d": 0.40100565681961037,
+          "auroc_r": 0.3412947831552483,
+          "auroc_d+r": 0.3441231929604023
+        }
+      }
+    },
+    "robot01_merged_data": {
+      "robot_name": "robot01_merged_data",
+      "fault_types": {
+        "cable trapped": {
+          "n": 206,
+          "auroc_d": 0.9358379062895738,
+          "auroc_r": 0.9221190375685945,
+          "auroc_d+r": 0.9216969185310259
+        }
+      }
+    },
+    "robot03_merged_data": {
+      "robot_name": "robot03_merged_data",
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 34,
+          "auroc_d": 0.461361014994233,
+          "auroc_r": 0.5057670126874279,
+          "auroc_d+r": 0.5196078431372548
+        }
+      }
+    },
+    "robot04_merged_data": {
+      "robot_name": "robot04_merged_data",
+      "fault_types": {
+        "stuck": {
+          "n": 149,
+          "auroc_d": 0.56848732181885,
+          "auroc_r": 0.7117962207222017,
+          "auroc_d+r": 0.7167282362725567
+        }
+      }
+    }
+  }
+}

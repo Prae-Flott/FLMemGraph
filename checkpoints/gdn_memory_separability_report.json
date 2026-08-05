@@ -1,0 +1,57 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "top_k": 15,
+    "epochs": 10,
+    "history_len": 30,
+    "num_nodes": 38,
+    "num_prototypes": 256,
+    "beta": 0.25,
+    "active_feature_groups": [
+      "kinematic_core"
+    ],
+    "codebook_utilization": 0.375
+  },
+  "fault_types": {
+    "Broken Pipe": {
+      "label_id": 1,
+      "n": 59,
+      "auroc_pred": 0.9354347030849897,
+      "recall_at_p95_pred": 0.576271186440678,
+      "auroc_quant": 0.6330122342803723,
+      "recall_at_p95_quant": 0.576271186440678,
+      "auroc_pred+quant": 0.9129577693777182,
+      "recall_at_p95_pred+quant": 0.576271186440678
+    },
+    "cable trapped": {
+      "label_id": 2,
+      "n": 206,
+      "auroc_pred": 0.9752508672673512,
+      "recall_at_p95_pred": 0.8446601941747572,
+      "auroc_quant": 0.9220565295336547,
+      "recall_at_p95_quant": 0.27184466019417475,
+      "auroc_pred+quant": 0.9486275057623803,
+      "recall_at_p95_pred+quant": 0.6699029126213593
+    },
+    "Low battery": {
+      "label_id": 3,
+      "n": 74,
+      "auroc_pred": 0.9347981074599779,
+      "recall_at_p95_pred": 0.5,
+      "auroc_quant": 0.7908970121200338,
+      "recall_at_p95_quant": 0.1891891891891892,
+      "auroc_pred+quant": 0.8921835504569318,
+      "recall_at_p95_pred+quant": 0.2702702702702703
+    },
+    "stuck": {
+      "label_id": 4,
+      "n": 149,
+      "auroc_pred": 0.693053610802633,
+      "recall_at_p95_pred": 0.2348993288590604,
+      "auroc_quant": 0.422762461172002,
+      "recall_at_p95_quant": 0.09395973154362416,
+      "auroc_pred+quant": 0.6456230988363671,
+      "recall_at_p95_pred+quant": 0.11409395973154363
+    }
+  }
+}

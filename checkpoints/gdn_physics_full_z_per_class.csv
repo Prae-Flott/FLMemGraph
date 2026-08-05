@@ -1,0 +1,153 @@
+class,feature,z_score
+Broken Pipe,wheel_vels_velocity_left,3.418420203148532
+Broken Pipe,wheel_vels_velocity_right,12.281065905393868
+Broken Pipe,odom_odo_pos_x,10.711205397777274
+Broken Pipe,odom_odo_pos_y,29.390692387254337
+Broken Pipe,odom_odo_pos_z,10.734014110047134
+Broken Pipe,odom_odo_orient_x,16.237568463830865
+Broken Pipe,odom_odo_orient_y,1.438425480214165
+Broken Pipe,odom_odo_orient_z,1.4214363385243474
+Broken Pipe,odom_odo_orient_w,4.443928713383406
+Broken Pipe,odom_odo_lintw_x__kin_residual,5.0518606452543855
+Broken Pipe,odom_odo_lintw_y,0.08304812605302875
+Broken Pipe,odom_odo_lintw_z,0.1499123345735683
+Broken Pipe,odom_odo_angtw_x,2.249403570318176
+Broken Pipe,odom_odo_angtw_y,0.013513114440771835
+Broken Pipe,odom_odo_angtw_z__kin_residual,6.684808746393702
+Broken Pipe,imu_imu_orient_x,11.551438656464061
+Broken Pipe,imu_imu_orient_y,0.4873678696112318
+Broken Pipe,imu_imu_orient_z,0.5163491076437878
+Broken Pipe,imu_imu_orient_w,3.4779878471203842
+Broken Pipe,imu_imu_angvel_x,-0.7271949130715906
+Broken Pipe,imu_imu_angvel_y,-0.8656601038171481
+Broken Pipe,imu_imu_angvel_z,8.155229550858097
+Broken Pipe,imu_imu_acc_x,0.14215471491188522
+Broken Pipe,imu_imu_acc_y,-0.47381378358400766
+Broken Pipe,imu_imu_acc_z,-1.0536278565250665
+Broken Pipe,wheel_ticks_ticks_left,12.911994579594738
+Broken Pipe,wheel_ticks_ticks_right,12.532034972757613
+Broken Pipe,tf_link_base_link_trans_x,-0.475443873670481
+Broken Pipe,tf_link_base_link_trans_y,-0.7717702728764754
+Broken Pipe,tf_link_base_link_trans_z,0.24713528387306918
+Broken Pipe,tf_link_base_link_rot_x,35.00046093114087
+Broken Pipe,tf_link_base_link_rot_y,97.53545755975821
+Broken Pipe,tf_link_base_link_rot_z,0.6768474069684328
+Broken Pipe,tf_link_base_link_rot_w,0.17070764705390076
+Broken Pipe,tf_footprint_base_footprint_trans_x,-0.5807284842422272
+Broken Pipe,tf_footprint_base_footprint_trans_y,-0.42952584145492556
+Broken Pipe,tf_footprint_base_footprint_rot_z,4.843584666953173
+Broken Pipe,tf_footprint_base_footprint_rot_w,-0.19022244113584413
+cable trapped,wheel_vels_velocity_left,9.059927387847083
+cable trapped,wheel_vels_velocity_right,15.442137494348575
+cable trapped,odom_odo_pos_x,8.80322056595811
+cable trapped,odom_odo_pos_y,8.600433886973269
+cable trapped,odom_odo_pos_z,111.96298328497647
+cable trapped,odom_odo_orient_x,26.533240258594628
+cable trapped,odom_odo_orient_y,14.563637427454902
+cable trapped,odom_odo_orient_z,3.108661235524302
+cable trapped,odom_odo_orient_w,5.15138619131593
+cable trapped,odom_odo_lintw_x__kin_residual,2.827776488086987
+cable trapped,odom_odo_lintw_y,48.17423148929808
+cable trapped,odom_odo_lintw_z,2.7711081657105954
+cable trapped,odom_odo_angtw_x,40.94851969041355
+cable trapped,odom_odo_angtw_y,3.280124767990232
+cable trapped,odom_odo_angtw_z__kin_residual,12.572208566429255
+cable trapped,imu_imu_orient_x,48.25936065669665
+cable trapped,imu_imu_orient_y,9.181036009767077
+cable trapped,imu_imu_orient_z,1.8116300912790932
+cable trapped,imu_imu_orient_w,6.7929836461041875
+cable trapped,imu_imu_angvel_x,18.548041997751756
+cable trapped,imu_imu_angvel_y,0.044644468907885336
+cable trapped,imu_imu_angvel_z,27.69717390124337
+cable trapped,imu_imu_acc_x,0.43928887818748114
+cable trapped,imu_imu_acc_y,-0.1093929998860203
+cable trapped,imu_imu_acc_z,-0.9415200074241761
+cable trapped,wheel_ticks_ticks_left,17.11391335693796
+cable trapped,wheel_ticks_ticks_right,16.38912989096944
+cable trapped,tf_link_base_link_trans_x,8.585892993511052
+cable trapped,tf_link_base_link_trans_y,11.410378176371445
+cable trapped,tf_link_base_link_trans_z,90.21543859383289
+cable trapped,tf_link_base_link_rot_x,60.7505807861464
+cable trapped,tf_link_base_link_rot_y,10.625190067044016
+cable trapped,tf_link_base_link_rot_z,1.5241124968597435
+cable trapped,tf_link_base_link_rot_w,1.8491282643088887
+cable trapped,tf_footprint_base_footprint_trans_x,9.18565546847511
+cable trapped,tf_footprint_base_footprint_trans_y,10.964089189923023
+cable trapped,tf_footprint_base_footprint_rot_z,1.7929620983903372
+cable trapped,tf_footprint_base_footprint_rot_w,1.6424151511337595
+Low battery,wheel_vels_velocity_left,8.715880419605789
+Low battery,wheel_vels_velocity_right,15.758864426755805
+Low battery,odom_odo_pos_x,6.515337296968403
+Low battery,odom_odo_pos_y,3.7323629675616345
+Low battery,odom_odo_pos_z,9.098993821545672
+Low battery,odom_odo_orient_x,111.77544828999828
+Low battery,odom_odo_orient_y,18.394290634728616
+Low battery,odom_odo_orient_z,2.974853288990928
+Low battery,odom_odo_orient_w,7.309832639763325
+Low battery,odom_odo_lintw_x__kin_residual,2.876577437507244
+Low battery,odom_odo_lintw_y,6.107202902086997
+Low battery,odom_odo_lintw_z,0.6825131546141415
+Low battery,odom_odo_angtw_x,15.601177954728882
+Low battery,odom_odo_angtw_y,3.0279553515248594
+Low battery,odom_odo_angtw_z__kin_residual,20.531720507174988
+Low battery,imu_imu_orient_x,238.59541345136344
+Low battery,imu_imu_orient_y,40.48067310813383
+Low battery,imu_imu_orient_z,1.6370146088286066
+Low battery,imu_imu_orient_w,7.146595818904718
+Low battery,imu_imu_angvel_x,13.643624267963503
+Low battery,imu_imu_angvel_y,-0.1378950555903556
+Low battery,imu_imu_angvel_z,32.59369388071274
+Low battery,imu_imu_acc_x,-0.003115983512922551
+Low battery,imu_imu_acc_y,-0.18945381840084682
+Low battery,imu_imu_acc_z,-0.9955998219480233
+Low battery,wheel_ticks_ticks_left,7.718241474578116
+Low battery,wheel_ticks_ticks_right,5.828802494219
+Low battery,tf_link_base_link_trans_x,6.453182450080634
+Low battery,tf_link_base_link_trans_y,5.741945492844438
+Low battery,tf_link_base_link_trans_z,6.6907479355685595
+Low battery,tf_link_base_link_rot_x,131.51248501265886
+Low battery,tf_link_base_link_rot_y,16.741688280297783
+Low battery,tf_link_base_link_rot_z,1.5659522058941393
+Low battery,tf_link_base_link_rot_w,5.059575790775672
+Low battery,tf_footprint_base_footprint_trans_x,7.104552977672772
+Low battery,tf_footprint_base_footprint_trans_y,6.1943741994754875
+Low battery,tf_footprint_base_footprint_rot_z,1.328118670705489
+Low battery,tf_footprint_base_footprint_rot_w,3.680793615864693
+stuck,wheel_vels_velocity_left,0.13164479575557553
+stuck,wheel_vels_velocity_right,1.0803588742955847
+stuck,odom_odo_pos_x,0.2748752293308733
+stuck,odom_odo_pos_y,0.7288690626272303
+stuck,odom_odo_pos_z,1.423043923919157
+stuck,odom_odo_orient_x,1.847495611154908
+stuck,odom_odo_orient_y,1.8316120035882104
+stuck,odom_odo_orient_z,0.3373025310249109
+stuck,odom_odo_orient_w,3.673756044949327
+stuck,odom_odo_lintw_x__kin_residual,0.8061488522883921
+stuck,odom_odo_lintw_y,0.6889535178268711
+stuck,odom_odo_lintw_z,1.212457489194633
+stuck,odom_odo_angtw_x,9.118363320504312
+stuck,odom_odo_angtw_y,0.7078261690295493
+stuck,odom_odo_angtw_z__kin_residual,1.090961431508957
+stuck,imu_imu_orient_x,8.97929786018928
+stuck,imu_imu_orient_y,0.9880036659394977
+stuck,imu_imu_orient_z,-0.25244630529172096
+stuck,imu_imu_orient_w,5.785814330996031
+stuck,imu_imu_angvel_x,4.536384474921325
+stuck,imu_imu_angvel_y,-0.38702125476672744
+stuck,imu_imu_angvel_z,0.7207244266012782
+stuck,imu_imu_acc_x,-0.3649678085099159
+stuck,imu_imu_acc_y,-0.024949541289030597
+stuck,imu_imu_acc_z,-0.6444294662602844
+stuck,wheel_ticks_ticks_left,0.17131112156337183
+stuck,wheel_ticks_ticks_right,-0.20211570845459703
+stuck,tf_link_base_link_trans_x,0.3784411889336445
+stuck,tf_link_base_link_trans_y,0.6314803777444156
+stuck,tf_link_base_link_trans_z,0.8660671886331701
+stuck,tf_link_base_link_rot_x,1.1455545088239227
+stuck,tf_link_base_link_rot_y,0.8823069610063087
+stuck,tf_link_base_link_rot_z,0.08255523526020081
+stuck,tf_link_base_link_rot_w,0.5183757281735198
+stuck,tf_footprint_base_footprint_trans_x,0.383939887422757
+stuck,tf_footprint_base_footprint_trans_y,0.6387747769248561
+stuck,tf_footprint_base_footprint_rot_z,0.23965287540044652
+stuck,tf_footprint_base_footprint_rot_w,0.7589185715979739
