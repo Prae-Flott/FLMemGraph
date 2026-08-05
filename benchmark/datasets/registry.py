@@ -1,7 +1,7 @@
 """
 Dataset registry, transcribed from `mem_phys_prompt_zh.md` Sec 8.1's
 benchmark plan. Four categories, matching the four things this project's
-"记忆检索 + 物理验证" design (test_gdn_physi/) needs to be evaluated
+"记忆检索 + 物理验证" design (src/) needs to be evaluated
 against: (A) multivariate time-series anomaly detection with physical/
 sensor structure -- the PRIMARY target, closest to robo3er itself; (B)
 federated image anomaly detection -- tests the memory+federation idea in

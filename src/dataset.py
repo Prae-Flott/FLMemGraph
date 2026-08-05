@@ -1,5 +1,5 @@
 """
-Shared dataloader for test_gdn_physi/: one place for loading robo3er,
+Shared dataloader for src/: one place for loading robo3er,
 dropping genuinely-zero-information columns, and producing the
 fit/calib/test_normal split every script in this folder uses, instead of
 each training script re-implementing (and risking silently diverging
