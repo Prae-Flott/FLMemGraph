@@ -147,6 +147,36 @@ BASELINES = {
                                          "bearings improved vs. only 2 with tiny regressions. See "
                                          "memory/paderborn-joint-prototype-v2-attention.md for the full "
                                          "table and design rationale."},
+    "Paderborn-joint-prototype-v3-typed-attention": {"category": "③", "type": "physics_prior", "status": "implemented",
+                                "module": "benchmark/run_paderborn_joint_prototype_v3.py, "
+                                           "src.joint_prototype_model.JointPrototypeGDNv3",
+                                "note": "Adds, per docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md: "
+                                         "relation-specific message functions on the 8 declared physics edges "
+                                         "(linear for the 4 current-related 'proportional' edges, small MLP for "
+                                         "the 4 vibration/torque-related 'nonlinear' edges), prototype-"
+                                         "conditioned edge-residual standardization (per-(prototype,edge) "
+                                         "mean/std from a post-training calibration pass, falling back to "
+                                         "global stats for sparse prototypes), and an unsupervised anomaly "
+                                         "attention (softmax over standardized residual magnitude) over each "
+                                         "node's incoming declared edges -- kept structurally separate from "
+                                         "v2's generic learned attention (TrendGraphAttentionHead, retained "
+                                         "unchanged as a parallel signal), per the design doc's "
+                                         "'normal relation attention != anomaly attention' distinction. "
+                                         "Result: the full v3 combination (0.898 mean AUROC) beats v2's "
+                                         "original full model (0.873) and the fair GDN baseline (0.819) by a "
+                                         "real but modest margin (+0.025 / +0.079). IMPORTANT CAVEAT: the new "
+                                         "typed-edge signal alone (0.816) is WEAKER than v2's generic attention "
+                                         "alone in the same run (0.904) -- most of v3's headline gain traces to "
+                                         "v2's own mechanism scoring higher when retrained jointly with the new "
+                                         "typed-edge auxiliary loss (likely a shared-encoder regularization "
+                                         "effect), not to the typed/anomaly-attention mechanism itself "
+                                         "out-performing generic attention. Also, only 5/16 prototypes had "
+                                         "enough calib windows for genuine per-prototype standardization (rest "
+                                         "fell back to global stats), so the 'prototype-conditioned' idea is "
+                                         "under-exercised by this dataset's calib-split size. See "
+                                         "memory/paderborn-joint-prototype-v3-typed-attention.md for the full "
+                                         "table, per-bearing breakdown, and honest analysis of what did/didn't "
+                                         "work."},
     "GDN-tuned": {"category": "③", "type": "graph_structure", "status": "implemented",
                    "module": "benchmark.baselines.gdn_baseline.GDNTunedBaseline",
                    "note": "Migrated from ~/Projects/FL-bench's test_gdn/train_gdn.py -- the actual "
