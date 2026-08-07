@@ -55,6 +55,7 @@ support a reliable answer to. This is the literal implementation of
   Sec 6.1's "each edge needs a declared relation," just without yet
   discriminating relation TYPES from each other.
 """
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -283,6 +284,186 @@ class JointPrototypeGDNv2(nn.Module):
 
     def device_score(self, s_node, s_edge, lambda_n: float = 1.0, lambda_e: float = 1.0):
         return lambda_n * s_node.mean(axis=-1) + lambda_e * s_edge.mean(axis=-1)
+
+
+class TypedRelationAnomalyHead(nn.Module):
+    """v3: relation-specific per-edge message functions (Sec 9 of
+    `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`) +
+    prototype-conditioned edge-residual standardization (Sec 12) +
+    an anomaly attention over each node's incoming declared edges (Sec
+    15-16), layered ALONGSIDE v2's `TrendGraphAttentionHead` rather than
+    replacing it -- the two mechanisms answer different questions and the
+    design doc is explicit that they must stay separate (Sec 13:
+    "alpha_ij^rel != beta_ij^anom"). `TrendGraphAttentionHead` covers ALL
+    node pairs generically and remains the primary structural signal for
+    nodes with no declared incoming edge; this head only covers the
+    DECLARED physics edges, but with type-appropriate functional forms,
+    prototype-conditioned normalization, and a genuinely separate
+    "which relationship is broken right now" attention.
+
+    Simplifications vs. the full design doc (v3, deliberately scoped
+    down, matching this project's repeated "implement the simplest sound
+    version first" convention -- see `TrendEdgeHead`/`TrendGraphAttentionHead`
+    docstrings for the same pattern at v1/v2):
+    - Only 2 relation-type classes are distinguished (linear/proportional
+      vs. nonlinear/dynamic), assigned by domain knowledge per declared
+      edge (see `run_paderborn_joint_prototype_v3.py`'s EDGE_TYPES), not
+      the full 9-type taxonomy in Sec 7 -- assigning finer types
+      (integral/derivative/thermal/frequency) would need dedicated
+      temporal-difference/aggregation structure this project has no
+      validated need for yet on Paderborn's 6 channels.
+    - Anomaly attention beta_ij is the UNSUPERVISED Sec 16 version
+      (softmax over standardized residual magnitude with a learned
+      temperature), not the self-supervised relation-breaking-augmentation
+      trained version from Sec 17 -- that augmentation pipeline (temporal
+      mismatch, cross-condition swap, scaling/trend/frequency perturbation)
+      is a substantial separate undertaking, left as a documented future
+      step once this simpler version's value is established.
+    - Prototype-conditioned standardization falls back to a GLOBAL mean/std
+      for any prototype with fewer than `min_samples` calibration windows,
+      since a 16-prototype codebook can have sparsely populated entries.
+    """
+
+    def __init__(self, num_nodes: int, edges, edge_types, embed_dim: int, temperature_init: float = 1.0):
+        super().__init__()
+        assert len(edges) == len(edge_types)
+        self.num_nodes = num_nodes
+        self.edges = edges
+        self.edge_types = edge_types
+
+        self.ops = nn.ModuleList()
+        for t in edge_types:
+            if t == "proportional":
+                self.ops.append(nn.Linear(embed_dim, embed_dim, bias=False))
+            else:  # "nonlinear" / "dynamic" -- anything not confidently proportional
+                self.ops.append(nn.Sequential(
+                    nn.Linear(embed_dim, embed_dim), nn.ReLU(), nn.Linear(embed_dim, embed_dim),
+                ))
+
+        self.by_target = {}
+        for e_idx, (_src, dst) in enumerate(edges):
+            self.by_target.setdefault(dst, []).append(e_idx)
+
+        self.log_temperature = nn.Parameter(torch.log(torch.tensor(float(temperature_init))))
+
+        num_edges = len(edges)
+        self.register_buffer("calib_mu_global", torch.zeros(num_edges))
+        self.register_buffer("calib_sigma_global", torch.ones(num_edges))
+        self.calib_mu_proto = None
+        self.calib_sigma_proto = None
+        self.calib_valid_proto = None
+
+    def raw_residuals(self, z, p_star):
+        """z, p_star: [B, N, D]. Returns r [B, num_edges], the raw squared
+        residual per declared edge using each edge's typed message function."""
+        d = z - p_star
+        rs = []
+        for (src, dst), op in zip(self.edges, self.ops):
+            pred = op(d[:, src])
+            actual = d[:, dst]
+            rs.append((actual - pred).pow(2).sum(-1))
+        return torch.stack(rs, dim=1)
+
+    def set_calibration(self, r_calib_np, idx_calib_np, num_prototypes, min_samples: int = 5):
+        """r_calib_np: [Ncalib, num_edges] raw per-window residuals; idx_calib_np:
+        [Ncalib] matched prototype index -- both from a calibration pass run AFTER
+        training (Stage B, Sec 22). Computes global stats and, per prototype, either
+        its own stats (if enough calib windows matched it) or a fallback to global."""
+        mu_g = r_calib_np.mean(axis=0)
+        sigma_g = r_calib_np.std(axis=0) + 1e-8
+        self.calib_mu_global = torch.tensor(mu_g, dtype=torch.float32)
+        self.calib_sigma_global = torch.tensor(sigma_g, dtype=torch.float32)
+
+        mu_p = np.tile(mu_g, (num_prototypes, 1))
+        sigma_p = np.tile(sigma_g, (num_prototypes, 1))
+        valid = np.zeros(num_prototypes, dtype=bool)
+        for m in range(num_prototypes):
+            mask = idx_calib_np == m
+            if int(mask.sum()) >= min_samples:
+                mu_p[m] = r_calib_np[mask].mean(axis=0)
+                sigma_p[m] = r_calib_np[mask].std(axis=0) + 1e-8
+                valid[m] = True
+        self.calib_mu_proto = torch.tensor(mu_p, dtype=torch.float32)
+        self.calib_sigma_proto = torch.tensor(sigma_p, dtype=torch.float32)
+        self.calib_valid_proto = torch.tensor(valid)
+
+    def standardize(self, r, idx):
+        device = r.device
+        mu_global = self.calib_mu_global.to(device).unsqueeze(0).expand_as(r)
+        sigma_global = self.calib_sigma_global.to(device).unsqueeze(0).expand_as(r)
+        if self.calib_mu_proto is None:
+            return (r - mu_global) / sigma_global
+        mu_proto = self.calib_mu_proto.to(device)[idx]
+        sigma_proto = self.calib_sigma_proto.to(device)[idx]
+        valid = self.calib_valid_proto.to(device)[idx].unsqueeze(1)
+        mu = torch.where(valid, mu_proto, mu_global)
+        sigma = torch.where(valid, sigma_proto, sigma_global)
+        return (r - mu) / sigma
+
+    def forward(self, z, p_star, idx):
+        """Returns dict with r [B, num_edges] (raw), r_tilde [B, num_edges]
+        (prototype-conditioned standardized, falls back to global stats before
+        `set_calibration()` is called -- fine during Stage A training), and
+        s_node_typed [B, N] (anomaly-attention-weighted standardized residual per
+        node; 0 for nodes with no declared incoming edge, e.g. force/speed here)."""
+        r = self.raw_residuals(z, p_star)
+        r_tilde = self.standardize(r, idx)
+
+        B = r.shape[0]
+        s_node_typed = torch.zeros(B, self.num_nodes, device=r.device)
+        temperature = self.log_temperature.exp()
+        for target, e_idxs in self.by_target.items():
+            r_t_group = r_tilde[:, e_idxs]
+            beta = F.softmax(temperature * r_t_group, dim=-1)
+            s_node_typed[:, target] = (beta * r_t_group.clamp(min=0)).sum(dim=-1)
+        return {"r": r, "r_tilde": r_tilde, "s_node_typed": s_node_typed}
+
+
+class JointPrototypeGDNv3(nn.Module):
+    """v3: adds `TypedRelationAnomalyHead` (relation-specific message
+    functions + prototype-conditioned standardization + anomaly attention
+    over declared physics edges) alongside v2's `TrendGraphAttentionHead`
+    (kept unchanged -- generic learned attention over ALL node pairs,
+    still the primary structural signal for nodes with no declared
+    incoming edge). See `TypedRelationAnomalyHead` docstring for the
+    design-doc section mapping and explicit scoping-down notes."""
+
+    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
+                 num_prototypes: int, prior_edges, edge_types, top_k: int = None, node_weights=None):
+        super().__init__()
+        self.num_nodes = num_nodes
+        self.encoder = SharedEncoder(window_size, embed_dim)
+        self.memory = JointPrototypeMemory(num_prototypes, num_nodes, embed_dim)
+        self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k, prior_edges=prior_edges)
+        self.typed_head = TypedRelationAnomalyHead(num_nodes, prior_edges, edge_types, embed_dim)
+        self.decoder = nn.Linear(embed_dim, window_size)  # training-only
+        self.register_buffer(
+            "node_weights",
+            node_weights if node_weights is not None else torch.ones(num_nodes) / num_nodes,
+        )
+
+    def forward(self, x, training_mode=False):
+        """x: [B, T, N]. Returns dict with z, memory outputs (idx, p_star,
+        d_G, s_node), s_edge [B, N] (v2 generic attention), r/r_tilde/
+        s_node_typed (v3 typed-edge signals). `training_mode=True` also
+        runs the decoder."""
+        B, T, N = x.shape
+        assert N == self.num_nodes
+
+        z = self.encoder(x)
+        mem_out = self.memory(z, self.node_weights)
+        d_hat, s_edge = self.edge_head(z, mem_out["p_star"])
+        typed_out = self.typed_head(z, mem_out["p_star"], mem_out["idx"])
+
+        out = {"z": z, "d_hat": d_hat, "s_edge": s_edge, **mem_out, **typed_out}
+        if training_mode:
+            out["x_hat"] = self.decoder(z).transpose(1, 2)
+        return out
+
+    def device_score(self, s_node, s_edge, s_node_typed, lambda_n: float = 1.0,
+                      lambda_e: float = 1.0, lambda_t: float = 1.0):
+        return (lambda_n * s_node.mean(axis=-1) + lambda_e * s_edge.mean(axis=-1)
+                + lambda_t * s_node_typed.mean(axis=-1))
 
 
 class JointPrototypeGDN(nn.Module):

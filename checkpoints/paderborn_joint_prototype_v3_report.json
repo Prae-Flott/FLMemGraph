@@ -1,0 +1,393 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 5,
+    "window_len": 64,
+    "epochs": 12,
+    "prior_edges": [
+      [
+        "force",
+        "vibration_1"
+      ],
+      [
+        "force",
+        "torque"
+      ],
+      [
+        "speed",
+        "vibration_1"
+      ],
+      [
+        "speed",
+        "torque"
+      ],
+      [
+        "speed",
+        "phase_current_1"
+      ],
+      [
+        "speed",
+        "phase_current_2"
+      ],
+      [
+        "torque",
+        "phase_current_1"
+      ],
+      [
+        "torque",
+        "phase_current_2"
+      ]
+    ],
+    "edge_types": [
+      "nonlinear",
+      "nonlinear",
+      "nonlinear",
+      "nonlinear",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional"
+    ],
+    "min_proto_samples": 5
+  },
+  "nodes": [
+    "vibration_1",
+    "phase_current_1",
+    "phase_current_2",
+    "force",
+    "speed",
+    "torque"
+  ],
+  "final_prior_bias_strength": 1.2497187852859497,
+  "final_typed_temperature": 1.0,
+  "n_valid_prototypes_for_typed_calib": 5,
+  "bearings": {
+    "KA01": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.4901041666666667,
+      "B_prototype_plus_node": 0.23767361111111113,
+      "C_edge_only": 0.9477430555555555,
+      "D_full_v2": 0.9057291666666666,
+      "E_typed_edge_only": 0.9090277777777778,
+      "F_full_v3": 0.9291666666666667
+    },
+    "KA03": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KA05": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.48142361111111115,
+      "B_prototype_plus_node": 0.6105902777777779,
+      "C_edge_only": 0.8564236111111111,
+      "D_full_v2": 0.8157986111111111,
+      "E_typed_edge_only": 0.7022569444444444,
+      "F_full_v3": 0.811111111111111
+    },
+    "KA06": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.4996527777777778,
+      "B_prototype_plus_node": 0.38454861111111116,
+      "C_edge_only": 0.6098958333333333,
+      "D_full_v2": 0.5543402777777777,
+      "E_typed_edge_only": 0.6055555555555556,
+      "F_full_v3": 0.6701388888888888
+    },
+    "KA07": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.5527777777777778,
+      "B_prototype_plus_node": 0.5324652777777777,
+      "C_edge_only": 0.9479166666666666,
+      "D_full_v2": 0.959375,
+      "E_typed_edge_only": 0.413888888888889,
+      "F_full_v3": 0.9444444444444444
+    },
+    "KA08": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 79,
+      "A_prototype_only": 0.5066807313642757,
+      "B_prototype_plus_node": 0.44813642756680727,
+      "C_edge_only": 0.9324894514767933,
+      "D_full_v2": 0.8558368495077355,
+      "E_typed_edge_only": 0.3672644163150493,
+      "F_full_v3": 0.8162798874824191
+    },
+    "KA09": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.7277777777777777,
+      "B_prototype_plus_node": 0.4760416666666667,
+      "C_edge_only": 0.7993055555555554,
+      "D_full_v2": 0.6848958333333334,
+      "E_typed_edge_only": 0.6090277777777777,
+      "F_full_v3": 0.6475694444444444
+    },
+    "KA04": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KA15": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KA16": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KA22": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KA30": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 0.5717013888888889,
+      "B_prototype_plus_node": 0.5013888888888889,
+      "C_edge_only": 0.5338541666666667,
+      "D_full_v2": 0.5449652777777778,
+      "E_typed_edge_only": 0.46545138888888893,
+      "F_full_v3": 0.60625
+    },
+    "KI01": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.990625,
+      "B_prototype_plus_node": 0.8491319444444444,
+      "C_edge_only": 0.9697916666666666,
+      "D_full_v2": 0.9286458333333334,
+      "E_typed_edge_only": 0.9934027777777779,
+      "F_full_v3": 0.9960069444444445
+    },
+    "KI03": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KI05": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.6812499999999999,
+      "B_prototype_plus_node": 0.5822916666666665,
+      "C_edge_only": 0.5590277777777778,
+      "D_full_v2": 0.6145833333333333,
+      "E_typed_edge_only": 0.5284722222222222,
+      "F_full_v3": 0.6269097222222222
+    },
+    "KI07": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.7883680555555556,
+      "B_prototype_plus_node": 0.7423611111111111,
+      "C_edge_only": 0.8423611111111111,
+      "D_full_v2": 0.8107638888888888,
+      "E_typed_edge_only": 0.6078125000000001,
+      "F_full_v3": 0.7873263888888888
+    },
+    "KI08": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "A_prototype_only": 0.7505208333333334,
+      "B_prototype_plus_node": 0.6196180555555556,
+      "C_edge_only": 0.8515625,
+      "D_full_v2": 0.9027777777777778,
+      "E_typed_edge_only": 0.4899305555555556,
+      "F_full_v3": 0.8562500000000001
+    },
+    "KI04": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 0.5211805555555555,
+      "B_prototype_plus_node": 0.42465277777777777,
+      "C_edge_only": 0.6659722222222222,
+      "D_full_v2": 0.5583333333333333,
+      "E_typed_edge_only": 0.5263888888888889,
+      "F_full_v3": 0.665625
+    },
+    "KI14": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KI16": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KI17": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KI18": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KI21": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KB23": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 0.9456597222222223,
+      "C_edge_only": 0.9953125,
+      "D_full_v2": 0.9854166666666667,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KB24": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    },
+    "KB27": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "A_prototype_only": 1.0,
+      "B_prototype_plus_node": 1.0,
+      "C_edge_only": 1.0,
+      "D_full_v2": 1.0,
+      "E_typed_edge_only": 1.0,
+      "F_full_v3": 1.0
+    }
+  },
+  "summary_mean_auroc": {
+    "A_prototype_only": 0.82931010291572,
+    "B_prototype_plus_node": 0.7828676937953045,
+    "C_edge_only": 0.9042944660824406,
+    "D_full_v2": 0.889286994211836,
+    "E_typed_edge_only": 0.8160953728497241,
+    "F_full_v3": 0.8983491730228281
+  },
+  "category_summary": {
+    "A_prototype_only": {
+      "outer_ring": 0.735843185947023,
+      "inner_ring": 0.8847222222222222,
+      "combined": 1.0
+    },
+    "B_prototype_plus_node": {
+      "outer_ring": 0.6825703967416783,
+      "inner_ring": 0.8380050505050505,
+      "combined": 0.9818865740740742
+    },
+    "C_edge_only": {
+      "outer_ring": 0.8856356950304733,
+      "inner_ring": 0.8989741161616162,
+      "combined": 0.9984375
+    },
+    "D_full_v2": {
+      "outer_ring": 0.8600784180145334,
+      "inner_ring": 0.8922821969696971,
+      "combined": 0.9951388888888889
+    },
+    "E_typed_edge_only": {
+      "outer_ring": 0.7560393958040318,
+      "inner_ring": 0.8314551767676768,
+      "combined": 1.0
+    },
+    "F_full_v3": {
+      "outer_ring": 0.8687467035864979,
+      "inner_ring": 0.9029198232323232,
+      "combined": 1.0
+    }
+  }
+}

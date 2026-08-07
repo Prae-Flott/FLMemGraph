@@ -101,6 +101,21 @@ where this work started (see each file's own note on provenance).
   physical-prior reference docs
   (including ones with NO hard prior found, like Sielaff) are in
   `benchmark/datasets/*_physics.md`.
+- [`paderborn-joint-prototype-v3-typed-attention.md`](paderborn-joint-prototype-v3-typed-attention.md)
+  — per `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`:
+  adds relation-specific message functions (linear for current edges,
+  MLP for vibration/torque edges), prototype-conditioned edge-residual
+  standardization, and a separate unsupervised anomaly attention,
+  alongside (not replacing) v2's generic attention. **Full v3 beats v2's
+  original result (0.898 vs. 0.873 mean AUROC)** and the GDN baseline
+  (+0.079), but with an important honest caveat: the new typed-edge
+  signal is WEAKER standalone (0.816) than v2's generic attention alone
+  in the same run (0.904) — most of the headline gain traces to v2's own
+  mechanism scoring higher when retrained jointly with the new auxiliary
+  loss (likely a shared-encoder regularization effect), not to the new
+  mechanism itself out-performing generic attention. Only 5/16
+  prototypes had enough calib data for genuine prototype-conditioned
+  stats, so that idea is under-exercised here too.
 - [`fl-bench-migrations.md`](fl-bench-migrations.md) — four pieces
   migrated from `~/Projects/FL-bench` as real, standalone, in-repo runnable
   code (not framework pointers): a real FedAvg baseline (the registry
