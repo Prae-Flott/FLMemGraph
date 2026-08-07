@@ -1,0 +1,79 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "top_k": 15,
+    "epochs": 30,
+    "history_len": 4,
+    "dense": true
+  },
+  "n_features": 39,
+  "reliability_ratio": 0.05,
+  "excluded_features": [
+    "cleaning_count",
+    "read SM_RingCamera 4",
+    "read barcode_RingCamera 2",
+    "read barcode_RingCamera 4"
+  ],
+  "threshold_p95": 14691.44627752699,
+  "normal": {
+    "n": 2110,
+    "false_positive_rate": 0.05023696682464455
+  },
+  "fault_types": {
+    "bottle_recognition": {
+      "label_id": 1,
+      "n": 3812,
+      "auroc": 0.9263524266099075,
+      "recall_at_p95": 0.5653200419727177,
+      "top_sensors_by_z": [
+        "total_deposit",
+        "total_weight",
+        "total_quantity"
+      ]
+    },
+    "mechanical_jam": {
+      "label_id": 2,
+      "n": 116,
+      "auroc": 0.9161014871711064,
+      "recall_at_p95": 0.5862068965517241,
+      "top_sensors_by_z": [
+        "cleaning_end_pixels",
+        "total_weight",
+        "total_deposit"
+      ]
+    },
+    "compactor_status": {
+      "label_id": 3,
+      "n": 414,
+      "auroc": 0.9018545229754791,
+      "recall_at_p95": 0.5144927536231884,
+      "top_sensors_by_z": [
+        "receipt_count",
+        "cleaning_end_pixels",
+        "total_weight"
+      ]
+    },
+    "crate_recognition": {
+      "label_id": 4,
+      "n": 138,
+      "auroc": 0.762612473384161,
+      "recall_at_p95": 0.35507246376811596,
+      "top_sensors_by_z": [
+        "total_weight",
+        "total_deposit",
+        "total_quantity"
+      ]
+    },
+    "other": {
+      "label_id": 5,
+      "n": 274,
+      "auroc": 0.8405887847234234,
+      "recall_at_p95": 0.48905109489051096,
+      "top_sensors_by_z": [
+        "cleaning_end_pixels",
+        "cleaning_begin_pixels",
+        "cleaning_duration"
+      ]
+    }
+  }
+}

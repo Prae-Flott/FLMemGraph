@@ -1,0 +1,368 @@
+{
+  "current_models": {
+    "phase_current_1": {
+      "a_torque": 1.1739845547911838,
+      "b_speed": 7.803472670685918e-05,
+      "c_intercept": 0.06532093541543443,
+      "r2": 0.2514685884089388
+    },
+    "phase_current_2": {
+      "a_torque": 1.1703007886996228,
+      "b_speed": 7.15763111896795e-05,
+      "c_intercept": 0.08543620845406363,
+      "r2": 0.24456394654267055
+    }
+  },
+  "results": {
+    "A_raw_current": {
+      "calib_mse": 0.3460127115249634,
+      "rows": [
+        [
+          "KA01",
+          "outer_ring",
+          "artificial",
+          0.5439236111111111
+        ],
+        [
+          "KA03",
+          "outer_ring",
+          "artificial",
+          1.0
+        ],
+        [
+          "KA05",
+          "outer_ring",
+          "artificial",
+          0.39236111111111105
+        ],
+        [
+          "KA06",
+          "outer_ring",
+          "artificial",
+          0.42552083333333335
+        ],
+        [
+          "KA07",
+          "outer_ring",
+          "artificial",
+          0.3399305555555555
+        ],
+        [
+          "KA08",
+          "outer_ring",
+          "artificial",
+          0.3560126582278481
+        ],
+        [
+          "KA09",
+          "outer_ring",
+          "artificial",
+          0.8223958333333333
+        ],
+        [
+          "KA04",
+          "outer_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KA15",
+          "outer_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KA16",
+          "outer_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KA22",
+          "outer_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KA30",
+          "outer_ring",
+          "real",
+          0.48593749999999997
+        ],
+        [
+          "KI01",
+          "inner_ring",
+          "artificial",
+          0.9744791666666666
+        ],
+        [
+          "KI03",
+          "inner_ring",
+          "artificial",
+          1.0
+        ],
+        [
+          "KI05",
+          "inner_ring",
+          "artificial",
+          0.5395833333333333
+        ],
+        [
+          "KI07",
+          "inner_ring",
+          "artificial",
+          0.509375
+        ],
+        [
+          "KI08",
+          "inner_ring",
+          "artificial",
+          0.5088541666666666
+        ],
+        [
+          "KI04",
+          "inner_ring",
+          "real",
+          0.4774305555555556
+        ],
+        [
+          "KI14",
+          "inner_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KI16",
+          "inner_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KI17",
+          "inner_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KI18",
+          "inner_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KI21",
+          "inner_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KB23",
+          "combined",
+          "real",
+          0.9944444444444445
+        ],
+        [
+          "KB24",
+          "combined",
+          "real",
+          1.0
+        ],
+        [
+          "KB27",
+          "combined",
+          "real",
+          1.0
+        ]
+      ],
+      "category_summary": {
+        "outer_ring": {
+          "n": 12,
+          "mean_auroc": 0.6971735085560243
+        },
+        "inner_ring": {
+          "n": 11,
+          "mean_auroc": 0.8190656565656567
+        },
+        "combined": {
+          "n": 3,
+          "mean_auroc": 0.9981481481481481
+        }
+      }
+    },
+    "B_physics_residual": {
+      "calib_mse": 0.35629621148109436,
+      "rows": [
+        [
+          "KA01",
+          "outer_ring",
+          "artificial",
+          0.4630208333333333
+        ],
+        [
+          "KA03",
+          "outer_ring",
+          "artificial",
+          0.8848958333333332
+        ],
+        [
+          "KA05",
+          "outer_ring",
+          "artificial",
+          0.2638888888888889
+        ],
+        [
+          "KA06",
+          "outer_ring",
+          "artificial",
+          0.3208333333333333
+        ],
+        [
+          "KA07",
+          "outer_ring",
+          "artificial",
+          0.2
+        ],
+        [
+          "KA08",
+          "outer_ring",
+          "artificial",
+          0.230309423347398
+        ],
+        [
+          "KA09",
+          "outer_ring",
+          "artificial",
+          0.6423611111111112
+        ],
+        [
+          "KA04",
+          "outer_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KA15",
+          "outer_ring",
+          "real",
+          0.8973958333333333
+        ],
+        [
+          "KA16",
+          "outer_ring",
+          "real",
+          1.0
+        ],
+        [
+          "KA22",
+          "outer_ring",
+          "real",
+          0.8626736111111111
+        ],
+        [
+          "KA30",
+          "outer_ring",
+          "real",
+          0.4065972222222222
+        ],
+        [
+          "KI01",
+          "inner_ring",
+          "artificial",
+          0.9991319444444444
+        ],
+        [
+          "KI03",
+          "inner_ring",
+          "artificial",
+          0.9027777777777778
+        ],
+        [
+          "KI05",
+          "inner_ring",
+          "artificial",
+          0.3833333333333333
+        ],
+        [
+          "KI07",
+          "inner_ring",
+          "artificial",
+          0.32552083333333337
+        ],
+        [
+          "KI08",
+          "inner_ring",
+          "artificial",
+          0.4105902777777778
+        ],
+        [
+          "KI04",
+          "inner_ring",
+          "real",
+          0.43524305555555554
+        ],
+        [
+          "KI14",
+          "inner_ring",
+          "real",
+          0.9234374999999999
+        ],
+        [
+          "KI16",
+          "inner_ring",
+          "real",
+          0.9947916666666666
+        ],
+        [
+          "KI17",
+          "inner_ring",
+          "real",
+          0.9640625
+        ],
+        [
+          "KI18",
+          "inner_ring",
+          "real",
+          0.9944444444444445
+        ],
+        [
+          "KI21",
+          "inner_ring",
+          "real",
+          0.9246527777777778
+        ],
+        [
+          "KB23",
+          "combined",
+          "real",
+          1.0
+        ],
+        [
+          "KB24",
+          "combined",
+          "real",
+          1.0
+        ],
+        [
+          "KB27",
+          "combined",
+          "real",
+          0.9088541666666666
+        ]
+      ],
+      "category_summary": {
+        "outer_ring": {
+          "n": 12,
+          "mean_auroc": 0.5976646741678387
+        },
+        "inner_ring": {
+          "n": 11,
+          "mean_auroc": 0.75072601010101
+        },
+        "combined": {
+          "n": 3,
+          "mean_auroc": 0.9696180555555555
+        }
+      }
+    }
+  }
+}

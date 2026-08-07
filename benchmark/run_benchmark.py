@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from datasets.robo3er_adapter import load as load_robo3er_bench  # noqa: E402
 from baselines.traditional import PCABaseline, IsolationForestBaseline  # noqa: E402
-from baselines.gdn_baseline import GDNBaseline  # noqa: E402
+from baselines.gdn_baseline import GDNBaseline, GDNTunedBaseline  # noqa: E402
 from metrics import auroc  # noqa: E402
 
 OUT_DIR = Path(__file__).resolve().parents[1] / "checkpoints"
@@ -33,12 +33,13 @@ def main():
         "PCA": PCABaseline(),
         "IsolationForest": IsolationForestBaseline(),
         "GDN": GDNBaseline(),
+        "GDN-tuned": GDNTunedBaseline(),
     }
 
     results = {}
     for name, model in methods.items():
         print(f"\nfitting {name}...")
-        if name == "GDN":
+        if name in ("GDN", "GDN-tuned"):
             model.fit(fit_w, calib_w)
         else:
             model.fit(fit_w)

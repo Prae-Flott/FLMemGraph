@@ -1,0 +1,62 @@
+{
+  "config": {
+    "rounds": 5,
+    "local_epochs": 20,
+    "num_prototypes": 256,
+    "beta": 0.25,
+    "lambda": 0.5,
+    "aggregation": "fedavg_full_parameter"
+  },
+  "clients": {
+    "robot00_merged_data": {
+      "robot_name": "robot00_merged_data",
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 25,
+          "auroc_d": 0.08139534883720928,
+          "auroc_r": 0.16279069767441856,
+          "auroc_d+r": 0.16279069767441856
+        },
+        "Low battery": {
+          "n": 74,
+          "auroc_d": 0.4220615964802012,
+          "auroc_r": 0.41357636706473916,
+          "auroc_d+r": 0.4296040226272785
+        }
+      }
+    },
+    "robot01_merged_data": {
+      "robot_name": "robot01_merged_data",
+      "fault_types": {
+        "cable trapped": {
+          "n": 206,
+          "auroc_d": 0.9482904178978472,
+          "auroc_r": 0.9307724778387505,
+          "auroc_d+r": 0.9400590966652597
+        }
+      }
+    },
+    "robot03_merged_data": {
+      "robot_name": "robot03_merged_data",
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 34,
+          "auroc_d": 0.4809688581314879,
+          "auroc_r": 0.49423298731257204,
+          "auroc_d+r": 0.49365628604382933
+        }
+      }
+    },
+    "robot04_merged_data": {
+      "robot_name": "robot04_merged_data",
+      "fault_types": {
+        "stuck": {
+          "n": 149,
+          "auroc_d": 0.5663887975552676,
+          "auroc_r": 0.5921513258418274,
+          "auroc_d+r": 0.5525404715393691
+        }
+      }
+    }
+  }
+}
