@@ -91,6 +91,45 @@ DATASETS = {
         "status": "downloadable",
         "obtain": "https://www.spotseven.de/gecco/gecco-challenge/gecco-challenge-2018/",
     },
+    "Paderborn-KAt-bearing": {
+        "category": "A",
+        "description": "Paderborn University KAt Bearing DataCenter: 32 type-6203 ball bearings "
+                         "(6 healthy, 12 artificially damaged, 14 real accelerated-lifetime-test "
+                         "damage), 4 controlled operating conditions x 20 reps x 4s each = 80 "
+                         ".mat files/bearing, 7 channels (motor current x2 @64kHz, vibration @64kHz, "
+                         "force/speed/torque @4kHz, bearing temp @1Hz).",
+        "num_features": 7,
+        "used_in_papers": ["Lessmeier, Kimotho, Zimmer, Sextro, PHME 2016 (original reference paper, "
+                             "motor-current-signal-based bearing diagnosis benchmark)"],
+        "why_relevant": "Not from mem_phys_prompt_zh.md Sec 8.1 -- added on request as a real "
+                          "dataset alongside robo3er/Sielaff. A DISCRETE fault-classification dataset "
+                          "(definite damage class per bearing: healthy / outer-ring / inner-ring / "
+                          "combined, each with known severity and generation method) -- close in "
+                          "structure to robo3er/Sielaff's fit-on-normal/evaluate-per-class-AUROC "
+                          "convention. Also includes MOTOR CURRENT channels alongside "
+                          "vibration -- a genuinely different sensing modality from every other "
+                          "dataset in this project, testing whether GDN's cross-channel structure "
+                          "signal transfers across modalities (electrical vs. mechanical), not just "
+                          "across datasets.",
+        "status": "implemented",
+        "path": "data/paderborn_bearing_data/{K001..,KA..,KB..,KI..}/ (~21GB uncompressed), docs "
+                 "(reference paper + 64 per-bearing fact-sheet/measuring-log PDFs) in "
+                 "docs/paderborn_bearing_KAt2016.pdf and docs/paderborn_bearing_facts/",
+        "obtain": "https://groups.uni-paderborn.de/kat/BearingDataCenter/ (official KAt DataCenter "
+                   "mirror, 32 direct-download .rar files, no registration).",
+        "note_extra": "benchmark/datasets/paderborn_adapter.py (loader, 3 of 7 channels used -- "
+                        "vibration_1 + phase_current_1/2, see its docstring) + "
+                        "benchmark/run_paderborn_fl_model.py (single-machine, no federation, reuses "
+                        "src.fl_model.FLGDNMemory unchanged) implement this project's full memory+"
+                        "structure pipeline here. Result: strong category-mean AUROC (combined 1.000, "
+                        "inner_ring 0.750, outer_ring 0.641) but a real bimodal split underneath -- "
+                        "15/26 damaged bearings near-perfect, 10/26 BELOW 0.5 AUROC (score direction "
+                        "inverted, mostly artificial-damage bearings), leading hypothesis is that "
+                        "crude 125x box-average decimation washes out the high-frequency impulsive "
+                        "signature artificial single-point defects rely on -- see "
+                        "memory/paderborn-fl-model-run.md for the full per-bearing table and "
+                        "untested follow-ups.",
+    },
     # ---------------------------------------------------------- category B --
     "MVTec-AD": {
         "category": "B",

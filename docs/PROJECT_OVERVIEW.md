@@ -6,21 +6,38 @@ repo at `~/Projects/FL-bench`) on 2026-08-05. Built for robo3er, a
 5-robot iRobot Create3 fleet with 4 labeled fault types (Broken Pipe,
 cable trapped, Low battery, stuck).
 
-See `docs/mem_phys_prompt_zh.md` for the full design spec this project
-implements, and `memory/` for the development history, bugs found/fixed,
-and results at each stage.
+See `docs/mem_phys_prompt_zh.md` for the original design spec (robo3er,
+per-feature memory + latent structure head), and
+`docs/joint_prototype_three_level_anomaly_prompt.md` for the newer
+Joint-Prototype + trend-based-edge redesign (Paderborn) -- see
+`memory/` for the development history, bugs found/fixed, and results at
+each stage.
 
 ## Layout
 
 ```
 FLMemGraph/
 ├── data/robo3er/        robo3er dataset (data.npy, targets.npy, metadata.json, partition.pkl)
+├── data/sielaff/         second real dataset: 10 reverse-vending machines, windowed
+│                         (data.npy, targets.npy, metadata.json, partition.pkl) -- generated
+│                         upstream in FL-bench, copied here, raw CSVs in data/sielaff_data/
+├── data/paderborn_bearing_data/  third real dataset: Paderborn KAt Bearing DataCenter,
+│                         32 bearings (healthy/outer-ring/inner-ring/combined damage),
+│                         motor current + vibration + mechanical channels, ~21GB --
+│                         full adapter + several training pipelines, see
+│                         memory/paderborn-*.md (dataset, fl_model run, physics-residual
+│                         attempts, joint-prototype redesign)
 ├── src/                  all project code: gdn_model.py (GDN class, no memory/federation),
-│                         kinematics residual, feature groups, discrete prototypical memory,
-│                         latent-space structure head, federated cross-robot memory alignment,
-│                         decision logic, and every train_*.py entry point
-├── benchmark/            baseline methods + public-dataset registry (mostly scaffolded,
-│                         see benchmark/README.md for what's actually implemented)
+│                         conv_autoencoder.py (reconstruction AE, used by IFCAAE baseline),
+│                         joint_prototype_model.py (Joint Prototype Memory + trend-based
+│                         edge anomaly, the current Paderborn design), paderborn_physics.py
+│                         (bearing/motor physics formulas), kinematics residual, feature
+│                         groups, discrete prototypical memory, latent-space structure head,
+│                         federated cross-robot memory alignment, decision logic (incl.
+│                         three_level_decision), and every train_*.py entry point
+├── benchmark/            baseline methods + public-dataset registry, including real FedAvg,
+│                         IFCAAE, GDN-tuned, and a Sielaff-dataset GDN run (see
+│                         benchmark/README.md for what's implemented vs. scaffolded)
 ├── checkpoints/          trained model weights + evaluation reports from every run
 ├── docs/                 design spec + this file
 └── memory/               project history: what was tried, what worked, what broke and why
@@ -56,11 +73,19 @@ python3 src/train_gdn_physics.py
 # + discrete memory
 python3 src/train_gdn_memory.py
 
-# federated multi-robot system
+# federated multi-robot system (this project's own memory+structure design)
 python3 src/train_fl_memory_gdn.py
 
-# baseline comparison harness
-python3 benchmark/run_benchmark.py
+# federated baselines, same model/data/schedule as train_fl_memory_gdn.py,
+# only the aggregation rule differs -- direct ablation comparisons
+python3 benchmark/run_fedavg_baseline.py     # full-parameter weighted averaging
+python3 benchmark/run_ifcaae_baseline.py     # unsupervised clustered FL (IFCA adaptation)
+
+# pooled/centralized baseline comparison harness (robo3er)
+python3 benchmark/run_benchmark.py           # PCA / IsolationForest / GDN / GDN-tuned
+
+# second real dataset (Sielaff reverse-vending machines)
+python3 benchmark/run_sielaff_gdn.py
 ```
 
 All training scripts write checkpoints + JSON evaluation reports to
