@@ -1,0 +1,90 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "window_len": 8,
+    "epochs": 30,
+    "reliability_ratio": 0.05
+  },
+  "nodes": [
+    "Helligkeit_Flaschenerkennung",
+    "journal_count",
+    "total_quantity",
+    "total_deposit",
+    "total_weight",
+    "unique_categories",
+    "reject_count",
+    "has_reject",
+    "cleaning_count",
+    "cleaning_duration",
+    "cleaning_begin_pixels",
+    "cleaning_end_pixels",
+    "receipt_count",
+    "schlie\u00dfen_Weiche 1",
+    "schlie\u00dfen_Weiche 2",
+    "\u00f6ffnen_Weiche 1",
+    "\u00f6ffnen_Weiche 2",
+    "schlie\u00dfen_Weiche 3",
+    "schlie\u00dfen_Weiche 4",
+    "schlie\u00dfen_Weiche 5",
+    "schlie\u00dfen_Weiche 6",
+    "schlie\u00dfen_Weiche 7",
+    "\u00f6ffnen_Weiche 3",
+    "\u00f6ffnen_Weiche 4",
+    "\u00f6ffnen_Weiche 5",
+    "\u00f6ffnen_Weiche 6",
+    "\u00f6ffnen_Weiche 7",
+    "read SM_RingCamera 1",
+    "read SM_RingCamera 2",
+    "read SM_RingCamera 3",
+    "read SM_RingCamera 4",
+    "read SM_RingCamera 5",
+    "read SM_RingCamera 6",
+    "read barcode_RingCamera 1",
+    "read barcode_RingCamera 2",
+    "read barcode_RingCamera 3",
+    "read barcode_RingCamera 4",
+    "read barcode_RingCamera 5",
+    "read barcode_RingCamera 6"
+  ],
+  "excluded_nodes": [
+    "total_weight",
+    "reject_count",
+    "has_reject",
+    "cleaning_count",
+    "cleaning_duration",
+    "cleaning_begin_pixels",
+    "cleaning_end_pixels"
+  ],
+  "fault_types": {
+    "bottle_recognition": {
+      "n": 3812,
+      "A_prototype_only": 0.9945000323249603,
+      "B_prototype_plus_node": 0.9934144731280117
+    },
+    "mechanical_jam": {
+      "n": 116,
+      "A_prototype_only": 0.9922944925641444,
+      "B_prototype_plus_node": 0.9899554665795064
+    },
+    "compactor_status": {
+      "n": 414,
+      "A_prototype_only": 0.9874384687593012,
+      "B_prototype_plus_node": 0.9869204615701628
+    },
+    "crate_recognition": {
+      "n": 138,
+      "A_prototype_only": 0.927489868809671,
+      "B_prototype_plus_node": 0.9547221649838588
+    },
+    "other": {
+      "n": 274,
+      "A_prototype_only": 0.9536444459819421,
+      "B_prototype_plus_node": 0.9662953609852285
+    }
+  },
+  "summary_mean_auroc": {
+    "A_prototype_only": 0.9710734616880037,
+    "B_prototype_plus_node": 0.9782615854493535
+  }
+}

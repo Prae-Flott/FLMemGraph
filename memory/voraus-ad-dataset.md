@@ -108,13 +108,17 @@ node-vs-edge-vs-typed-edge signal split localizes differently per fault
 mechanism (a collision should show up very differently from a motor
 commutation fault or an added can weight) -- directly extending the
 "does the diagnosis signal differ by fault type" question this project
-already investigated on Paderborn (`memory/paderborn-joint-prototype-v2-attention.md`'s
-diagnosis-capability check) and robo3er (v3's node-vs-edge split, see
-`memory/robo3er-joint-prototype-v3.md`).
+already investigated on Paderborn and robo3er -- see
+`memory/joint-prototype-scheme-v3.md` and `memory/joint-prototype-scheme-b.md`
+for the consolidated cross-dataset conclusions, including this dataset's
+own results.
 
 ## What's NOT done yet
 
-- No `benchmark/datasets/voraus_ad_adapter.py` -- this is a download +
+(Note: `benchmark/datasets/voraus_ad_adapter.py` and a full Scheme V3 run
+now exist -- see `memory/joint-prototype-scheme-v3.md` -- the item below
+describes this file's original download-only scope, kept for history.)
+- Originally, no adapter existed -- this file covered a download +
   structure-verification step only, per the literal request ("拉取这篇
   数据集作为对比" -- pull this dataset for comparison), not yet wired
   into this project's adapter/registry-runnable convention the way

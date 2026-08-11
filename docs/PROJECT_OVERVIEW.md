@@ -8,10 +8,14 @@ cable trapped, Low battery, stuck).
 
 See `docs/mem_phys_prompt_zh.md` for the original design spec (robo3er,
 per-feature memory + latent structure head), and
-`docs/joint_prototype_three_level_anomaly_prompt.md` for the newer
-Joint-Prototype + trend-based-edge redesign (Paderborn) -- see
-`memory/` for the development history, bugs found/fixed, and results at
-each stage.
+`docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md` for the
+Joint Prototype Memory design this project's main anomaly-detection line
+now implements as two consolidated final versions -- **Scheme B**
+(prototype + per-node deviation, no edges, mechanism-agnostic) and
+**Scheme V3** (adds typed relation-specific edges, pays off only when a
+verified physical relation exists) -- see `memory/joint-prototype-scheme-b.md`
+and `memory/joint-prototype-scheme-v3.md` for the cross-dataset results,
+and `memory/` generally for the rest of the development history.
 
 ## Layout
 
@@ -23,23 +27,26 @@ FLMemGraph/
 │                         upstream in FL-bench, copied here, raw CSVs in data/sielaff_data/
 ├── data/paderborn_bearing_data/  third real dataset: Paderborn KAt Bearing DataCenter,
 │                         32 bearings (healthy/outer-ring/inner-ring/combined damage),
-│                         motor current + vibration + mechanical channels, ~21GB --
-│                         full adapter + several training pipelines, see
-│                         memory/paderborn-*.md (dataset, fl_model run, physics-residual
-│                         attempts, joint-prototype redesign)
+│                         motor current + vibration + mechanical channels, ~21GB
+├── data/voraus_ad/       fourth real dataset: vorausrobotik 6-DOF pick-and-place arm,
+│                         2122 samples, 12 named fault categories, 130 machine-data
+│                         signals -- see memory/voraus-ad-dataset.md
 ├── src/                  all project code: gdn_model.py (GDN class, no memory/federation),
 │                         conv_autoencoder.py (reconstruction AE, used by IFCAAE baseline),
-│                         joint_prototype_model.py (Joint Prototype Memory + trend-based
-│                         edge anomaly, the current Paderborn design), paderborn_physics.py
-│                         (bearing/motor physics formulas), kinematics residual, feature
-│                         groups, discrete prototypical memory, latent-space structure head,
-│                         federated cross-robot memory alignment, decision logic (incl.
-│                         three_level_decision), and every train_*.py entry point
+│                         joint_prototype_model.py (Scheme B + Scheme V3 -- SharedEncoder,
+│                         JointPrototypeMemory, TrendGraphAttentionHead,
+│                         TypedRelationAnomalyHead, JointPrototypeGDNv3), kinematics
+│                         residual, feature groups, discrete prototypical memory,
+│                         latent-space structure head, federated cross-robot memory
+│                         alignment, decision logic (incl. three_level_decision), and
+│                         every train_*.py entry point
 ├── benchmark/            baseline methods + public-dataset registry, including real FedAvg,
-│                         IFCAAE, GDN-tuned, and a Sielaff-dataset GDN run (see
-│                         benchmark/README.md for what's implemented vs. scaffolded)
+│                         IFCAAE, GDN-tuned, Scheme B/V3 runs per dataset, and a
+│                         Sielaff-dataset GDN run (see benchmark/README.md for what's
+│                         implemented vs. scaffolded)
 ├── checkpoints/          trained model weights + evaluation reports, one subfolder per
-│                         dataset (checkpoints/robo3er/, checkpoints/paderborn/, checkpoints/sielaff/)
+│                         dataset (checkpoints/robo3er/, checkpoints/paderborn/,
+│                         checkpoints/sielaff/, checkpoints/voraus_ad/)
 ├── docs/                 design spec + this file
 └── memory/               project history: what was tried, what worked, what broke and why
 ```

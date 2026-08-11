@@ -180,7 +180,9 @@ coefficient from the published catalog range (`mu`=0.0014 midpoint,
    the fixed, non-confounded coefficient (e.g. KA30: -0.197 -> -0.095,
    KI05: -0.217 -> -0.086) -- but it's still net negative overall (1
    improved / 12 worse vs. free-fit's 3 improved / 10 worse). Full
-   writeup: `memory/paderborn-fixed-mu-torque-residual.md`.
+   writeup condensed into `memory/joint-prototype-scheme-v3.md`'s lineage
+   section (the standalone scripts/checkpoints for this precursor
+   experiment were removed once Joint Prototype Memory superseded it).
 
 `force`/`torque` measure physically DIFFERENT things at different points
 in the drivetrain (`force` = radial load applied directly to the bearing
@@ -211,7 +213,7 @@ at the bearing's characteristic frequencies doesn't depend on this
 confounded experimental design or on friction being a large share of the
 torque budget.
 
-Full reports: `checkpoints/paderborn/paderborn_physics_gdn_report.json`,
-`checkpoints/paderborn/paderborn_torque_residual_gdn_report.json`. Full analysis:
-`memory/paderborn-physics-residual-gdn.md`,
-`memory/paderborn-torque-residual-gdn.md`.
+These were precursor experiments to this project's Joint Prototype Memory
+line (Scheme B / Scheme V3) -- the scripts and checkpoint reports were
+removed once superseded; conclusions are preserved in this file and
+condensed into `memory/joint-prototype-scheme-v3.md`'s lineage section.

@@ -5,10 +5,10 @@ Wandt, "The voraus-AD Dataset for Anomaly Detection in Robot
 Applications", IEEE T-RO 2023, arXiv:2311.04765 -- Sections III-B, III-D
 and the ablation in V-D are the primary sources for everything below).
 Current implementation: `benchmark/datasets/voraus_ad_adapter.py`
-(18-node graph, only a subset of the relations documented here --
-see "What's declared vs. not" at the end). See `memory/voraus-ad-dataset.md`
-for the raw data-structure verification and `memory/voraus-ad-joint-prototype-v3.md`
-for the first model run this doc's findings help explain.
+(66-node graph -- covers relations #1-#3 below, see "What's declared vs.
+not" at the end for what's still missing). See `memory/voraus-ad-dataset.md`
+for the raw data-structure verification and `memory/joint-prototype-scheme-v3.md`
+for the model results this doc's findings helped explain and improve.
 
 ## Platform
 
@@ -120,14 +120,14 @@ target_torque_i  (or target_velocity_i)  ->  motor_torque_i      ("nonlinear" --
                                                                      fixed offset or scale factor)
 ```
 
-**This relation is NOT currently declared anywhere in
-`voraus_ad_adapter.py`'s 18-node graph** -- the graph only includes
-`motor_iq`, `motor_torque`, `torque_sensor_a` per joint, with no
-target/velocity/position nodes at all. This is very likely why
-`memory/voraus-ad-joint-prototype-v3.md`'s first run scored worst on
-exactly `axis_friction` (0.540-0.566) among the larger-sample categories --
-the one relation the paper says friction actually breaks isn't in the
-graph.
+**This relation IS now declared** (`joint_velocity_i -> motor_torque_i`,
+"nonlinear") in the current 66-node graph, after the original 18-node
+version (`motor_iq`/`motor_torque`/`torque_sensor_a` per joint only, no
+target/velocity/position nodes at all) scored worst on exactly
+`axis_friction` (0.540-0.566) among the larger-sample categories --
+adding this edge (plus fixing a max-aggregation artifact that initially
+masked its benefit) raised `axis_friction`'s AUROC to 0.789, see
+`memory/joint-prototype-scheme-v3.md`.
 
 ## 5. Energy conservation chain: electrical power -> mechanical power -> load power
 
@@ -164,33 +164,29 @@ mechanical alone ~92%, measured-only ~85%, computed-only ~86%, all
 signals ~93%** -- *"Mechanical signals provide clearly more importance
 for AD compared to electrical signals improving the performance by 25%."*
 
-This is a striking, directly relevant number: `voraus_ad_adapter.py`'s
-current 18-node graph is built almost entirely from what the paper calls
-electrical (`motor_iq`) plus one mechanical-but-narrow signal
-(`torque_sensor_a`) -- it excludes every position/velocity signal, i.e.
-the exact category the paper's own ablation says matters most. The
-first V3 run's weak overall AUROC (0.66-0.68, see
-`memory/voraus-ad-joint-prototype-v3.md`) landing almost exactly at the
-paper's own "electrical alone" figure (~65%) is a strong, now
-paper-corroborated explanation, not a coincidence -- adding
-`joint_velocity_i`/`joint_position_i` (or the target-vs-measured tracking
-chain from #1) as nodes is the most evidence-backed next step for
-improving this dataset's graph, ahead of tuning hyperparameters or
-epochs.
+This finding directly explained the ORIGINAL 18-node graph's weak
+overall AUROC (0.66-0.68, landing almost exactly at the paper's own
+"electrical alone" figure) -- that graph was built almost entirely from
+`motor_iq` (electrical) plus one mechanical-but-narrow signal
+(`torque_sensor_a`), excluding every position/velocity signal. The
+current 66-node graph adds the full target/motor/joint tracking chain
+(#1) precisely to close this gap -- see `memory/joint-prototype-scheme-v3.md`
+for the resulting improvement.
 
-## What's declared in `voraus_ad_adapter.py` vs. what this doc covers
+## What's declared in `voraus_ad_adapter.py` (66-node graph) vs. what this doc covers
 
 | relation | in this doc | declared as an edge in the adapter |
 |---|---|---|
-| target/motor/joint position+velocity tracking chain (#1) | yes | **no** -- no position/velocity nodes at all |
+| target/motor/joint position+velocity tracking chain (#1) | yes | **yes** ("proportional", 4 edges/joint) |
 | motor_iq -> motor_torque (#2) | yes | **yes** ("proportional") |
-| motor_torque -> torque_sensor_a (#3) | yes | **yes** ("nonlinear") |
-| target_torque/velocity -> motor_torque, friction (#4) | yes | **no** |
+| motor_torque -> torque_sensor_a/b (#3) | yes | **yes** ("nonlinear", both sensors + a proportional a-vs-b cross-check) |
+| joint_velocity -> motor_torque, friction (#4) | yes | **yes** ("nonlinear") |
 | power_motor_el -> power_motor_mech -> power_load_mech (#5) | yes | **no** (no multiplicative relation type exists yet) |
 | cross-joint kinematic coupling | not covered here -- needs DH parameters or an empirical check, see `memory/voraus-ad-dataset.md` | no |
 
-Only #2 and #3 are implemented today. #1 and #4 are the most
-evidence-backed additions (directly explains the friction/miscommutation
-category split and the paper's own mechanical-vs-electrical finding);
-#5 would require extending `TypedRelationAnomalyHead` with a new
-relation type before it's usable.
+Relations #1-#4 are all implemented (66 nodes, 54 within-joint edges).
+#5 (the power-conservation chain) is the only documented relation left
+out, since it's a multiplicative rather than proportional/nonlinear
+relationship -- would require extending `TypedRelationAnomalyHead` with a
+new relation type before it's usable. Cross-joint edges also remain
+undeclared, needing the arm's geometry.
