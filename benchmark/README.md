@@ -206,7 +206,8 @@ physical-prior reference docs (formulas + what's verified vs. untried)
 for every dataset in this project, including ones with no hard prior
 found: `benchmark/datasets/robo3er_physics.md`,
 `benchmark/datasets/sielaff_physics.md`,
-`benchmark/datasets/paderborn_physics.md`. Full analysis:
+`benchmark/datasets/paderborn_physics.md`,
+`benchmark/datasets/voraus_ad_physics.md`. Full analysis:
 `memory/paderborn-physics-residual-gdn.md`,
 `memory/paderborn-torque-residual-gdn.md`.
 

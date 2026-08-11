@@ -167,15 +167,21 @@ DATASETS = {
                    "no registration; code/loader reference at "
                    "https://github.com/vorausrobotik/voraus-ad-dataset). Dataset itself is CC "
                    "BY-NC-SA 4.0 (non-commercial), repo code is MIT.",
-        "note_extra": "benchmark/datasets/voraus_ad_adapter.py (18 nodes: motor_iq/motor_torque/"
+        "note_extra": "benchmark/datasets/voraus_ad_physics.md (physical relations transcribed from "
+                        "the reference paper: target/motor/joint tracking chain, current->torque "
+                        "(the paper's own worked 'proportional' example, with miscommutation defined "
+                        "as exactly this relation breaking), redundant torque-sensor cross-check, "
+                        "friction as a target/velocity->torque relation NOT currently declared as an "
+                        "edge, the 3-stage power-conservation chain, and the paper's own ablation "
+                        "finding that mechanical signals matter far more than electrical ones -- a "
+                        "strong, paper-corroborated explanation for the first V3 run's weak result) + "
+                        "benchmark/datasets/voraus_ad_adapter.py (18 nodes: motor_iq/motor_torque/"
                         "torque_sensor_a x 6 joints, 12 within-joint-only declared edges) + "
                         "benchmark/run_voraus_ad_joint_prototype_v3.py implement a first V3 run. "
                         "Result is WEAK across the board (mean AUROC 0.66-0.68) but UNVALIDATED -- "
                         "no fair GDN/AE baseline exists on this dataset yet, so these numbers can't "
                         "be judged good/bad until that comparison is built. See "
-                        "memory/voraus-ad-joint-prototype-v3.md for the full breakdown and untested "
-                        "hypotheses (no cross-joint edges, zero-padding dilution, untuned "
-                        "hyperparameters at this much larger 18-node/1164-timestep scale).",
+                        "memory/voraus-ad-joint-prototype-v3.md for the full breakdown.",
     },
     # ---------------------------------------------------------- category B --
     "MVTec-AD": {
