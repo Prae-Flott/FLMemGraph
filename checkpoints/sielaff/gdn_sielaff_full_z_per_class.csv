@@ -1,196 +1,196 @@
 class,feature,z_score,reliable
-bottle_recognition,Helligkeit_Flaschenerkennung,83.39448988853236,True
-bottle_recognition,journal_count,196868.5830696016,True
-bottle_recognition,total_quantity,246823.5442057572,True
-bottle_recognition,total_deposit,372007.3435889542,True
-bottle_recognition,total_weight,352489.3925086282,True
-bottle_recognition,unique_categories,75311.71169832771,True
-bottle_recognition,reject_count,104453.73143273845,True
-bottle_recognition,has_reject,31014.242647200408,True
-bottle_recognition,cleaning_count,76637.58638426212,False
-bottle_recognition,cleaning_duration,525.4112578278045,True
-bottle_recognition,cleaning_begin_pixels,5413.418519104956,True
-bottle_recognition,cleaning_end_pixels,27221.313138727728,True
-bottle_recognition,receipt_count,179744.51879518168,True
-bottle_recognition,schließen_Weiche 1,119.60101107170497,True
-bottle_recognition,schließen_Weiche 2,26.98727012653279,True
-bottle_recognition,öffnen_Weiche 1,120.16484362039361,True
-bottle_recognition,öffnen_Weiche 2,44.542368231023424,True
-bottle_recognition,schließen_Weiche 3,284.85552082877285,True
-bottle_recognition,schließen_Weiche 4,45.322526240473415,True
-bottle_recognition,schließen_Weiche 5,59.89771892751451,True
-bottle_recognition,schließen_Weiche 6,88.20722714700662,True
-bottle_recognition,schließen_Weiche 7,148.6028209898131,True
-bottle_recognition,öffnen_Weiche 3,1020.1425925681917,True
-bottle_recognition,öffnen_Weiche 4,1822.3328378276638,True
-bottle_recognition,öffnen_Weiche 5,45.943153320553435,True
-bottle_recognition,öffnen_Weiche 6,5754.214342146326,True
-bottle_recognition,öffnen_Weiche 7,868.0609142749526,True
-bottle_recognition,read SM_RingCamera 1,529.6508855880801,True
-bottle_recognition,read SM_RingCamera 2,143.885588731518,True
-bottle_recognition,read SM_RingCamera 3,247.28406298746592,True
-bottle_recognition,read SM_RingCamera 4,12275429.06999588,False
-bottle_recognition,read SM_RingCamera 5,455.9200754126268,True
-bottle_recognition,read SM_RingCamera 6,592.55753313109,True
-bottle_recognition,read barcode_RingCamera 1,209.4573958026796,True
-bottle_recognition,read barcode_RingCamera 2,8956110.47744751,False
-bottle_recognition,read barcode_RingCamera 3,5809.162431212376,True
-bottle_recognition,read barcode_RingCamera 4,10636255.890130997,False
-bottle_recognition,read barcode_RingCamera 5,1807.8286600487022,True
-bottle_recognition,read barcode_RingCamera 6,3615.6185618953155,True
-mechanical_jam,Helligkeit_Flaschenerkennung,92.63294405396867,True
-mechanical_jam,journal_count,68272.12086774921,True
-mechanical_jam,total_quantity,83568.76597875425,True
-mechanical_jam,total_deposit,120032.35815023136,True
-mechanical_jam,total_weight,160530.2975970972,True
-mechanical_jam,unique_categories,48596.776011110705,True
-mechanical_jam,reject_count,16035.29600651129,True
-mechanical_jam,has_reject,30325.307179515145,True
-mechanical_jam,cleaning_count,751893.5767706156,False
-mechanical_jam,cleaning_duration,13669.462454303186,True
-mechanical_jam,cleaning_begin_pixels,53221.70012311364,True
-mechanical_jam,cleaning_end_pixels,270767.5583463477,True
-mechanical_jam,receipt_count,74808.80238769906,True
-mechanical_jam,schließen_Weiche 1,139.1800526480153,True
-mechanical_jam,schließen_Weiche 2,29.79962798482334,True
-mechanical_jam,öffnen_Weiche 1,154.46369157278312,True
-mechanical_jam,öffnen_Weiche 2,45.040379648729136,True
-mechanical_jam,schließen_Weiche 3,114.04814301080201,True
-mechanical_jam,schließen_Weiche 4,43.140274192923876,True
-mechanical_jam,schließen_Weiche 5,55.24989468740971,True
-mechanical_jam,schließen_Weiche 6,109.94470136088864,True
-mechanical_jam,schließen_Weiche 7,162.9102142364634,True
-mechanical_jam,öffnen_Weiche 3,365.91362400572734,True
-mechanical_jam,öffnen_Weiche 4,1814.159329372002,True
-mechanical_jam,öffnen_Weiche 5,56.299054201580084,True
-mechanical_jam,öffnen_Weiche 6,5806.976207893487,True
-mechanical_jam,öffnen_Weiche 7,821.4862201828585,True
-mechanical_jam,read SM_RingCamera 1,237.96134221579544,True
-mechanical_jam,read SM_RingCamera 2,119.39426110028666,True
-mechanical_jam,read SM_RingCamera 3,206.80001977546243,True
-mechanical_jam,read SM_RingCamera 4,11356228.590011597,False
-mechanical_jam,read SM_RingCamera 5,252.71785977947664,True
-mechanical_jam,read SM_RingCamera 6,617.2259775377476,True
-mechanical_jam,read barcode_RingCamera 1,190.80472367998723,True
-mechanical_jam,read barcode_RingCamera 2,7319774.478673935,False
-mechanical_jam,read barcode_RingCamera 3,3513.1936012008264,True
-mechanical_jam,read barcode_RingCamera 4,10172408.819198608,False
-mechanical_jam,read barcode_RingCamera 5,955.8189333189434,True
-mechanical_jam,read barcode_RingCamera 6,2241.3525503900914,True
-compactor_status,Helligkeit_Flaschenerkennung,67.51664944316191,True
-compactor_status,journal_count,52860.12363298592,True
-compactor_status,total_quantity,57578.549631718,True
-compactor_status,total_deposit,84602.88576781319,True
-compactor_status,total_weight,106026.16054014741,True
-compactor_status,unique_categories,39103.317940252535,True
-compactor_status,reject_count,11081.62397215579,True
-compactor_status,has_reject,22567.84018434527,True
-compactor_status,cleaning_count,84992.82775653148,False
-compactor_status,cleaning_duration,1678.7590541133409,True
-compactor_status,cleaning_begin_pixels,23733.080188887125,True
-compactor_status,cleaning_end_pixels,119583.33755592543,True
-compactor_status,receipt_count,120199.55303926907,True
-compactor_status,schließen_Weiche 1,142.39162727560907,True
-compactor_status,schließen_Weiche 2,31.11257609015438,True
-compactor_status,öffnen_Weiche 1,130.38824852127686,True
-compactor_status,öffnen_Weiche 2,52.73757613542233,True
-compactor_status,schließen_Weiche 3,178.80827789430768,True
-compactor_status,schließen_Weiche 4,38.864264543578024,True
-compactor_status,schließen_Weiche 5,49.08082350826854,True
-compactor_status,schließen_Weiche 6,64.93995143802874,True
-compactor_status,schließen_Weiche 7,114.95062018349525,True
-compactor_status,öffnen_Weiche 3,539.4317658616203,True
-compactor_status,öffnen_Weiche 4,1587.4851298189658,True
-compactor_status,öffnen_Weiche 5,35.11135961579157,True
-compactor_status,öffnen_Weiche 6,4617.539894108411,True
-compactor_status,öffnen_Weiche 7,641.6837793895829,True
-compactor_status,read SM_RingCamera 1,109.39702028652557,True
-compactor_status,read SM_RingCamera 2,62.75570572478453,True
-compactor_status,read SM_RingCamera 3,128.59183217812392,True
-compactor_status,read SM_RingCamera 4,3290377.1847486496,False
-compactor_status,read SM_RingCamera 5,243.5487844340394,True
-compactor_status,read SM_RingCamera 6,241.34220570313678,True
-compactor_status,read barcode_RingCamera 1,65.77429438971757,True
-compactor_status,read barcode_RingCamera 2,2724941.26111269,False
-compactor_status,read barcode_RingCamera 3,1203.2922374752632,True
-compactor_status,read barcode_RingCamera 4,2200237.847864628,False
-compactor_status,read barcode_RingCamera 5,542.4451137965962,True
-compactor_status,read barcode_RingCamera 6,1265.7083872136664,True
-crate_recognition,Helligkeit_Flaschenerkennung,57.02577835281612,True
-crate_recognition,journal_count,37311.909608923,True
-crate_recognition,total_quantity,44079.854997417526,True
-crate_recognition,total_deposit,68358.51479736055,True
-crate_recognition,total_weight,74662.2295058851,True
-crate_recognition,unique_categories,19977.738160113186,True
-crate_recognition,reject_count,29804.67683072863,True
-crate_recognition,has_reject,12349.632742250205,True
-crate_recognition,cleaning_count,755.7090713982967,False
-crate_recognition,cleaning_duration,2.0062550549226494,True
-crate_recognition,cleaning_begin_pixels,8.312377212444419,True
-crate_recognition,cleaning_end_pixels,90.50512476911922,True
-crate_recognition,receipt_count,39914.222048063966,True
-crate_recognition,schließen_Weiche 1,91.0439063926185,True
-crate_recognition,schließen_Weiche 2,19.988563896698754,True
-crate_recognition,öffnen_Weiche 1,82.18986443321904,True
-crate_recognition,öffnen_Weiche 2,33.1704758500573,True
-crate_recognition,schließen_Weiche 3,207.17507179555366,True
-crate_recognition,schließen_Weiche 4,59.707365026378056,True
-crate_recognition,schließen_Weiche 5,63.991181828032666,True
-crate_recognition,schließen_Weiche 6,96.9318519001963,True
-crate_recognition,schließen_Weiche 7,226.28477915415382,True
-crate_recognition,öffnen_Weiche 3,858.050700724248,True
-crate_recognition,öffnen_Weiche 4,2576.6906650901747,True
-crate_recognition,öffnen_Weiche 5,81.20238939140218,True
-crate_recognition,öffnen_Weiche 6,7463.349701292372,True
-crate_recognition,öffnen_Weiche 7,1116.905502663697,True
-crate_recognition,read SM_RingCamera 1,150.91884941808144,True
-crate_recognition,read SM_RingCamera 2,41.90330575984906,True
-crate_recognition,read SM_RingCamera 3,110.50503500524037,True
-crate_recognition,read SM_RingCamera 4,4198905.0805568695,False
-crate_recognition,read SM_RingCamera 5,512.0377643179417,True
-crate_recognition,read SM_RingCamera 6,798.0787986815088,True
-crate_recognition,read barcode_RingCamera 1,140.64014485629392,True
-crate_recognition,read barcode_RingCamera 2,3575851.395726204,False
-crate_recognition,read barcode_RingCamera 3,1243.1825393215,True
-crate_recognition,read barcode_RingCamera 4,6156540.289521217,False
-crate_recognition,read barcode_RingCamera 5,1151.495587304119,True
-crate_recognition,read barcode_RingCamera 6,3397.1825185352127,True
-other,Helligkeit_Flaschenerkennung,69.9836892845653,True
-other,journal_count,31324.346567736673,True
-other,total_quantity,29492.996264724097,True
-other,total_deposit,45587.63143976402,True
-other,total_weight,37060.896033175384,True
-other,unique_categories,21233.38932769984,True
-other,reject_count,15193.23985480382,True
-other,has_reject,19248.366537448812,True
-other,cleaning_count,2667995.293817734,False
-other,cleaning_duration,45795.99063627509,True
-other,cleaning_begin_pixels,124238.82303572605,True
-other,cleaning_end_pixels,467509.01709636586,True
-other,receipt_count,45369.10048445492,True
-other,schließen_Weiche 1,110.10111775793759,True
-other,schließen_Weiche 2,22.753890579508273,True
-other,öffnen_Weiche 1,108.44869723356886,True
-other,öffnen_Weiche 2,45.82073813880728,True
-other,schließen_Weiche 3,246.95812943861264,True
-other,schließen_Weiche 4,39.00447261286638,True
-other,schließen_Weiche 5,41.7801755169724,True
-other,schließen_Weiche 6,77.55813897088692,True
-other,schließen_Weiche 7,125.83531971959869,True
-other,öffnen_Weiche 3,1226.6614718744459,True
-other,öffnen_Weiche 4,1556.1778980252705,True
-other,öffnen_Weiche 5,33.08559888665701,True
-other,öffnen_Weiche 6,5195.360938016361,True
-other,öffnen_Weiche 7,687.6433570347782,True
-other,read SM_RingCamera 1,235.42316989650607,True
-other,read SM_RingCamera 2,165.7583472767263,True
-other,read SM_RingCamera 3,438.13156768651424,True
-other,read SM_RingCamera 4,8450316.63775444,False
-other,read SM_RingCamera 5,506.4762888381008,True
-other,read SM_RingCamera 6,432.69781690505016,True
-other,read barcode_RingCamera 1,192.0036572793854,True
-other,read barcode_RingCamera 2,13477948.307991028,False
-other,read barcode_RingCamera 3,14816.323078067115,True
-other,read barcode_RingCamera 4,9686556.458473206,False
-other,read barcode_RingCamera 5,2745.1812611050427,True
-other,read barcode_RingCamera 6,2178.9229220744523,True
+bottle_recognition,Helligkeit_Flaschenerkennung,116.80468736285769,True
+bottle_recognition,journal_count,217739.77364428085,True
+bottle_recognition,total_quantity,290290.31080575526,True
+bottle_recognition,total_deposit,348581.063873701,True
+bottle_recognition,total_weight,161262.92611154972,True
+bottle_recognition,unique_categories,68753.98710862895,True
+bottle_recognition,reject_count,4016.000311876904,True
+bottle_recognition,has_reject,21052.626903207303,True
+bottle_recognition,cleaning_count,239955.49426699278,False
+bottle_recognition,cleaning_duration,928.7245471373438,True
+bottle_recognition,cleaning_begin_pixels,1528.7462235579808,True
+bottle_recognition,cleaning_end_pixels,1822.1895401941747,True
+bottle_recognition,receipt_count,38422.36902659101,True
+bottle_recognition,schließen_Weiche 1,239.56147964508392,True
+bottle_recognition,schließen_Weiche 2,43.48784062565644,True
+bottle_recognition,öffnen_Weiche 1,73.37668834422675,True
+bottle_recognition,öffnen_Weiche 2,25.049721123871777,True
+bottle_recognition,schließen_Weiche 3,2544.0764253838347,True
+bottle_recognition,schließen_Weiche 4,68.6915899000588,True
+bottle_recognition,schließen_Weiche 5,33.77379108746432,True
+bottle_recognition,schließen_Weiche 6,77.3418918087589,True
+bottle_recognition,schließen_Weiche 7,511.3817622835184,True
+bottle_recognition,öffnen_Weiche 3,794.6949111293256,True
+bottle_recognition,öffnen_Weiche 4,1760.118850129369,True
+bottle_recognition,öffnen_Weiche 5,87.31418707465816,True
+bottle_recognition,öffnen_Weiche 6,88.27726611382276,True
+bottle_recognition,öffnen_Weiche 7,176.3805681961895,True
+bottle_recognition,read SM_RingCamera 1,457.730586527453,True
+bottle_recognition,read SM_RingCamera 2,2737.3569830842207,True
+bottle_recognition,read SM_RingCamera 3,380.0100813603942,True
+bottle_recognition,read SM_RingCamera 4,589.7779762593934,True
+bottle_recognition,read SM_RingCamera 5,1417.7475669336611,True
+bottle_recognition,read SM_RingCamera 6,14600886.404514313,False
+bottle_recognition,read barcode_RingCamera 1,1815.2695452231935,True
+bottle_recognition,read barcode_RingCamera 2,3485.704935544765,True
+bottle_recognition,read barcode_RingCamera 3,7517.7588924967595,False
+bottle_recognition,read barcode_RingCamera 4,1963.0198456127632,True
+bottle_recognition,read barcode_RingCamera 5,221.96005197062874,True
+bottle_recognition,read barcode_RingCamera 6,109.44103000999328,True
+mechanical_jam,Helligkeit_Flaschenerkennung,132.48112469186552,True
+mechanical_jam,journal_count,75501.41851835097,True
+mechanical_jam,total_quantity,98256.93366534356,True
+mechanical_jam,total_deposit,112610.85116419908,True
+mechanical_jam,total_weight,73519.3224677495,True
+mechanical_jam,unique_categories,44394.06516227341,True
+mechanical_jam,reject_count,626.4350901758507,True
+mechanical_jam,has_reject,20617.612936690515,True
+mechanical_jam,cleaning_count,2459647.9985166825,False
+mechanical_jam,cleaning_duration,23996.727284776513,True
+mechanical_jam,cleaning_begin_pixels,15143.048479947905,True
+mechanical_jam,cleaning_end_pixels,18276.243566093224,True
+mechanical_jam,receipt_count,15981.986262192922,True
+mechanical_jam,schließen_Weiche 1,319.11801395700587,True
+mechanical_jam,schließen_Weiche 2,49.26509054446312,True
+mechanical_jam,öffnen_Weiche 1,96.33866196261914,True
+mechanical_jam,öffnen_Weiche 2,25.904653536299385,True
+mechanical_jam,schließen_Weiche 3,1272.5625928703034,True
+mechanical_jam,schließen_Weiche 4,65.68662111672613,True
+mechanical_jam,schließen_Weiche 5,35.40813553689276,True
+mechanical_jam,schließen_Weiche 6,90.19752526697826,True
+mechanical_jam,schließen_Weiche 7,502.9288728023291,True
+mechanical_jam,öffnen_Weiche 3,343.3156223236129,True
+mechanical_jam,öffnen_Weiche 4,1996.3207670409445,True
+mechanical_jam,öffnen_Weiche 5,85.5827821159358,True
+mechanical_jam,öffnen_Weiche 6,127.00018501202028,True
+mechanical_jam,öffnen_Weiche 7,172.6800790344419,True
+mechanical_jam,read SM_RingCamera 1,234.0397947458201,True
+mechanical_jam,read SM_RingCamera 2,1463.293923223767,True
+mechanical_jam,read SM_RingCamera 3,139.80558723337924,True
+mechanical_jam,read SM_RingCamera 4,404.14984223735024,True
+mechanical_jam,read SM_RingCamera 5,838.7778328039545,True
+mechanical_jam,read SM_RingCamera 6,9936004.877090454,False
+mechanical_jam,read barcode_RingCamera 1,603.0227434933965,True
+mechanical_jam,read barcode_RingCamera 2,2201.722696505096,True
+mechanical_jam,read barcode_RingCamera 3,4676.106622673007,False
+mechanical_jam,read barcode_RingCamera 4,1237.6279513792751,True
+mechanical_jam,read barcode_RingCamera 5,109.11957351722839,True
+mechanical_jam,read barcode_RingCamera 6,44.31996479673102,True
+compactor_status,Helligkeit_Flaschenerkennung,106.19671577479697,True
+compactor_status,journal_count,58472.98811379524,True
+compactor_status,total_quantity,67703.60268588974,True
+compactor_status,total_deposit,79332.75667319744,True
+compactor_status,total_weight,48510.33015924334,True
+compactor_status,unique_categories,35696.88967984987,True
+compactor_status,reject_count,431.51725568384967,True
+compactor_status,has_reject,15266.872336273405,True
+compactor_status,cleaning_count,275770.6791087638,False
+compactor_status,cleaning_duration,2950.460246685264,True
+compactor_status,cleaning_begin_pixels,6752.779185870478,True
+compactor_status,cleaning_end_pixels,8062.72795910669,True
+compactor_status,receipt_count,25710.148474971695,True
+compactor_status,schließen_Weiche 1,275.3408291992484,True
+compactor_status,schließen_Weiche 2,51.155051133331895,True
+compactor_status,öffnen_Weiche 1,83.41175537017023,True
+compactor_status,öffnen_Weiche 2,28.16971702912539,True
+compactor_status,schließen_Weiche 3,1770.4391304199676,True
+compactor_status,schließen_Weiche 4,57.875769155949236,True
+compactor_status,schließen_Weiche 5,26.05325645887872,True
+compactor_status,schließen_Weiche 6,59.3128263507601,True
+compactor_status,schließen_Weiche 7,378.35174693881964,True
+compactor_status,öffnen_Weiche 3,547.4544153068538,True
+compactor_status,öffnen_Weiche 4,1706.2308717328806,True
+compactor_status,öffnen_Weiche 5,61.738933042657145,True
+compactor_status,öffnen_Weiche 6,77.07647554008484,True
+compactor_status,öffnen_Weiche 7,133.92968992537283,True
+compactor_status,read SM_RingCamera 1,154.34684671299877,True
+compactor_status,read SM_RingCamera 2,674.1828169838276,True
+compactor_status,read SM_RingCamera 3,135.3140496967302,True
+compactor_status,read SM_RingCamera 4,192.10809920594903,True
+compactor_status,read SM_RingCamera 5,278.84059164960723,True
+compactor_status,read SM_RingCamera 6,4579801.112413406,False
+compactor_status,read barcode_RingCamera 1,372.3020945260561,True
+compactor_status,read barcode_RingCamera 2,938.1562913088411,True
+compactor_status,read barcode_RingCamera 3,2064.6534028608976,False
+compactor_status,read barcode_RingCamera 4,452.8803285952009,True
+compactor_status,read barcode_RingCamera 5,39.11137602601585,True
+compactor_status,read barcode_RingCamera 6,21.550574919694885,True
+crate_recognition,Helligkeit_Flaschenerkennung,87.02329056952044,True
+crate_recognition,journal_count,41280.90844756041,True
+crate_recognition,total_quantity,51841.59203870172,True
+crate_recognition,total_deposit,64085.20788213278,True
+crate_recognition,total_weight,34131.60166294687,True
+crate_recognition,unique_categories,18245.12663146217,True
+crate_recognition,reject_count,1143.3039574983652,True
+crate_recognition,has_reject,8341.294802618517,True
+crate_recognition,cleaning_count,67.11104962812045,False
+crate_recognition,cleaning_duration,6.625900153006031,True
+crate_recognition,cleaning_begin_pixels,1.618612148921687,True
+crate_recognition,cleaning_end_pixels,5.534895218486819,True
+crate_recognition,receipt_count,8556.848537053776,True
+crate_recognition,schließen_Weiche 1,170.35002156371763,True
+crate_recognition,schließen_Weiche 2,32.79523711309945,True
+crate_recognition,öffnen_Weiche 1,49.25420369703858,True
+crate_recognition,öffnen_Weiche 2,17.76485525261818,True
+crate_recognition,schließen_Weiche 3,2556.738041529581,True
+crate_recognition,schließen_Weiche 4,85.19659210939984,True
+crate_recognition,schließen_Weiche 5,50.368327045499676,True
+crate_recognition,schließen_Weiche 6,94.39498003101431,True
+crate_recognition,schließen_Weiche 7,581.6798821830738,True
+crate_recognition,öffnen_Weiche 3,731.8288442363934,True
+crate_recognition,öffnen_Weiche 4,2428.054857188992,True
+crate_recognition,öffnen_Weiche 5,107.08267857510387,True
+crate_recognition,öffnen_Weiche 6,164.01508388128073,True
+crate_recognition,öffnen_Weiche 7,214.53949413029554,True
+crate_recognition,read SM_RingCamera 1,184.0398603387501,True
+crate_recognition,read SM_RingCamera 2,475.7860009511492,True
+crate_recognition,read SM_RingCamera 3,110.95105914171258,True
+crate_recognition,read SM_RingCamera 4,338.22469292706495,True
+crate_recognition,read SM_RingCamera 5,417.86328791097196,True
+crate_recognition,read SM_RingCamera 6,5402788.892388344,False
+crate_recognition,read barcode_RingCamera 1,610.3741483985921,True
+crate_recognition,read barcode_RingCamera 2,556.096548723618,True
+crate_recognition,read barcode_RingCamera 3,1979.5800120153524,False
+crate_recognition,read barcode_RingCamera 4,349.21535166137085,True
+crate_recognition,read barcode_RingCamera 5,59.61900671831342,True
+crate_recognition,read barcode_RingCamera 6,22.957340672444577,True
+other,Helligkeit_Flaschenerkennung,106.22938735206057,True
+other,journal_count,34643.88503040402,True
+other,total_quantity,34673.20344567396,True
+other,total_deposit,42755.321624357915,True
+other,total_weight,16968.876342520856,True
+other,unique_categories,19396.59647153654,True
+other,reject_count,587.1979549139853,True
+other,has_reject,13060.108317858034,True
+other,cleaning_count,8742751.09417979,False
+other,cleaning_duration,80375.42824567377,True
+other,cleaning_begin_pixels,35329.158122040804,True
+other,cleaning_end_pixels,31560.608414724044,True
+other,receipt_count,9700.0933166185,True
+other,schließen_Weiche 1,223.14597568593953,True
+other,schließen_Weiche 2,37.471647085681326,True
+other,öffnen_Weiche 1,67.985299042003,True
+other,öffnen_Weiche 2,25.595237794683136,True
+other,schließen_Weiche 3,2657.825517340549,True
+other,schließen_Weiche 4,59.038665199313435,True
+other,schließen_Weiche 5,24.962260057579712,True
+other,schließen_Weiche 6,75.35742406147399,True
+other,schließen_Weiche 7,456.45542351247724,True
+other,öffnen_Weiche 3,552.8795737667959,True
+other,öffnen_Weiche 4,1499.9995399335771,True
+other,öffnen_Weiche 5,62.542537878860365,True
+other,öffnen_Weiche 6,142.22338259586726,True
+other,öffnen_Weiche 7,149.8196309609836,True
+other,read SM_RingCamera 1,923.3684212486482,True
+other,read SM_RingCamera 2,5141.976450002239,True
+other,read SM_RingCamera 3,407.78299375203426,True
+other,read SM_RingCamera 4,953.8709446213172,True
+other,read SM_RingCamera 5,2263.2496258554597,True
+other,read SM_RingCamera 6,15123790.502548218,False
+other,read barcode_RingCamera 1,2063.499530039866,True
+other,read barcode_RingCamera 2,2334.179296383337,True
+other,read barcode_RingCamera 3,24289.413210430776,False
+other,read barcode_RingCamera 4,1929.2302493264583,True
+other,read barcode_RingCamera 5,206.7026221405664,True
+other,read barcode_RingCamera 6,57.82018906173244,True
