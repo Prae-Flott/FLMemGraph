@@ -177,6 +177,29 @@ BASELINES = {
                                          "memory/paderborn-joint-prototype-v3-typed-attention.md for the full "
                                          "table, per-bearing breakdown, and honest analysis of what did/didn't "
                                          "work."},
+    "robo3er-joint-prototype-v3": {"category": "③", "type": "physics_prior", "status": "implemented",
+                                "module": "benchmark/run_robo3er_joint_prototype_v3.py, "
+                                           "src.joint_prototype_model.JointPrototypeGDNv3",
+                                "note": "First run of JointPrototypeGDNv3 (built for Paderborn) outside that "
+                                         "dataset -- 7 nodes from robo3er's kinematic chain (2 wheel "
+                                         "velocities, chassis lin/ang velocity via odometry, IMU yaw rate as "
+                                         "an independent cross-check never exploited before, 2 motor "
+                                         "currents), 7 declared edges (5 'proportional' differential-drive/"
+                                         "sensor-cross-check relations, 2 'nonlinear' actuation relations). "
+                                         "Result is the OPPOSITE pattern from Paderborn: node/prototype "
+                                         "signal ALONE (B, 0.942 mean AUROC over 4 fault types) beats the "
+                                         "full v3 combination (F, 0.861) -- the new typed-edge signal (E, "
+                                         "0.791) is the weakest signal in the table and net-HURTS when "
+                                         "combined via max, most severely on 'stuck' (this project's "
+                                         "historically hardest fault type, best-ever result 0.72-0.74 via "
+                                         "kinematics.py residual + GDN forecasting) where every edge-"
+                                         "inclusive combination is WORSE than prototype-only. Confirms "
+                                         "edge-vs-node signal strength is genuinely dataset-dependent "
+                                         "(Paderborn's bearing faults break cross-channel relationships; "
+                                         "robo3er's faults look like single-node value anomalies), not a "
+                                         "property of v3's architecture alone -- sharpens the case for a "
+                                         "calibration-learned signal combination instead of a fixed max over "
+                                         "every available signal. See memory/robo3er-joint-prototype-v3.md."},
     "GDN-tuned": {"category": "③", "type": "graph_structure", "status": "implemented",
                    "module": "benchmark.baselines.gdn_baseline.GDNTunedBaseline",
                    "note": "Migrated from ~/Projects/FL-bench's test_gdn/train_gdn.py -- the actual "
