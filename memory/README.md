@@ -10,6 +10,15 @@ where this work started (see each file's own note on provenance).
   robo3er 0.942, voraus-AD 0.756 winning/tying 11/12 fault categories) —
   needs no physics prior, mechanism-agnostic, the recommended default
   starting point for any new dataset.
+- [`joint-prototype-v2-1-sielaff.md`](joint-prototype-v2-1-sielaff.md) —
+  **V2.1** (V2 + generic GDN attention, no declared edges needed) tested
+  on Sielaff. Attention adds NOTHING here -- best V2.1 combination
+  (0.965) is still below plain V2 (0.978), and joint training with the
+  attention loss slightly hurt the node/prototype signals too. Sharpens
+  "Sielaff has no verified physical prior" into "even domain-knowledge-
+  free attention finds nothing useful" -- confirms V2 is the right
+  default for this dataset against a stronger alternative, not just an
+  unavailable one.
 - [`joint-prototype-scheme-v3.md`](joint-prototype-scheme-v3.md) — **Scheme
   V3** (`JointPrototypeGDNv3`: V2 + typed relation-specific edges +
   prototype-conditioned standardization + anomaly attention),

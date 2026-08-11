@@ -3,12 +3,12 @@ Joint Prototype Memory + three-level (node/edge/device) anomaly
 detection, per `docs/joint_prototype_three_level_anomaly_prompt.md` and
 `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
 
-This module now holds the two consolidated final versions this project's
-Joint Prototype Memory line converged on (see `memory/joint-prototype-scheme-v2.md`
-and `memory/joint-prototype-scheme-v3.md` for the full cross-dataset
-results and rationale; earlier intermediate iterations -- a fixed-edge-
-list version and a physics-residual precursor -- were superseded and
-removed, their conclusions preserved in those memory files):
+This module holds three versions this project's Joint Prototype Memory
+line has produced (see `memory/joint-prototype-scheme-v2.md` and
+`memory/joint-prototype-scheme-v3.md` for the full cross-dataset results
+and rationale; earlier intermediate iterations -- a fixed-edge-list
+version and a physics-residual precursor -- were superseded and removed,
+their conclusions preserved in those memory files):
 
 - **V2** (`SharedEncoder` + `JointPrototypeMemory`, no edge head at
   all): "has the WHOLE device been in roughly this joint state before"
@@ -19,14 +19,18 @@ removed, their conclusions preserved in those memory files):
   prototypes here are a full `[N, D]` snapshot of ALL nodes together, so
   node anomaly is inherently conditioned on which joint operating regime
   the memory thinks the device is in.
-- **Scheme V3** (`JointPrototypeGDNv3`): V2's encoder/memory, PLUS
-  `TrendGraphAttentionHead` (GDN-style learned attention over neighbors,
-  declared physics edges bias but don't restrict it) AND
-  `TypedRelationAnomalyHead` (relation-specific message functions +
-  prototype-conditioned residual standardization + anomaly attention over
-  ONLY the declared edges). Needs domain knowledge of which signal pairs
-  relate and how (proportional/nonlinear) -- pays off specifically when a
-  fault's failure mechanism matches a declared relation breaking (e.g.
+- **V2.1** (`JointPrototypeGDNv21`): V2 + `TrendGraphAttentionHead` only
+  (GDN-style learned attention over neighbors, no typed relation head) --
+  treats an ABNORMAL CHANGE IN CROSS-FEATURE ATTENTION as one
+  manifestation of a fault, without needing any declared physics edges
+  (`prior_edges` is optional). Runs on any dataset, including ones with
+  no verified physical relation.
+- **Scheme V3** (`JointPrototypeGDNv3`): V2.1 + `TypedRelationAnomalyHead`
+  (relation-specific message functions + prototype-conditioned residual
+  standardization + anomaly attention over ONLY the declared edges).
+  Needs domain knowledge of which signal pairs relate and how
+  (proportional/nonlinear) -- pays off specifically when a fault's
+  failure mechanism matches a declared relation breaking (e.g.
   Paderborn's vibration/torque/current coupling, voraus-AD's
   current-vs-torque miscommutation fault); V2 otherwise wins on
   faults that manifest as a single value drifting rather than a relation
@@ -199,6 +203,61 @@ class TrendGraphAttentionHead(nn.Module):
 
         s_node_edge = (d - d_hat).pow(2).sum(dim=-1)  # [B, N]
         return d_hat, s_node_edge
+
+
+class JointPrototypeGDNv21(nn.Module):
+    """V2.1: V2 (`SharedEncoder` + `JointPrototypeMemory`, see module
+    docstring) + `TrendGraphAttentionHead` -- GDN-style learned attention
+    over neighbors, treating an ABNORMAL CHANGE IN CROSS-FEATURE
+    ATTENTION as one manifestation of a fault, on top of V2's node-level
+    "did this one value drift" signal. Unlike V3, there is no typed
+    relation head (`TypedRelationAnomalyHead`) -- `prior_edges` is
+    optional and, when omitted, the attention is FULLY GENERIC (no
+    physics bias at all), so this runs on any dataset with zero domain
+    knowledge, including ones with no verified physical relation (e.g.
+    Sielaff, `benchmark/datasets/sielaff_physics.md`).
+
+    Named "V2.1" rather than reviving the deleted historical
+    `JointPrototypeGDNv2` class under its old name, to avoid the naming
+    collision documented in `memory/joint-prototype-scheme-v3.md` -- this
+    project's current "V2" means something else (no edge signal at all).
+    Structurally this class IS what that old class used to be, just
+    trained independently rather than jointly with a typed-relation
+    auxiliary loss -- see `memory/joint-prototype-scheme-v3.md`'s lineage
+    section and its Paderborn caveat about joint-training confounds
+    before comparing V2.1's numbers to V3's own C/D ablation columns."""
+
+    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
+                 num_prototypes: int, prior_edges=None, top_k: int = None, node_weights=None):
+        super().__init__()
+        self.num_nodes = num_nodes
+        self.encoder = SharedEncoder(window_size, embed_dim)
+        self.memory = JointPrototypeMemory(num_prototypes, num_nodes, embed_dim)
+        self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k, prior_edges=prior_edges)
+        self.decoder = nn.Linear(embed_dim, window_size)  # training-only
+        self.register_buffer(
+            "node_weights",
+            node_weights if node_weights is not None else torch.ones(num_nodes) / num_nodes,
+        )
+
+    def forward(self, x, training_mode=False):
+        """x: [B, T, N]. Returns dict with z, memory outputs (idx, p_star,
+        d_G, s_node), s_edge [B, N] (per-node structural/attention
+        anomaly). `training_mode=True` also runs the decoder."""
+        B, T, N = x.shape
+        assert N == self.num_nodes
+
+        z = self.encoder(x)
+        mem_out = self.memory(z, self.node_weights)
+        d_hat, s_edge = self.edge_head(z, mem_out["p_star"])
+
+        out = {"z": z, "d_hat": d_hat, "s_edge": s_edge, **mem_out}
+        if training_mode:
+            out["x_hat"] = self.decoder(z).transpose(1, 2)
+        return out
+
+    def device_score(self, s_node, s_edge, lambda_n: float = 1.0, lambda_e: float = 1.0):
+        return lambda_n * s_node.mean(axis=-1) + lambda_e * s_edge.mean(axis=-1)
 
 
 class TypedRelationAnomalyHead(nn.Module):
