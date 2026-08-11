@@ -3,6 +3,13 @@
 Development history for this project, carried over from `~/Projects/FL-bench`
 where this work started (see each file's own note on provenance).
 
+- [`voraus-ad-dataset.md`](voraus-ad-dataset.md) — downloaded and
+  structure-verified `voraus-AD` (vorausrobotik 6-DOF pick-and-place arm,
+  2122 samples, 12 named fault categories, 112 machine-data signals: a
+  full per-joint kinematic+electromechanical chain, six joints x 18
+  signals each). Richest physics-graph structure of any dataset in this
+  project so far — a strong next JointPrototypeGDNv3 target. Download +
+  structure verification only; no adapter/pipeline built yet.
 - [`fl-memory-physics-system.md`](fl-memory-physics-system.md) — the
   federated memory+structure system itself: encoder/memory-head/
   structure-head design, cross-robot codebook alignment, two real bugs

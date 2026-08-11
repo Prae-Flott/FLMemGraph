@@ -130,6 +130,48 @@ DATASETS = {
                         "memory/paderborn-fl-model-run.md for the full per-bearing table and "
                         "untested follow-ups.",
     },
+    "voraus-AD": {
+        "category": "A",
+        "description": "vorausrobotik 6-DOF pick-and-place robot arm, 100Hz, 2122 pick-place-cycle "
+                         "samples (2.32M rows), 12 anomaly categories (axis friction, axis weight, "
+                         "3 collision types, missed/lost/heavy can, entangled cable, invalid "
+                         "position, motor commutation fault, wobbling station) + normal operation. "
+                         "Rich per-joint telemetry: 6 joints x ~18 signals each (target/motor/joint "
+                         "position/velocity/acceleration/torque, computed inertia/torque, dual "
+                         "torque sensors A/B, motor Iq/Id current, electrical/mechanical power, "
+                         "motor/supply/brake voltage) + 4 robot-level electrical signals "
+                         "(robot voltage/current, IO current, system current). 948 samples are a "
+                         "dedicated pure-normal training variant (PRE_A); the rest mix normal and "
+                         "the 12 fault categories across 77 named settings/variants.",
+        "num_features": "112 machine-data signals (4 robot-level + 6 joints x 18) + 7 meta columns",
+        "used_in_papers": ["Brockmann, Rudolph, Rosenhahn, Wandt, IEEE T-RO 2023, arXiv:2311.04765 "
+                             "(original reference paper, introduces MVT-Flow baseline)"],
+        "why_relevant": "A 6-DOF articulated arm with an explicit KINEMATIC CHAIN (joint 1..6, each "
+                          "with target vs. motor vs. joint-side position/velocity/torque and dual "
+                          "redundant torque sensors A/B) -- the richest physics-graph structure of "
+                          "any dataset in this project so far, well beyond robo3er's 2-wheel "
+                          "differential-drive relation or Paderborn's single-bearing channel set. "
+                          "Each joint is a natural graph node with well-defined intra-joint edges "
+                          "(target->motor->joint position/velocity/torque chain, computed vs. "
+                          "measured torque, electrical vs. mechanical power) AND inter-joint edges "
+                          "(kinematic coupling along the arm) to declare as physics priors for "
+                          "JointPrototypeGDNv3. 12 distinct, named fault categories with real "
+                          "physical mechanisms (friction, added weight, 3 collision types, gripper/"
+                          "part handling faults, motor commutation) give much finer-grained "
+                          "comparison than Paderborn's 3-category damage taxonomy.",
+        "status": "downloaded",
+        "path": "data/voraus_ad/voraus-ad-dataset-100hz.parquet (~1.1GB, the 100Hz variant used by "
+                 "the reference repo; a 500Hz/~5.3GB variant also exists but was not fetched), "
+                 "reference paper in docs/voraus_ad_paper.pdf.",
+        "obtain": "https://media.vorausrobotik.com/voraus-ad-dataset-100hz.parquet (direct download, "
+                   "no registration; code/loader reference at "
+                   "https://github.com/vorausrobotik/voraus-ad-dataset). Dataset itself is CC "
+                   "BY-NC-SA 4.0 (non-commercial), repo code is MIT.",
+        "note_extra": "No adapter/pipeline built yet -- this is a download-and-document-only step. "
+                        "See memory/voraus-ad-dataset.md for the verified structure and the "
+                        "train/test split convention (train = variant PRE_A only, i.e. setting==72; "
+                        "test = every other variant, normal and anomalous).",
+    },
     # ---------------------------------------------------------- category B --
     "MVTec-AD": {
         "category": "B",
