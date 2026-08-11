@@ -54,7 +54,8 @@ import torch
 from sklearn import metrics as sk_metrics
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "robo3er"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from conv_autoencoder import ConvAutoEncoder  # noqa: E402
 from fl_dataset import load_fl_clients  # noqa: E402

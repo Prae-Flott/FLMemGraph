@@ -102,7 +102,7 @@ start, not raw max.
 
 ## Where results/code live
 
-- `src/joint_prototype_model.py`: `JointPrototypeGDNv3` and its
+- `src/models/joint_prototype_model.py`: `JointPrototypeGDNv3` and its
   components (current, only version in the codebase).
 - Paderborn: `benchmark/run_paderborn_joint_prototype_v3.py`,
   `checkpoints/paderborn/paderborn_joint_prototype_v3_report.json`.

@@ -2,14 +2,14 @@
 """
 Joint Prototype Memory + Physics-Relation GDN + Anomaly Attention (v3) on
 robo3er, per `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
-First run of `JointPrototypeGDNv3` (`src/joint_prototype_model.py`) outside
+First run of `JointPrototypeGDNv3` (`src/models/joint_prototype_model.py`) outside
 Paderborn -- reuses the model unchanged, only the node set / declared
 physics edges / relation types are robo3er-specific, built from
-`benchmark/datasets/robo3er_physics.md` / `src/feature_groups.py`'s
+`benchmark/datasets/robo3er_physics.md` / `src/robo3er/feature_groups.py`'s
 kinematic chain rather than bearing physics.
 
 7 nodes, chosen as the smallest set that covers robo3er's ONE validated
-physical relation (differential-drive kinematics, `src/kinematics.py`)
+physical relation (differential-drive kinematics, `src/robo3er/kinematics.py`)
 plus its natural extensions already documented but not yet exploited
 (IMU cross-check, actuation current):
   - wheel_vels_velocity_left / _right   -- the two independently driven wheels
@@ -50,7 +50,7 @@ import torch
 from sklearn import metrics as sk_metrics
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from joint_prototype_model import JointPrototypeGDNv3  # noqa: E402
 from datasets.robo3er_adapter import load  # noqa: E402

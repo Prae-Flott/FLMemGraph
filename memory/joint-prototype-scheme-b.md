@@ -8,7 +8,7 @@ description: Final conclusions for Joint Prototype Memory "Scheme B" (prototype 
 
 ## What it is
 
-`src/joint_prototype_model.py`'s `SharedEncoder` + `JointPrototypeMemory`
+`src/models/joint_prototype_model.py`'s `SharedEncoder` + `JointPrototypeMemory`
 only -- no edge/relation head at all. Produces two signals:
 - **A** (`d_G`): device-level novelty -- "has the WHOLE multi-sensor
   joint state been seen before" (distance to the nearest of M learned

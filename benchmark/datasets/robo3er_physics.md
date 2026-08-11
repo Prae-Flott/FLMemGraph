@@ -1,6 +1,6 @@
 # robo3er: physical prior relationships & formulas
 
-Full implementation: `src/kinematics.py`. This is the reference
+Full implementation: `src/robo3er/kinematics.py`. This is the reference
 implementation every other dataset's physics-prior work in this project
 is modeled after ("expert-knowledge-informed structure, data-fit
 parameters").
@@ -41,7 +41,7 @@ offset/calibration bias -- physically that term shouldn't exist for an
 ideal robot at rest, so a fitted intercept far from 0 is itself a
 diagnostic flag worth reporting, not silently discarded.
 
-In the federated system (`src/fl_dataset.py`), this fit is done
+In the federated system (`src/robo3er/fl_dataset.py`), this fit is done
 **per client** (per robot) -- each robot may have slightly different
 wheel radius/track width (e.g. from wear), so a per-robot fitted constant
 captures that rather than forcing one global fit across robots with
@@ -73,7 +73,7 @@ on top of whatever raw-feature signal GDN could already find on its own.
 ## writeup)
 
 This residual, combined with GDN's own forecasting mechanism
-(`src/train_gdn_physics.py`), produced this project's best-ever `stuck`
+(`src/training/train_gdn_physics.py`), produced this project's best-ever `stuck`
 fault result (AUROC 0.53 -> 0.72-0.74) -- the single largest improvement
 found anywhere in this project's history, via a mechanism orthogonal to
 every other approach tried on that fault type (memory, feature selection,
@@ -84,7 +84,7 @@ architecture changes).
 - Only the linear/angular VELOCITY relation is used. The chain continues
   further (velocity -> displacement via integration, and there's a
   second independent estimator of chassis yaw rate via the IMU,
-  `imu_imu_angvel_z`, that `src/feature_groups.py`'s docstring flags as
+  `imu_imu_angvel_z`, that `src/robo3er/feature_groups.py`'s docstring flags as
   "arguably a MORE rigorous slip detector than wheel-vs-odom, since both
   sides of THAT comparison are wheel-derived" -- not yet implemented).
 - Wheel radius/track width are assumed constant per robot per run (no

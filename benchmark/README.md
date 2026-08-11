@@ -26,7 +26,7 @@ Baseline + public-dataset scaffold for evaluating `src/`'s
   | GDN-tuned | 0.929 | 0.950 | 0.976 | 0.600 |
 
 - This project's own federated memory+structure system:
-  `src/train_fl_memory_gdn.py` (not wired into
+  `src/training/train_fl_memory_gdn.py` (not wired into
   `run_benchmark.py` yet since it needs the per-client, not pooled, data
   loader -- run it separately)
 - **FedAvg baseline** (`python3 run_fedavg_baseline.py`): standalone
@@ -244,7 +244,7 @@ multi-week effort, not a single session's work. This scaffold prioritizes:
 3. The **mandatory ablations** (Sec 8.4) that don't need new external
    data: GDN alone (no memory, no federation) is implemented as a
    baseline; the memory+structure ablations (d-only / r-only / d+r) are
-   already built into `src/train_fl_memory_gdn.py`'s own
+   already built into `src/training/train_fl_memory_gdn.py`'s own
    evaluation, not duplicated here.
 
 ## Extending this

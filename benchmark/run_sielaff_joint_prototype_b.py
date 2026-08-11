@@ -15,7 +15,7 @@ actually testing anything about Joint Prototype's node/edge distinction)
 or inventing edges with no physical justification, which this project
 has consistently avoided doing elsewhere. Path B needs NEITHER of those
 -- it only needs `SharedEncoder` + `JointPrototypeMemory`, reused directly
-from `src/joint_prototype_model.py` (no new model code). This directly
+from `src/models/joint_prototype_model.py` (no new model code). This directly
 answers the cross-dataset finding from voraus-AD/robo3er
 (`memory/joint-prototype-scheme-v3.md`, which also documents Scheme B's
 generalization back to `memory/joint-prototype-scheme-b.md`):
@@ -52,7 +52,7 @@ from sklearn import metrics as sk_metrics
 from sklearn.preprocessing import StandardScaler
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 from joint_prototype_model import SharedEncoder, JointPrototypeMemory  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "sielaff"

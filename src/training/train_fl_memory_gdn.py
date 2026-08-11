@@ -35,13 +35,15 @@ import numpy as np
 import torch
 from sklearn import metrics as sk_metrics
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "robo3er"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from fl_model import FLGDNMemory  # noqa: E402
 from fl_dataset import load_fl_clients  # noqa: E402
 from federated_memory import align_and_split  # noqa: E402
 from dataset import gdn_score  # noqa: E402
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = REPO_ROOT / "data" / "robo3er"  # local copy, see dataset.py's comment
 OUT_DIR = REPO_ROOT / "checkpoints" / "robo3er"
 

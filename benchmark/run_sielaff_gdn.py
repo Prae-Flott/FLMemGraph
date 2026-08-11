@@ -50,7 +50,7 @@ from sklearn import metrics as sk_metrics
 from sklearn.preprocessing import StandardScaler
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 from gdn_model import GDN  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "sielaff"

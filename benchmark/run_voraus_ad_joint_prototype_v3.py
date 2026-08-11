@@ -2,7 +2,7 @@
 """
 Joint Prototype Memory + Physics-Relation GDN + Anomaly Attention (v3) on
 voraus-AD, per `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
-Third dataset for `JointPrototypeGDNv3` (`src/joint_prototype_model.py`,
+Third dataset for `JointPrototypeGDNv3` (`src/models/joint_prototype_model.py`,
 after Paderborn and robo3er) -- model reused unchanged, only the node set/
 declared physics edges/relation types are voraus-AD-specific
 (`benchmark/datasets/voraus_ad_adapter.py`).
@@ -67,7 +67,7 @@ import torch
 from sklearn import metrics as sk_metrics
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from joint_prototype_model import JointPrototypeGDNv3  # noqa: E402
 from datasets.voraus_ad_adapter import load, NODE_NAMES, PRIOR_EDGES, EDGE_TYPES, FIXED_LEN  # noqa: E402
