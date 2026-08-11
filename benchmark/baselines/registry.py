@@ -77,6 +77,24 @@ BASELINES = {
                                          "first on any new dataset before investing in physics-relation "
                                          "analysis. See memory/joint-prototype-scheme-v2.md for the full "
                                          "cross-dataset table and per-category pattern."},
+    "joint-prototype-v2-1-sielaff": {"category": "③", "type": "physics_prior", "status": "implemented",
+                                "module": "src.models.joint_prototype_model.JointPrototypeGDNv21 "
+                                           "(TrendGraphAttentionHead, no typed relation head). "
+                                           "benchmark/run_sielaff_joint_prototype_v2_1.py.",
+                                "note": "V2.1: V2 + GDN-style generic learned attention (no typed relation "
+                                         "head, no declared physics edges needed -- prior_edges=None), "
+                                         "treating an abnormal change in cross-feature attention as one "
+                                         "manifestation of a fault. Tested on Sielaff (no verified physics "
+                                         "prior exists there, so this is the first edge/attention signal "
+                                         "ever tried on this dataset). Result: attention adds NOTHING -- "
+                                         "best V2.1 combination (0.965) is still below plain V2 (0.978), and "
+                                         "joint training with the attention loss slightly hurt the node/"
+                                         "prototype signals too (A 0.971->0.954, B 0.978->0.965), the same "
+                                         "joint-training confound documented for Paderborn's V3 run but "
+                                         "negative here instead of positive. Sharpens 'no verified physical "
+                                         "prior' into 'even domain-knowledge-free attention finds nothing "
+                                         "useful' for this dataset. See "
+                                         "memory/joint-prototype-v2-1-sielaff.md for the full breakdown."},
     "joint-prototype-scheme-v3": {"category": "③", "type": "physics_prior", "status": "implemented",
                                 "module": "src.models.joint_prototype_model.JointPrototypeGDNv3 (TrendGraphAttentionHead "
                                            "+ TypedRelationAnomalyHead). Paderborn: "
