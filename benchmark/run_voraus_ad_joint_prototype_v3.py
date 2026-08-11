@@ -76,8 +76,11 @@ OUT_DIR = REPO_ROOT / "checkpoints" / "voraus_ad"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 BATCH_SIZE = 64  # smaller than Paderborn/robo3er -- windows are much longer (1164 vs 60-64)
-EPOCHS = 40  # bumped from 12 -- calib_dG_mean was still decreasing steadily at epoch 12 on
-             # this 66-node graph (unlike the smaller 18-node version, which had plateaued)
+EPOCHS = 100  # bumped again from 40 -- at epoch 40, calib_dG_mean was still decreasing
+              # (~0.01/epoch, down from ~0.034/epoch around epoch 20-25 -- slowing but not
+              # flat), so pushed further to see where it actually plateaus. Best-checkpoint
+              # selection by calib_dG_mean (see train()) already guards against picking an
+              # overfit late epoch if performance turns over before training ends.
 LR = 1e-3
 SEED = 42
 EMBED_DIM = 64

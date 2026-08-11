@@ -10,20 +10,22 @@ where this work started (see each file's own note on provenance).
   signals each). Richest physics-graph structure of any dataset in this
   project so far — a strong next JointPrototypeGDNv3 target.
 - [`voraus-ad-joint-prototype-v3.md`](voraus-ad-joint-prototype-v3.md) —
-  three iterations on voraus-AD, tracked in one file. (1) First pass, 18
+  four iterations on voraus-AD, tracked in one file. (1) First pass, 18
   nodes: weak (mean AUROC 0.66-0.68). (2) Expanded to 66 nodes (full
   tracking chain + friction edge, per the paper's physics) using the SAME
-  raw-max aggregation: got WORSE, not better (`axis_friction` -- the
-  fault the expansion targeted -- regressed 0.566->0.489) — diagnosed as
-  the max-aggregation noise-floor problem, now sharp enough at 66
-  dimensions to be net-negative. (3) Fixed the aggregation (top-k-mean +
-  a second calibration stage against the calib split's own distribution)
-  and increased training (12->40 epochs): confirms the diagnosis and the
-  original physics prediction — `axis_friction` D jumped to 0.771 (+0.282
-  vs. the 18-node version), overall `C_edge_only` (0.732) is now the best
-  score across all three runs. **Still no fair GDN/AE baseline on this
-  dataset** — these numbers are a clear improvement over the prior two
-  runs but still can't be judged against an external yardstick.
+  raw-max aggregation: got WORSE (`axis_friction` regressed 0.566->0.489)
+  — diagnosed as the max-aggregation noise-floor problem. (3) Fixed the
+  aggregation (top-k-mean + a second calibration stage) + more training
+  (12->40 epochs): confirmed the diagnosis, `axis_friction` D jumped to
+  0.771. (4) Pushed training further (100-epoch budget): found the real
+  convergence point at epoch 57 (calib metric overfits past that), modest
+  further gain — **`B` (prototype+node, NO edge signal) is now the best
+  path overall at 0.756**, winning/tying on 11 of 12 fault categories;
+  the sole exception is `motor_commutation`, the one category whose fault
+  is a textbook edge-relation break — same "node beats edge except for
+  the one relation-matched fault" pattern seen on robo3er, opposite of
+  Paderborn. **Still no fair GDN/AE baseline on this dataset** to judge
+  these numbers against an external yardstick.
 - [`fl-memory-physics-system.md`](fl-memory-physics-system.md) — the
   federated memory+structure system itself: encoder/memory-head/
   structure-head design, cross-robot codebook alignment, two real bugs
