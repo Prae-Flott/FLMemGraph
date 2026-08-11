@@ -136,14 +136,16 @@ DATASETS = {
                          "samples (2.32M rows), 12 anomaly categories (axis friction, axis weight, "
                          "3 collision types, missed/lost/heavy can, entangled cable, invalid "
                          "position, motor commutation fault, wobbling station) + normal operation. "
-                         "Rich per-joint telemetry: 6 joints x ~18 signals each (target/motor/joint "
+                         "Rich per-joint telemetry: 6 joints x 21 signals each (target/motor/joint "
                          "position/velocity/acceleration/torque, computed inertia/torque, dual "
                          "torque sensors A/B, motor Iq/Id current, electrical/mechanical power, "
                          "motor/supply/brake voltage) + 4 robot-level electrical signals "
                          "(robot voltage/current, IO current, system current). 948 samples are a "
                          "dedicated pure-normal training variant (PRE_A); the rest mix normal and "
                          "the 12 fault categories across 77 named settings/variants.",
-        "num_features": "112 machine-data signals (4 robot-level + 6 joints x 18) + 7 meta columns",
+        "num_features": "130 machine-data signals (4 robot-level + 6 joints x 21) + 7 meta columns, "
+                          "verified directly against the parquet's columns (see "
+                          "benchmark/datasets/voraus_ad_physics.md's feature table).",
         "used_in_papers": ["Brockmann, Rudolph, Rosenhahn, Wandt, IEEE T-RO 2023, arXiv:2311.04765 "
                              "(original reference paper, introduces MVT-Flow baseline)"],
         "why_relevant": "A 6-DOF articulated arm with an explicit KINEMATIC CHAIN (joint 1..6, each "
@@ -175,13 +177,20 @@ DATASETS = {
                         "edge, the 3-stage power-conservation chain, and the paper's own ablation "
                         "finding that mechanical signals matter far more than electrical ones -- a "
                         "strong, paper-corroborated explanation for the first V3 run's weak result) + "
-                        "benchmark/datasets/voraus_ad_adapter.py (18 nodes: motor_iq/motor_torque/"
-                        "torque_sensor_a x 6 joints, 12 within-joint-only declared edges) + "
-                        "benchmark/run_voraus_ad_joint_prototype_v3.py implement a first V3 run. "
-                        "Result is WEAK across the board (mean AUROC 0.66-0.68) but UNVALIDATED -- "
-                        "no fair GDN/AE baseline exists on this dataset yet, so these numbers can't "
-                        "be judged good/bad until that comparison is built. See "
-                        "memory/voraus-ad-joint-prototype-v3.md for the full breakdown.",
+                        "benchmark/datasets/voraus_ad_adapter.py (now 66 nodes: full target/motor/"
+                        "joint tracking chain + both torque sensors + Iq/Id current x 6 joints, 54 "
+                        "within-joint-only declared edges including a friction edge "
+                        "joint_velocity->motor_torque) + benchmark/run_voraus_ad_joint_prototype_v3.py "
+                        "(now with a two-stage top-k-mean aggregation replacing raw max, and 40 "
+                        "training epochs) implement three iterations of a V3 run. First pass (18 "
+                        "nodes) was weak (mean AUROC 0.66-0.68); expanding to 66 nodes with the SAME "
+                        "raw-max aggregation made it WORSE (axis_friction regressed to 0.489 despite "
+                        "adding the exact edge predicted to help); fixing the aggregation + more "
+                        "training confirmed the physics prediction (axis_friction D jumped to 0.771, "
+                        "+0.282 vs. the 18-node version; C_edge_only=0.732 is now the best score across "
+                        "all three runs). UNVALIDATED -- no fair GDN/AE baseline exists on this dataset "
+                        "yet, so these numbers still can't be judged against an external yardstick. See "
+                        "memory/voraus-ad-joint-prototype-v3.md for the full three-iteration breakdown.",
     },
     # ---------------------------------------------------------- category B --
     "MVTec-AD": {

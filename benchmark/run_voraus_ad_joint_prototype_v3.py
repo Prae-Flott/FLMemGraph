@@ -7,23 +7,53 @@ after Paderborn and robo3er) -- model reused unchanged, only the node set/
 declared physics edges/relation types are voraus-AD-specific
 (`benchmark/datasets/voraus_ad_adapter.py`).
 
-18 nodes (3 signals x 6 joints: `motor_iq_i`, `motor_torque_i`,
-`torque_sensor_a_i`), 12 declared WITHIN-joint edges (replicated
-identically across all 6 joints, no cross-joint edges declared -- the
-arm's kinematic coupling isn't characterized yet, see
-`memory/voraus-ad-dataset.md`):
-  - `motor_iq_i -> motor_torque_i`: "proportional" (current ~ torque via
-    Kt, the design doc's own textbook example).
-  - `motor_torque_i -> torque_sensor_a_i`: "nonlinear" (motor-side torque
-    vs. the independent joint-side sensor, through link/gearbox dynamics).
+REVISED (v2 of this script): 66 nodes (11 signals x 6 joints -- the full
+target/motor/joint tracking chain, both torque sensors, and the
+torque-forming/magnetizing current pair), 54 declared WITHIN-joint edges.
+The original 18-node version was scoped down to match Paderborn/robo3er's
+much smaller graphs, not because of any real data or model constraint,
+and missed exactly the signals (`joint_velocity`, the tracking chain)
+`benchmark/datasets/voraus_ad_physics.md` identified as most diagnostic
+-- see `benchmark/datasets/voraus_ad_adapter.py`'s module docstring for
+the full per-edge rationale. No cross-joint edges declared -- the arm's
+kinematic coupling isn't characterized yet, see `memory/voraus-ad-dataset.md`.
 
 Official train/test convention (`voraus_ad.py`'s `variant==PRE_A` split):
 FIT/CALIB come from the 948 PRE_A (pure-normal) samples, TEST_NORMAL is
 the 419 held-out NORMAL_OPERATION samples from other variants, and each
 of the 12 named fault categories is scored separately -- same per-sample
 AUROC convention as `run_robo3er_joint_prototype_v3.py` (one voraus-AD
-"sample" = one pick-and-place cycle, already a fixed-length [1164, 18]
+"sample" = one pick-and-place cycle, already a fixed-length [1164, 66]
 padded array, no further windowing needed).
+
+## Aggregation fix (v3 of this script)
+
+The 66-node run (see `memory/voraus-ad-joint-prototype-v3.md`'s update
+note) found the typed-edge signal got WORSE than the 18-node version
+despite adding the friction edge it was specifically missing -- diagnosed
+as the known max-aggregation noise-floor problem
+(`memory/paderborn-joint-prototype.md`), sharply worse here because
+`s_node`/`s_edge`/`s_node_typed` each grew to 66 dimensions: taking a
+raw `.max(axis=1)` over more dimensions systematically inflates the
+right tail of the NORMAL test set's score distribution (more chances for
+one dimension to spike by noise alone), which hurts AUROC even when a
+genuinely informative dimension (the new friction edge) is among them.
+
+Fix: `topk_mean()` + `two_stage_group_score()` replace the raw
+per-dimension z-score + `.max(axis=1)` for the node/edge/typed-edge
+GROUPS (which have many dimensions) with a top-`TOP_K_AGG`-mean, THEN
+re-calibrate that aggregate statistic AGAIN against its own distribution
+on the calib split (not just each dimension independently) -- directly
+correcting for "the null distribution of top-k-mean shifts as the group
+grows" rather than assuming per-dimension normalization alone accounts
+for it. The top-level combination across the 4 signal GROUPS (dG, node,
+edge, typed -- only 4 items) is left as a plain max, since 4 items carries
+far less of this multiple-comparisons risk than 66. `EPOCHS` is also
+increased (12 -> 40): the 66-node run's `calib_dG_mean` was still
+decreasing steadily at epoch 12 (unlike the smaller 18-node graph, which
+had largely plateaued by then), so more training capacity was needed
+regardless of the aggregation fix -- both changes are applied together
+per the user's request, not isolated as a controlled ablation.
 
 Usage:
     python3 run_voraus_ad_joint_prototype_v3.py
@@ -46,16 +76,22 @@ OUT_DIR = REPO_ROOT / "checkpoints" / "voraus_ad"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 BATCH_SIZE = 64  # smaller than Paderborn/robo3er -- windows are much longer (1164 vs 60-64)
-EPOCHS = 12
+EPOCHS = 40  # bumped from 12 -- calib_dG_mean was still decreasing steadily at epoch 12 on
+             # this 66-node graph (unlike the smaller 18-node version, which had plateaued)
 LR = 1e-3
 SEED = 42
 EMBED_DIM = 64
 NUM_PROTOTYPES = 16
-TOP_K = 5
+TOP_K = 10  # bumped from 5 (the 18-node version's setting) -- with 66 nodes, top_k=5 would
+            # attend over under 8% of other nodes; the generic attention head still needs
+            # enough room to find useful cross-signal pairs beyond the declared typed edges
 BETA = 0.25
 LAMBDA_EDGE = 0.5
 LAMBDA_TYPED = 0.5
 MIN_PROTO_SAMPLES = 5
+TOP_K_AGG = 3  # for the node/edge/typed-edge GROUP aggregation (see module docstring's
+               # "Aggregation fix" section) -- top-3-mean instead of a raw max over all
+               # 66 node/edge dimensions, re-calibrated against its own calib distribution
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -121,6 +157,31 @@ def zscore(x, calib_x):
     return (x - median) / iqr
 
 
+def topk_mean(x, k):
+    """x: [B, D]. Mean of the top-k values along axis 1 (k clipped to D)."""
+    k = min(k, x.shape[1])
+    return np.sort(x, axis=1)[:, -k:].mean(axis=1)
+
+
+def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG):
+    """raw_calib/raw_x: [N, D] raw (unstandardized) per-dimension signal
+    (D = num_nodes, e.g. s_node/s_edge/s_node_typed). Two calibration
+    stages: (1) per-dimension z-score against calib, as before; (2)
+    top-k-mean of those z-scores, THEN re-z-score that scalar statistic
+    against its OWN distribution on the calib split. Stage 2 is what a
+    raw `.max(axis=1)` (the D->infinity limit of top-1) skips -- without
+    it, the aggregate statistic's null distribution silently shifts as D
+    grows, inflating false positives on the normal test set. See module
+    docstring's "Aggregation fix" section."""
+    z_calib = zscore(raw_calib, raw_calib)
+    z_x = zscore(raw_x, raw_calib)
+    stat_calib = topk_mean(z_calib, k)
+    stat_x = topk_mean(z_x, k)
+    median = np.median(stat_calib)
+    iqr = max(np.percentile(stat_calib, 75) - np.percentile(stat_calib, 25), 1e-8)
+    return (stat_x - median) / iqr
+
+
 def main():
     torch.manual_seed(SEED)
     np.random.seed(SEED)
@@ -152,27 +213,27 @@ def main():
     d_G_normal, s_node_normal, s_edge_normal, s_typed_normal, _, _ = per_sample_scores(model, test_normal_arr)
 
     z_dG_normal = zscore(d_G_normal, d_G_calib)
-    z_node_normal = zscore(s_node_normal, s_node_calib)
-    z_edge_normal = zscore(s_edge_normal, s_edge_calib)
-    z_typed_normal = zscore(s_typed_normal, s_typed_calib)
+    node_score_normal = two_stage_group_score(s_node_calib, s_node_normal)
+    edge_score_normal = two_stage_group_score(s_edge_calib, s_edge_normal)
+    typed_score_normal = two_stage_group_score(s_typed_calib, s_typed_normal)
 
-    def ablation_scores(z_dG, z_node, z_edge, z_typed):
+    def ablation_scores(z_dG, node_score, edge_score, typed_score):
         return {
             "A_prototype_only": z_dG,
-            "B_prototype_plus_node": np.maximum(z_dG, z_node.max(axis=1)),
-            "C_edge_only": z_edge.max(axis=1),
-            "D_full_v2": np.maximum(np.maximum(z_dG, z_node.max(axis=1)), z_edge.max(axis=1)),
-            "E_typed_edge_only": z_typed.max(axis=1),
-            "F_full_v3": np.max(np.stack([z_dG, z_node.max(axis=1), z_edge.max(axis=1),
-                                            z_typed.max(axis=1)], axis=1), axis=1),
+            "B_prototype_plus_node": np.maximum(z_dG, node_score),
+            "C_edge_only": edge_score,
+            "D_full_v2": np.maximum(np.maximum(z_dG, node_score), edge_score),
+            "E_typed_edge_only": typed_score,
+            "F_full_v3": np.max(np.stack([z_dG, node_score, edge_score, typed_score], axis=1), axis=1),
         }
 
-    scores_normal = ablation_scores(z_dG_normal, z_node_normal, z_edge_normal, z_typed_normal)
+    scores_normal = ablation_scores(z_dG_normal, node_score_normal, edge_score_normal, typed_score_normal)
 
     print("\nscoring fault categories ...")
     report = {"config": {"embed_dim": EMBED_DIM, "num_prototypes": NUM_PROTOTYPES, "top_k": TOP_K,
-                           "window_len": FIXED_LEN, "epochs": EPOCHS, "prior_edges": PRIOR_EDGES,
-                           "edge_types": EDGE_TYPES, "min_proto_samples": MIN_PROTO_SAMPLES},
+                           "top_k_agg": TOP_K_AGG, "window_len": FIXED_LEN, "epochs": EPOCHS,
+                           "prior_edges": PRIOR_EDGES, "edge_types": EDGE_TYPES,
+                           "min_proto_samples": MIN_PROTO_SAMPLES},
                "nodes": node_names, "final_prior_bias_strength": model.edge_head.prior_bias_strength.item(),
                "final_typed_temperature": model.typed_head.log_temperature.exp().item(),
                "n_valid_prototypes_for_typed_calib": n_valid_proto,
@@ -181,10 +242,10 @@ def main():
     for name, arr in faults.items():
         d_G_f, s_node_f, s_edge_f, s_typed_f, _, _ = per_sample_scores(model, arr)
         z_dG_f = zscore(d_G_f, d_G_calib)
-        z_node_f = zscore(s_node_f, s_node_calib)
-        z_edge_f = zscore(s_edge_f, s_edge_calib)
-        z_typed_f = zscore(s_typed_f, s_typed_calib)
-        scores_fault = ablation_scores(z_dG_f, z_node_f, z_edge_f, z_typed_f)
+        node_score_f = two_stage_group_score(s_node_calib, s_node_f)
+        edge_score_f = two_stage_group_score(s_edge_calib, s_edge_f)
+        typed_score_f = two_stage_group_score(s_typed_calib, s_typed_f)
+        scores_fault = ablation_scores(z_dG_f, node_score_f, edge_score_f, typed_score_f)
 
         aurocs = {}
         for key in scores_normal:

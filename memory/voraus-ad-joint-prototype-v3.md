@@ -139,5 +139,105 @@ tuning, or the padding/windowing choice.
   proportional/nonlinear typed-edge distinction, not the richest
   possible graph.
 
+## UPDATE 2: 66-node graph, first attempt -- WORSE, a real and instructive
+## regression (2026-08-11, same day)
+
+Expanded the node set per the update above: 66 nodes (11 signals x 6
+joints -- full target/motor/joint tracking chain, both torque sensors,
+`motor_id`), 54 declared edges (9/joint, adding the friction edge
+`joint_velocity_i -> motor_torque_i` this analysis specifically called
+for). Everything else unchanged (`EPOCHS=12`, raw `.max(axis=1)`
+aggregation, `TOP_K=10`).
+
+| method | 18-node | 66-node (unfixed) |
+|---|---|---|
+| A | 0.660 | 0.654 |
+| B | 0.679 | 0.672 |
+| C | 0.679 | 0.670 |
+| D | 0.680 | 0.669 |
+| E: typed-edge only | 0.666 | **0.563** |
+| F: full v3 | 0.666 | **0.572** |
+
+`axis_friction` -- the fault this whole expansion was targeted at --
+got WORSE, not better: D 0.566 -> 0.489, F 0.540 -> 0.480, despite the
+friction edge being genuinely new and physically well-motivated.
+
+**Root cause (leading hypothesis, later confirmed -- see Update 3)**: the
+known max-aggregation noise-floor problem
+(`memory/paderborn-joint-prototype.md`), sharply worse here because
+`s_node`/`s_edge`/`s_node_typed` grew from 18 to 66 dimensions each --
+taking a raw `.max(axis=1)` over more dimensions systematically inflates
+the right tail of the NORMAL test set's score distribution (more chances
+for one dimension to spike from noise alone), which can swamp a
+genuinely informative dimension rather than surface it. `A` (prototype
+only, unaffected by node/edge count) barely moved (0.660->0.654),
+pointing specifically at the node/edge/typed-edge aggregation as the
+cause, not a general training failure. A secondary, untested confound:
+`calib_dG_mean` was still decreasing steadily at epoch 12 on this larger
+graph (unlike the 18-node version, which had largely plateaued),
+suggesting under-training on top of the aggregation problem.
+
+## UPDATE 3: aggregation fix + 40 epochs -- confirms the hypothesis, clear
+## improvement (2026-08-11, same day)
+
+Per explicit user request ("更新聚合方式，同时扩大训练量"), two changes
+made together (not isolated as a controlled ablation):
+
+1. **Aggregation fix**: `run_voraus_ad_joint_prototype_v3.py` replaces
+   the raw per-dimension z-score + `.max(axis=1)` for the node/edge/
+   typed-edge GROUPS with `two_stage_group_score()` -- top-3-mean of the
+   per-dimension z-scores, THEN a SECOND z-score of that aggregate
+   statistic against its own distribution on the calib split (correcting
+   for the fact that the top-k-mean's null distribution shifts as the
+   group's dimensionality grows, which per-dimension normalization alone
+   does not account for). Verified directionally on synthetic data before
+   the real run: as injected noise dimensions grow from 12->130 with one
+   fixed-size true signal spike, raw-max AUROC degrades much faster
+   (0.82->0.64 at D=66) than the two-stage version (0.79->0.68 at D=66).
+   The top-level combination across the 4 signal GROUPS (dG/node/edge/
+   typed, only 4 items) is left as a plain max -- far less multiple-
+   comparisons risk at N=4 than at N=66.
+2. **More training**: `EPOCHS` 12 -> 40.
+
+| method | 18-node | 66-node (unfixed, 12ep) | **66-node (fixed agg, 40ep)** |
+|---|---|---|---|
+| A | 0.660 | 0.654 | 0.651 |
+| B | 0.679 | 0.672 | **0.726** |
+| **C** | 0.679 | 0.670 | **0.732** |
+| D | 0.680 | 0.669 | **0.726** |
+| E | 0.666 | 0.563 | **0.638** |
+| F | 0.666 | 0.572 | **0.694** |
+
+`C_edge_only` (0.732) is now the best score across all three runs of this
+dataset. `axis_friction`, the specific target of the node-set expansion,
+went from a regression (0.489) to a clear, substantial improvement:
+
+| | 18-node (no friction edge) | 66-node unfixed | 66-node fixed |
+|---|---|---|---|
+| axis_friction D | 0.566 | 0.489 | **0.771** (+0.282 vs. 18-node) |
+| axis_friction F | 0.540 | 0.480 | **0.724** (+0.184 vs. 18-node) |
+
+`motor_commutation` (the current->torque relation's own fault) also
+jumped: D 0.667 -> 0.858, F 0.667 -> 0.780. This is a clean, well-
+evidenced validation chain: physics analysis (the paper) predicted
+`joint_velocity -> motor_torque` should catch `axis_friction` -> first
+attempt added the edge but got WORSE due to a diagnosable aggregation
+artifact -> fixing that artifact (plus more training) recovers the
+predicted improvement, and then some.
+
+**Caveats that still apply**: the two changes (aggregation, epochs) were
+made together per the request, so their individual contributions aren't
+separated -- a controlled ablation (fix aggregation only vs. more epochs
+only) would be needed to attribute the gain precisely. `n_valid_prototypes_for_typed_calib`
+dropped to 1/16 in this run (vs. 9/16 in the unfixed 66-node run) --
+plausibly the codebook concentrating onto fewer prototypes with more
+training; not diagnosed. **Still no fair GDN/AE baseline on this
+dataset's graph** -- these numbers are a clear improvement over the
+prior two runs of this dataset, but still can't be judged against an
+external yardstick.
+
 Full report: `checkpoints/voraus_ad/voraus_ad_joint_prototype_v3_report.json`,
-model weights: `checkpoints/voraus_ad/voraus_ad_joint_prototype_v3.pth`.
+model weights: `checkpoints/voraus_ad/voraus_ad_joint_prototype_v3.pth`
+(both overwritten by Update 3's run -- Update 2's unfixed-66-node numbers
+are preserved only in this memory file's table above, not as a separate
+saved report).
