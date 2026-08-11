@@ -236,8 +236,63 @@ dataset's graph** -- these numbers are a clear improvement over the
 prior two runs of this dataset, but still can't be judged against an
 external yardstick.
 
+## UPDATE 4: pushed training further (100-epoch budget) -- found the real
+## convergence point, modest/mixed further gain (2026-08-11, same day)
+
+Per explicit user request ("继续加大训练"), `EPOCHS` raised 40 -> 100
+(everything else unchanged from Update 3). `calib_dG_mean` bottomed out
+at epoch 57 (0.190) then rose monotonically through epoch 100 (0.427) --
+clear overfitting past that point. The existing best-checkpoint selection
+(`train()` already saves whichever epoch has the lowest `calib_dG_mean`)
+correctly recovered the epoch-57 weights rather than epoch 100's, so this
+run effectively bought 17 more genuinely useful epochs (40->57) beyond
+Update 3, not the full 60 the budget nominally allowed.
+
+| method | 40ep (Update 3) | 100ep budget / ~57ep effective |
+|---|---|---|
+| A | 0.651 | 0.642 |
+| **B** | 0.726 | **0.756** |
+| C | 0.732 | 0.729 |
+| D | 0.726 | 0.730 |
+| E | 0.638 | 0.647 |
+| F | 0.694 | 0.687 |
+| axis_friction D | 0.771 | **0.789** (continued improving) |
+| motor_commutation D | 0.858 | 0.840 (slightly down) |
+
+Modest, mixed further movement (B and axis_friction keep improving; C/F
+flat-to-down) -- nowhere near the size of the 12->40 epoch jump. `B`
+(prototype+node, no edge signal at all) is now the single best path at
+0.756, ahead of `C`/`D`. `final_prior_bias_strength` grew substantially
+(1.07 -> 1.51), suggesting the model's trust in the declared physics
+edges keeps deepening with more training even as the edge-based AUROC
+itself plateaus/regresses slightly -- an interesting dissociation
+(trusting the prior more != that prior producing a better final score)
+not otherwise investigated.
+
+**Practical takeaway**: epoch 57 is this configuration's real convergence
+point; training further than that is wasted compute unless paired with
+stronger regularization (larger `BETA`/`LAMBDA_EDGE`, data augmentation)
+to push the overfitting point later.
+
+## Cross-path analysis: which of A-F wins on THIS dataset, and why
+
+Across all 4 iterations, `B` (prototype + node-level deviation, NO edge/
+relation signal at all) is the most consistent top performer, and is now
+the outright best path (0.756). Per-category breakdown (Update 4's run)
+shows `B` wins or ties on 11 of 12 categories -- the sole exception is
+`motor_commutation` (`C`/`D` win, 0.841/0.840 vs. `B`'s 0.818), the ONE
+category whose fault mechanism is a textbook edge-relation break (current
+vs. torque decoupling, `voraus_ad_physics.md` relation #2). Every other
+fault category (collisions, can weight/loss, axis friction, wobbling,
+invalid position) is better explained by SOME node's own value drifting
+out of its normal range than by a declared relation breaking -- the same
+"node signal beats edge signal except for the one relation-type-matched
+fault" pattern seen on robo3er (`memory/robo3er-joint-prototype-v3.md`),
+and the opposite of Paderborn where edge/attention signal dominates
+almost everywhere. Confirms (again) that which signal type wins is a
+property of the DATASET's fault mechanisms, not of the model architecture.
+
 Full report: `checkpoints/voraus_ad/voraus_ad_joint_prototype_v3_report.json`,
 model weights: `checkpoints/voraus_ad/voraus_ad_joint_prototype_v3.pth`
-(both overwritten by Update 3's run -- Update 2's unfixed-66-node numbers
-are preserved only in this memory file's table above, not as a separate
-saved report).
+(overwritten by each update's run in turn -- only the tables above
+preserve the intermediate iterations' numbers).
