@@ -54,7 +54,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from gdn_model import GDN  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "sielaff"
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "sielaff"
 
 FIT_FRACTION = 0.70
 CALIB_FRACTION = 0.15

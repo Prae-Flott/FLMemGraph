@@ -58,7 +58,7 @@ from datasets.paderborn_adapter import (  # noqa: E402
     load_bearing, HEALTHY_CODES, ALL_DAMAGED_CODES, category_of, damage_origin_of, CHANNELS,
 )
 
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "paderborn"
 
 DECIMATE = 125           # 256000 -> 2048 samples/file (~512Hz effective, see adapter docstring)
 FIT_FRACTION = 0.70      # per healthy bearing, of its 80 files

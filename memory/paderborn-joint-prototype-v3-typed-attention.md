@@ -113,5 +113,5 @@ exercise this mechanism.
 - Per-edge attention-weight inspection wasn't done for the typed head
   either (same open item v2 left for its own attention).
 
-Full report: `checkpoints/paderborn_joint_prototype_v3_report.json`,
-model weights: `checkpoints/paderborn_joint_prototype_v3.pth`.
+Full report: `checkpoints/paderborn/paderborn_joint_prototype_v3_report.json`,
+model weights: `checkpoints/paderborn/paderborn_joint_prototype_v3.pth`.

@@ -39,7 +39,7 @@ Category means: outer_ring 0.697 -> 0.627 (-0.070), inner_ring 0.819 ->
 The bearings that got WORSE are overwhelmingly the ones that were already
 the hardest cases (KA05/06/08/09/30, KI04/05/07/08 -- several dropped by
 0.15-0.22 AUROC). Full per-bearing table:
-`checkpoints/paderborn_torque_residual_gdn_report.json`.
+`checkpoints/paderborn/paderborn_torque_residual_gdn_report.json`.
 
 ## Root cause found: NOT just "the physical relation is weak" -- this
 ## dataset's experimental design doesn't have enough independent
@@ -113,4 +113,4 @@ that approach doesn't depend on this dataset's confounded experimental
 design at all, and remains the most promising untried direction if this
 dataset's physics-prior work continues.
 
-Full report: `checkpoints/paderborn_torque_residual_gdn_report.json`.
+Full report: `checkpoints/paderborn/paderborn_torque_residual_gdn_report.json`.

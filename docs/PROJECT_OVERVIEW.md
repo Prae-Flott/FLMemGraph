@@ -38,7 +38,8 @@ FLMemGraph/
 ├── benchmark/            baseline methods + public-dataset registry, including real FedAvg,
 │                         IFCAAE, GDN-tuned, and a Sielaff-dataset GDN run (see
 │                         benchmark/README.md for what's implemented vs. scaffolded)
-├── checkpoints/          trained model weights + evaluation reports from every run
+├── checkpoints/          trained model weights + evaluation reports, one subfolder per
+│                         dataset (checkpoints/robo3er/, checkpoints/paderborn/, checkpoints/sielaff/)
 ├── docs/                 design spec + this file
 └── memory/               project history: what was tried, what worked, what broke and why
 ```
@@ -89,4 +90,5 @@ python3 benchmark/run_sielaff_gdn.py
 ```
 
 All training scripts write checkpoints + JSON evaluation reports to
-`checkpoints/`.
+`checkpoints/<dataset>/` (e.g. `checkpoints/robo3er/`, `checkpoints/paderborn/`,
+`checkpoints/sielaff/`).

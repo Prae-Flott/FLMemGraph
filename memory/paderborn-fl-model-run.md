@@ -135,5 +135,5 @@ features instead of raw box-averaged amplitude).
   the deleted IMS findings where the relationship flipped depending on
   architecture -- worth a closer look if this dataset gets revisited.
 
-Full report: `checkpoints/paderborn_fl_model_report.json`, model weights:
-`checkpoints/paderborn_fl_model.pth`.
+Full report: `checkpoints/paderborn/paderborn_fl_model_report.json`, model weights:
+`checkpoints/paderborn/paderborn_fl_model.pth`.

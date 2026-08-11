@@ -38,7 +38,7 @@ from datasets.paderborn_adapter import (  # noqa: E402
     load_bearing_with_physics, HEALTHY_CODES, ALL_DAMAGED_CODES, category_of, damage_origin_of,
 )
 
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "paderborn"
 
 NODE_NAMES = ["vibration_1", "phase_current_1", "phase_current_2", "force", "speed", "torque"]
 NODE_IDX = {name: i for i, name in enumerate(NODE_NAMES)}

@@ -55,7 +55,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from joint_prototype_model import JointPrototypeGDNv3  # noqa: E402
 from datasets.robo3er_adapter import load  # noqa: E402
 
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "robo3er"
 
 NODE_NAMES = [
     "wheel_vels_velocity_left", "wheel_vels_velocity_right",

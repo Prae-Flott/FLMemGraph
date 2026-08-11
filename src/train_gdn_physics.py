@@ -54,7 +54,7 @@ from dataset import (  # noqa: E402
 import feature_groups  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "robo3er"
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "robo3er"
 BASELINE_CKPT = OUT_DIR / "gdn_baseline_robo3er.pth"
 
 # Minimal-validation-first: start with ONLY the kinematics-equation

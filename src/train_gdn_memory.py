@@ -55,7 +55,7 @@ from dataset import (  # noqa: E402
 import feature_groups  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "robo3er"  # local copy, see dataset.py's comment
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "robo3er"
 NO_MEMORY_REPORT = OUT_DIR / "gdn_physics_separability_report.json"
 
 ACTIVE_FEATURE_GROUPS = ["kinematic_core"]  # matches train_gdn_physics.py's current setting
