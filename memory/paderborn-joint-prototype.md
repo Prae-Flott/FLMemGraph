@@ -130,5 +130,5 @@ trend/co-deviation, locally referenced) rather than how it's fit.
   was the strongest prior result, but an apples-to-apples 6-channel
   FLGDNMemory run doesn't exist yet.
 
-Full report: `checkpoints/paderborn_joint_prototype_report.json`, model
-weights: `checkpoints/paderborn_joint_prototype.pth`.
+Full report: `checkpoints/paderborn/paderborn_joint_prototype_report.json`, model
+weights: `checkpoints/paderborn/paderborn_joint_prototype.pth`.

@@ -211,7 +211,7 @@ at the bearing's characteristic frequencies doesn't depend on this
 confounded experimental design or on friction being a large share of the
 torque budget.
 
-Full reports: `checkpoints/paderborn_physics_gdn_report.json`,
-`checkpoints/paderborn_torque_residual_gdn_report.json`. Full analysis:
+Full reports: `checkpoints/paderborn/paderborn_physics_gdn_report.json`,
+`checkpoints/paderborn/paderborn_torque_residual_gdn_report.json`. Full analysis:
 `memory/paderborn-physics-residual-gdn.md`,
 `memory/paderborn-torque-residual-gdn.md`.

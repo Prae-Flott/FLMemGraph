@@ -62,7 +62,7 @@ from dataset import gdn_score  # noqa: E402
 from baselines.fedavg_baseline import federated_average  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "robo3er"
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "robo3er"
 
 BATCH_SIZE = 32
 ROUNDS = 15

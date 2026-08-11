@@ -21,9 +21,9 @@ data/
 # Trained model weights -- large binaries, don't belong in git history.
 # Evaluation reports (*.json, *.csv) ARE tracked -- they're small and are
 # exactly the "project progress" record this checkpoints/ folder is for.
-checkpoints/*.pth
-checkpoints/*.pt
-checkpoints/*.ckpt
+checkpoints/**/*.pth
+checkpoints/**/*.pt
+checkpoints/**/*.ckpt
 
 # OS / editor cruft
 .DS_Store

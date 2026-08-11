@@ -43,7 +43,7 @@ from dataset import gdn_score  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = REPO_ROOT / "data" / "robo3er"  # local copy, see dataset.py's comment
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "robo3er"
 
 BATCH_SIZE = 32
 ROUNDS = 5

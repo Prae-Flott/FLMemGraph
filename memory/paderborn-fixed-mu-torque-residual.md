@@ -81,5 +81,5 @@ something structurally different (spectral content at specific
 frequencies, not a linear DC-ish torque balance) and doesn't share this
 same "friction is a small fraction of the measured quantity" problem.
 
-Full report: `checkpoints/paderborn_torque_residual_gdn_report.json`
+Full report: `checkpoints/paderborn/paderborn_torque_residual_gdn_report.json`
 (now contains both the free-fit and fixed-mu models' full results).

@@ -72,4 +72,4 @@ feature and which specific relationship broke, not just a single AUROC
 number), which plain GDN's forecast residual doesn't provide at all --
 not raw detection AUROC, where this comparison shows GDN still ahead.
 
-Full report: `checkpoints/paderborn_6ch_comparison_report.json`.
+Full report: `checkpoints/paderborn/paderborn_6ch_comparison_report.json`.

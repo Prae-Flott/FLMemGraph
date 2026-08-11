@@ -108,5 +108,5 @@ data-dependent, not just an under-exercised mechanism on sparse data.
   Paderborn's v3 write-up about not yet being able to cleanly separate
   "retrain variance" from "mechanism contribution").
 
-Full report: `checkpoints/robo3er_joint_prototype_v3_report.json`, model
-weights: `checkpoints/robo3er_joint_prototype_v3.pth`.
+Full report: `checkpoints/robo3er/robo3er_joint_prototype_v3_report.json`, model
+weights: `checkpoints/robo3er/robo3er_joint_prototype_v3.pth`.

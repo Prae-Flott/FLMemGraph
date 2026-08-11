@@ -21,7 +21,7 @@ from baselines.traditional import PCABaseline, IsolationForestBaseline  # noqa: 
 from baselines.gdn_baseline import GDNBaseline, GDNTunedBaseline  # noqa: E402
 from metrics import auroc  # noqa: E402
 
-OUT_DIR = Path(__file__).resolve().parents[1] / "checkpoints"
+OUT_DIR = Path(__file__).resolve().parents[1] / "checkpoints" / "robo3er"
 
 
 def main():

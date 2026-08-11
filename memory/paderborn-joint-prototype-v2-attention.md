@@ -121,5 +121,5 @@ as intended.
   been tried here yet -- a natural next step given how well the
   single-scalar version already worked.
 
-Full report: `checkpoints/paderborn_joint_prototype_v2_report.json`,
-model weights: `checkpoints/paderborn_joint_prototype_v2.pth`.
+Full report: `checkpoints/paderborn/paderborn_joint_prototype_v2_report.json`,
+model weights: `checkpoints/paderborn/paderborn_joint_prototype_v2.pth`.

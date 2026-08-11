@@ -13,7 +13,7 @@ architecture:
                   (src.conv_autoencoder.ConvAutoEncoder), no graph, no
                   memory -- the "no relational structure at all" baseline.
   C. Joint Prototype (full, D from the ablation study) -- reused from
-     `checkpoints/paderborn_joint_prototype_report.json` (deterministic,
+     `checkpoints/paderborn/paderborn_joint_prototype_report.json` (deterministic,
      same seed/data/split, no need to retrain) --
      `src.joint_prototype_model.JointPrototypeGDN`.
 
@@ -46,7 +46,7 @@ from datasets.paderborn_adapter import (  # noqa: E402
     load_bearing_with_physics, HEALTHY_CODES, ALL_DAMAGED_CODES, category_of, damage_origin_of,
 )
 
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "paderborn"
 
 NODE_NAMES = ["vibration_1", "phase_current_1", "phase_current_2", "force", "speed", "torque"]
 FIT_FRACTION = 0.70

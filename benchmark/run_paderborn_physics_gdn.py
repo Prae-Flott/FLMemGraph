@@ -52,7 +52,7 @@ from datasets.paderborn_adapter import (  # noqa: E402
     load_bearing_with_physics, HEALTHY_CODES, ALL_DAMAGED_CODES, category_of, damage_origin_of, CHANNELS,
 )
 
-OUT_DIR = REPO_ROOT / "checkpoints"
+OUT_DIR = REPO_ROOT / "checkpoints" / "paderborn"
 
 FIT_FRACTION = 0.70
 CALIB_FRACTION = 0.15

@@ -83,4 +83,4 @@ type (forecasting vs. reconstruction) also differs between the two runs
   `train_gdn_memory.py`) -- natural next step once/if a working physics
   signal is found for this dataset.
 
-Full report: `checkpoints/paderborn_physics_gdn_report.json`.
+Full report: `checkpoints/paderborn/paderborn_physics_gdn_report.json`.
