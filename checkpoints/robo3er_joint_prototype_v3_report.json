@@ -1,0 +1,107 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 5,
+    "window_len": 60,
+    "epochs": 12,
+    "prior_edges": [
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "odom_odo_angtw_z",
+        "imu_imu_angvel_z"
+      ],
+      [
+        "wheel_status_current_ma_left",
+        "wheel_vels_velocity_left"
+      ],
+      [
+        "wheel_status_current_ma_right",
+        "wheel_vels_velocity_right"
+      ]
+    ],
+    "edge_types": [
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "nonlinear",
+      "nonlinear"
+    ],
+    "min_proto_samples": 5
+  },
+  "nodes": [
+    "wheel_vels_velocity_left",
+    "wheel_vels_velocity_right",
+    "odom_odo_lintw_x",
+    "odom_odo_angtw_z",
+    "imu_imu_angvel_z",
+    "wheel_status_current_ma_left",
+    "wheel_status_current_ma_right"
+  ],
+  "final_prior_bias_strength": 1.0755655765533447,
+  "final_typed_temperature": 1.0,
+  "n_valid_prototypes_for_typed_calib": 9,
+  "fault_types": {
+    "Broken Pipe": {
+      "n": 59,
+      "A_prototype_only": 0.7640531642482624,
+      "B_prototype_plus_node": 0.9808763158964355,
+      "C_edge_only": 0.5911677437710848,
+      "D_full_v2": 0.8726984514083649,
+      "E_typed_edge_only": 0.5480632443197984,
+      "F_full_v3": 0.7950859651262041
+    },
+    "cable trapped": {
+      "n": 206,
+      "A_prototype_only": 0.9972468627040116,
+      "B_prototype_plus_node": 0.9996100207212871,
+      "C_edge_only": 0.9944064166142814,
+      "D_full_v2": 0.9944064166142814,
+      "E_typed_edge_only": 0.9988591650951084,
+      "F_full_v3": 0.9988591650951083
+    },
+    "Low battery": {
+      "n": 74,
+      "A_prototype_only": 0.9893544623760451,
+      "B_prototype_plus_node": 0.9973426664074146,
+      "C_edge_only": 0.9794704776719165,
+      "D_full_v2": 0.9847851448570873,
+      "E_typed_edge_only": 0.9853603603603603,
+      "F_full_v3": 0.9910558040054444
+    },
+    "stuck": {
+      "n": 149,
+      "A_prototype_only": 0.8215602015032268,
+      "B_prototype_plus_node": 0.7893953293740846,
+      "C_edge_only": 0.7408060129077945,
+      "D_full_v2": 0.7204384143691758,
+      "E_typed_edge_only": 0.6297539149888144,
+      "F_full_v3": 0.6592470989651231
+    }
+  },
+  "summary_mean_auroc": {
+    "A_prototype_only": 0.8930536727078865,
+    "B_prototype_plus_node": 0.9418060830998055,
+    "C_edge_only": 0.8264626627412693,
+    "D_full_v2": 0.8930821068122274,
+    "E_typed_edge_only": 0.7905091711910204,
+    "F_full_v3": 0.8610620082979699
+  }
+}

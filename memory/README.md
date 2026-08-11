@@ -101,6 +101,17 @@ where this work started (see each file's own note on provenance).
   physical-prior reference docs
   (including ones with NO hard prior found, like Sielaff) are in
   `benchmark/datasets/*_physics.md`.
+- [`robo3er-joint-prototype-v3.md`](robo3er-joint-prototype-v3.md) — first
+  run of `JointPrototypeGDNv3` outside Paderborn, on robo3er's kinematic
+  chain (7 nodes: wheels/odom/IMU/current). **Opposite pattern from
+  Paderborn**: node/prototype signal alone (0.942 mean AUROC) beats the
+  full v3 combination (0.861) — the new typed-edge signal is the weakest
+  in the table and net-HURTS via max-aggregation, especially on `stuck`
+  (this project's historically hardest fault). Confirms edge-vs-node
+  signal strength is dataset-dependent (Paderborn's faults break
+  cross-channel relationships; robo3er's faults look like single-node
+  value anomalies), sharpening the case for a learned (not fixed-max)
+  signal combination.
 - [`paderborn-joint-prototype-v3-typed-attention.md`](paderborn-joint-prototype-v3-typed-attention.md)
   — per `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`:
   adds relation-specific message functions (linear for current edges,
