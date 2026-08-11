@@ -10,15 +10,20 @@ where this work started (see each file's own note on provenance).
   signals each). Richest physics-graph structure of any dataset in this
   project so far — a strong next JointPrototypeGDNv3 target.
 - [`voraus-ad-joint-prototype-v3.md`](voraus-ad-joint-prototype-v3.md) —
-  first V3 run on voraus-AD (18 nodes: 3 signals x 6 joints,
-  within-joint-only typed edges). Result is WEAK across the board (mean
-  AUROC 0.66-0.68, most categories 0.55-0.72, `entangled` near/below
-  chance) — but **unlike Paderborn/robo3er, no fair GDN/AE baseline
-  exists yet on this dataset**, so these numbers can't be read as
-  good/bad/better-than-v2 until that comparison is built. Several
-  untested hypotheses noted (no cross-joint edges, zero-padding dilution
-  from variable-length samples, untuned hyperparameters for the much
-  larger 18-node/1164-timestep scale).
+  three iterations on voraus-AD, tracked in one file. (1) First pass, 18
+  nodes: weak (mean AUROC 0.66-0.68). (2) Expanded to 66 nodes (full
+  tracking chain + friction edge, per the paper's physics) using the SAME
+  raw-max aggregation: got WORSE, not better (`axis_friction` -- the
+  fault the expansion targeted -- regressed 0.566->0.489) — diagnosed as
+  the max-aggregation noise-floor problem, now sharp enough at 66
+  dimensions to be net-negative. (3) Fixed the aggregation (top-k-mean +
+  a second calibration stage against the calib split's own distribution)
+  and increased training (12->40 epochs): confirms the diagnosis and the
+  original physics prediction — `axis_friction` D jumped to 0.771 (+0.282
+  vs. the 18-node version), overall `C_edge_only` (0.732) is now the best
+  score across all three runs. **Still no fair GDN/AE baseline on this
+  dataset** — these numbers are a clear improvement over the prior two
+  runs but still can't be judged against an external yardstick.
 - [`fl-memory-physics-system.md`](fl-memory-physics-system.md) — the
   federated memory+structure system itself: encoder/memory-head/
   structure-head design, cross-robot codebook alignment, two real bugs

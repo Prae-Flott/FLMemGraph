@@ -5,27 +5,72 @@ official host, no registration; reference paper: Brockmann, Rudolph,
 Rosenhahn, Wandt, IEEE T-RO 2023, arXiv:2311.04765, `docs/voraus_ad_paper.pdf`).
 See `memory/voraus-ad-dataset.md` for the full verified structure.
 
-## Node set (18 nodes: 3 signals x 6 joints)
+## Node set (66 nodes: 11 signals x 6 joints)
 
-Per joint i in 1..6: `motor_iq_i` (motor current, drives torque),
-`motor_torque_i` (motor-side torque), `torque_sensor_a_i` (independent
-joint-side torque sensor -- the dataset has a redundant `_b_i` too, not
-used here to keep the graph at a comparable size to Paderborn/robo3er's
-prior 6-7 node graphs).
+REVISED (see `memory/voraus-ad-dataset.md`'s update note) -- the original
+18-node version (3 signals/joint: `motor_iq`, `motor_torque`,
+`torque_sensor_a` only) was scoped down purely to match Paderborn/
+robo3er's much smaller graphs, NOT because of any model or data
+constraint (`JointPrototypeGDNv3`'s components all scale gracefully with
+node count -- `SharedEncoder` is weight-SHARED across nodes,
+`JointPrototypeMemory`'s codebook and `TrendGraphAttentionHead`'s
+embeddings scale linearly, `TypedRelationAnomalyHead` only costs what you
+declare). It missed exactly the signals `benchmark/datasets/voraus_ad_physics.md`
+identified as most diagnostic (joint velocity/position for friction and
+the target/motor/joint tracking chain) and landed almost exactly at the
+reference paper's own "electrical signals alone" AUROC figure -- not a
+coincidence. This version adds every signal each of `voraus_ad_physics.md`'s
+5 documented relations actually needs (except the power/energy chain,
+which needs a multiplicative relation type `TypedRelationAnomalyHead`
+doesn't have yet):
+
+Per joint i in 1..6 (11 signals): `target_position_i`, `target_velocity_i`,
+`motor_position_i`, `motor_velocity_i`, `joint_position_i`,
+`joint_velocity_i` (the full 3-stage tracking chain, relation #1 in
+`voraus_ad_physics.md`), `motor_iq_i`, `motor_id_i` (relation #2's
+torque-forming vs. magnetizing current pair -- `motor_id_i` is a node but
+has no declared edge, since "should stay uncorrelated with torque" isn't
+a relation `TypedRelationAnomalyHead`'s message functions are built to
+express; it's included so v2's generic attention can still pick up a
+newly-appearing correlation if one emerges), `motor_torque_i`,
+`torque_sensor_a_i`, `torque_sensor_b_i` (both redundant torque sensors
+now, relation #3's cross-check).
 
 No cross-joint edges are declared -- the arm's actual kinematic coupling
 (DH parameters/link geometry) isn't in the parquet and hasn't been
 empirically characterized yet (see `memory/voraus-ad-dataset.md`'s "not
-done yet" list). Only within-joint edges are used, replicated identically
-across all 6 joints:
+done yet" list). 9 within-joint edges, replicated identically across all
+6 joints (54 edges total):
+  - `target_position_i -> motor_position_i`: "proportional" (closed-loop
+    position tracking, relation #1).
+  - `motor_position_i -> joint_position_i`: "proportional" (gearbox
+    transmission, relation #1).
+  - `target_velocity_i -> motor_velocity_i`: "proportional" (closed-loop
+    velocity tracking, relation #1).
+  - `motor_velocity_i -> joint_velocity_i`: "proportional" (gearbox
+    transmission, relation #1).
   - `motor_iq_i -> motor_torque_i`: "proportional" (motor current ~
     torque via the motor's torque constant Kt -- the same textbook
     relation `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`
-    Sec 9 uses as its own "proportional" example).
+    Sec 9 uses as its own "proportional" example; miscommutation is
+    defined by the reference paper as exactly this relation breaking,
+    relation #2 in `voraus_ad_physics.md`).
   - `motor_torque_i -> torque_sensor_a_i`: "nonlinear" (motor-side torque
     vs. the joint-side sensor differs through link/gearbox dynamics,
-    friction and compliance -- not assumed linear, especially under a
-    fault).
+    friction and compliance, relation #3).
+  - `motor_torque_i -> torque_sensor_b_i`: "nonlinear" (same as above,
+    the second redundant sensor).
+  - `torque_sensor_a_i -> torque_sensor_b_i`: "proportional" (the two
+    independent torque sensors measuring the SAME physical quantity
+    should closely agree -- the direct sensor-cross-check analogue of
+    robo3er's odometry-vs-IMU relation, relation #3).
+  - `joint_velocity_i -> motor_torque_i`: "nonlinear" (friction: the
+    reference paper defines `AXIS_FRICTION` as needing a higher motor
+    torque for the same movement -- a velocity-dependent (Coulomb +
+    viscous) extra torque term, relation #4. This is the single most
+    important addition vs. the original 18-node version: the friction
+    fault is a paper-documented example of exactly this relation
+    breaking, and it was entirely absent before.).
 
 ## Official train/test split (from the reference repo's `voraus_ad.py`)
 
@@ -67,15 +112,35 @@ CATEGORY_NAMES = {
 NUM_JOINTS = 6
 NODE_NAMES = []
 for _i in range(1, NUM_JOINTS + 1):
-    NODE_NAMES += [f"motor_iq_{_i}", f"motor_torque_{_i}", f"torque_sensor_a_{_i}"]
+    NODE_NAMES += [
+        f"target_position_{_i}", f"target_velocity_{_i}",
+        f"motor_position_{_i}", f"motor_velocity_{_i}",
+        f"joint_position_{_i}", f"joint_velocity_{_i}",
+        f"motor_iq_{_i}", f"motor_id_{_i}",
+        f"motor_torque_{_i}", f"torque_sensor_a_{_i}", f"torque_sensor_b_{_i}",
+    ]
 NODE_IDX = {name: i for i, name in enumerate(NODE_NAMES)}
 
 EDGES_NAMED = []
 EDGE_TYPES = []
 for _i in range(1, NUM_JOINTS + 1):
+    EDGES_NAMED.append((f"target_position_{_i}", f"motor_position_{_i}"))
+    EDGE_TYPES.append("proportional")
+    EDGES_NAMED.append((f"motor_position_{_i}", f"joint_position_{_i}"))
+    EDGE_TYPES.append("proportional")
+    EDGES_NAMED.append((f"target_velocity_{_i}", f"motor_velocity_{_i}"))
+    EDGE_TYPES.append("proportional")
+    EDGES_NAMED.append((f"motor_velocity_{_i}", f"joint_velocity_{_i}"))
+    EDGE_TYPES.append("proportional")
     EDGES_NAMED.append((f"motor_iq_{_i}", f"motor_torque_{_i}"))
     EDGE_TYPES.append("proportional")
     EDGES_NAMED.append((f"motor_torque_{_i}", f"torque_sensor_a_{_i}"))
+    EDGE_TYPES.append("nonlinear")
+    EDGES_NAMED.append((f"motor_torque_{_i}", f"torque_sensor_b_{_i}"))
+    EDGE_TYPES.append("nonlinear")
+    EDGES_NAMED.append((f"torque_sensor_a_{_i}", f"torque_sensor_b_{_i}"))
+    EDGE_TYPES.append("proportional")
+    EDGES_NAMED.append((f"joint_velocity_{_i}", f"motor_torque_{_i}"))
     EDGE_TYPES.append("nonlinear")
 PRIOR_EDGES = [(NODE_IDX[s], NODE_IDX[d]) for s, d in EDGES_NAMED]
 
