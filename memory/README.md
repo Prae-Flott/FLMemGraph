@@ -3,7 +3,7 @@
 Development history for this project, carried over from `~/Projects/FL-bench`
 where this work started (see each file's own note on provenance).
 
-- [`joint-prototype-scheme-b.md`](joint-prototype-scheme-b.md) — **Scheme B**
+- [`joint-prototype-scheme-v2.md`](joint-prototype-scheme-v2.md) — **V2**
   (Joint Prototype Memory, prototype + per-node deviation, NO edges),
   consolidated final conclusions across all 4 datasets tested. Best or
   near-best signal on 3 of 4 (Sielaff 0.978 vs. a 0.887 GDN baseline,
@@ -11,7 +11,7 @@ where this work started (see each file's own note on provenance).
   needs no physics prior, mechanism-agnostic, the recommended default
   starting point for any new dataset.
 - [`joint-prototype-scheme-v3.md`](joint-prototype-scheme-v3.md) — **Scheme
-  V3** (`JointPrototypeGDNv3`: Scheme B + typed relation-specific edges +
+  V3** (`JointPrototypeGDNv3`: V2 + typed relation-specific edges +
   prototype-conditioned standardization + anomaly attention),
   consolidated final conclusions plus a condensed lineage (physics-
   residual precursor -> v1 fixed-edge-list -> v2 learned attention -> v3
@@ -48,7 +48,7 @@ where this work started (see each file's own note on provenance).
   archives into `docs/paderborn_bearing_facts/` per explicit request.
 - [`paderborn-fl-model-run.md`](paderborn-fl-model-run.md) — the full
   single-machine (no federation) memory+structure pipeline run on
-  Paderborn, reusing `src/fl_model.FLGDNMemory` unchanged (a different
+  Paderborn, reusing `src/models/fl_model.FLGDNMemory` unchanged (a different
   architecture line from the Joint Prototype scheme above). Two real data
   bugs found+fixed (non-constant per-file sample counts, one unparseable
   `.mat` file). Category-mean AUROC looks strong (combined 1.000,

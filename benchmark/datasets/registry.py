@@ -132,7 +132,7 @@ DATASETS = {
                         "Memory's typed-relation Scheme V3 was originally developed on and wins most "
                         "clearly on (0.904 vs. a 0.819 fair GDN baseline) -- see "
                         "memory/joint-prototype-scheme-v3.md and the "
-                        "joint-prototype-scheme-b/joint-prototype-scheme-v3 entries in "
+                        "joint-prototype-scheme-v2/joint-prototype-scheme-v3 entries in "
                         "benchmark/baselines/registry.py.",
     },
     "voraus-AD": {
@@ -184,11 +184,11 @@ DATASETS = {
                         "full target/motor/joint tracking chain + both torque sensors + Iq/Id current x "
                         "6 joints, 54 within-joint-only declared edges) + "
                         "benchmark/run_voraus_ad_joint_prototype_v3.py implement Scheme V3 here. FINAL "
-                        "result: Scheme B (prototype+node, no edges) is the top path at 0.756 mean "
+                        "result: V2 (prototype+node, no edges) is the top path at 0.756 mean "
                         "AUROC, winning/tying on 11/12 fault categories -- the sole exception, "
                         "motor_commutation, is the one category whose fault is a textbook edge-relation "
                         "break. UNVALIDATED -- no fair GDN/AE baseline exists on this dataset yet. See "
-                        "memory/joint-prototype-scheme-v3.md and memory/joint-prototype-scheme-b.md for "
+                        "memory/joint-prototype-scheme-v3.md and memory/joint-prototype-scheme-v2.md for "
                         "the full cross-dataset conclusions (this dataset's iteration history is "
                         "condensed there, not kept separately).",
     },

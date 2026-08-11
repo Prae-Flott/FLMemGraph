@@ -6,10 +6,21 @@ description: Final conclusions for Joint Prototype Memory "Scheme V3" (typed rel
 # Scheme V3: typed-relation Joint Prototype GDN -- final cross-dataset
 # conclusions (consolidated 2026-08-11)
 
+## Naming note
+
+This document's "V3" is the current, final version. `memory/joint-prototype-scheme-v2.md`
+documents "V2" -- a DIFFERENT, later-named concept (renamed from "Scheme
+B", the no-edges-at-all baseline). Do not confuse V2 with the historical
+`JointPrototypeGDNv2` class discussed in the Lineage section below (which
+had generic edge attention but no typed relations, and was deleted in an
+earlier cleanup pass) -- that class predates and is unrelated to the
+current "V2" naming; it's referred to below as "the interim
+attention-only design" to avoid the collision.
+
 ## What it is
 
-`src/joint_prototype_model.JointPrototypeGDNv3` = Scheme B's encoder +
-`JointPrototypeMemory` (`memory/joint-prototype-scheme-b.md`), PLUS:
+`src/models/joint_prototype_model.JointPrototypeGDNv3` = V2's encoder +
+`JointPrototypeMemory` (`memory/joint-prototype-scheme-v2.md`), PLUS:
 - `TrendGraphAttentionHead`: GDN-style learned attention over each node's
   TopK-similar neighbors: declared physics edges bias attention logits
   (one learned scalar) but do NOT restrict which relationships can be
@@ -24,8 +35,8 @@ description: Final conclusions for Joint Prototype Memory "Scheme V3" (typed rel
 
 Needs domain knowledge: a verified physical relation between two signals
 (what kind -- proportional or nonlinear) must be declared as an edge
-before this adds anything Scheme B doesn't already provide. See
-`memory/joint-prototype-scheme-b.md` for when to prefer the simpler,
+before this adds anything V2 doesn't already provide. See
+`memory/joint-prototype-scheme-v2.md` for when to prefer the simpler,
 prior-free alternative instead.
 
 ## Lineage (condensed -- intermediate code removed, conclusions kept)
@@ -43,20 +54,24 @@ repo (code + checkpoints), their lessons folded in here:
    Joint Prototype Memory operates on DEVIATIONS from a matched
    prototype (`d_i = z_i - p_i*`) rather than raw magnitudes -- deviation
    space sidesteps the confound, magnitude space doesn't.
-2. **v1** (fixed edge list, one linear map per declared edge): did NOT
-   beat a fair same-footing plain-GDN baseline on Paderborn (0.802 vs.
-   0.819) -- the fixed-edge skeleton and single linear map per edge had
-   less capacity than GDN's own learned attention, and covered only the
-   declared pairs.
-3. **v2** (learned attention over all pairs, physics edges as an
-   attention-logit bias instead of a hard restriction): the first clear,
-   substantial win on Paderborn (0.873 vs. the 0.819 baseline) -- kept
-   deviation-space edges from v1, replaced the capacity-limited fixed
-   edge list with GDN-style attention. This became `TrendGraphAttentionHead`,
-   still used unchanged inside v3 today.
-4. **v3** (this version): adds typed relation-specific message functions
+2. **Fixed edge list** (one linear map per declared edge, an early
+   `JointPrototypeGDN` design): did NOT beat a fair same-footing
+   plain-GDN baseline on Paderborn (0.802 vs. 0.819) -- the fixed-edge
+   skeleton and single linear map per edge had less capacity than GDN's
+   own learned attention, and covered only the declared pairs.
+3. **The interim attention-only design** (historically called
+   `JointPrototypeGDNv2` -- NOT the same as this project's current "V2"
+   naming, see the note above): learned attention over all pairs,
+   physics edges as an attention-logit bias instead of a hard
+   restriction -- the first clear, substantial win on Paderborn (0.873
+   vs. the 0.819 baseline). Kept deviation-space edges from the fixed-edge
+   design, replaced the capacity-limited fixed edge list with GDN-style
+   attention. This became `TrendGraphAttentionHead`, still used unchanged
+   inside V3 today.
+4. **V3** (this version): adds typed relation-specific message functions
    + prototype-conditioned standardization + anomaly attention on top of
-   v2's attention head, per `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
+   the interim design's attention head, per
+   `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
 
 ## Cross-dataset results (final numbers, mean AUROC per dataset)
 
@@ -68,7 +83,7 @@ repo (code + checkpoints), their lessons folded in here:
 | fair baselines (GDN / AE, Paderborn) | 0.819 / 0.679 | | | | | | V3 beats both |
 
 **Only Paderborn's fault mechanism is dominated by the declared edges.**
-Both other datasets' best path is B (Scheme B, no edges at all) -- the
+Both other datasets' best path is B (V2, no edges at all) -- the
 typed-edge mechanism (E) never wins outright anywhere, and the "kitchen
 sink" combination (F) never beats the single best individual signal on
 any dataset. This is the central, repeatedly-confirmed finding: **which
@@ -76,7 +91,7 @@ signal wins is a property of the dataset's fault mechanisms, not of
 model capability** -- Paderborn's bearing damage genuinely breaks
 cross-channel physical coupling (vibration/force/torque/current); most
 of robo3er's and voraus-AD's faults look like a single value drifting,
-which Scheme B already captures without needing any declared relation.
+which V2 already captures without needing any declared relation.
 
 The ONE consistent exception within otherwise B-dominated datasets:
 voraus-AD's `motor_commutation` fault (current stops predicting torque
@@ -114,8 +129,8 @@ start, not raw max.
 - Physics references per dataset: `benchmark/datasets/paderborn_physics.md`,
   `benchmark/datasets/robo3er_physics.md`, `benchmark/datasets/voraus_ad_physics.md`
   (Sielaff has no verified physics prior -- `benchmark/datasets/sielaff_physics.md`
-  documents that explicitly; only Scheme B was run there, see
-  `memory/joint-prototype-scheme-b.md`).
+  documents that explicitly; only V2 was run there, see
+  `memory/joint-prototype-scheme-v2.md`).
 
 ## What's NOT done
 

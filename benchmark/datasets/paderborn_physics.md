@@ -214,6 +214,6 @@ confounded experimental design or on friction being a large share of the
 torque budget.
 
 These were precursor experiments to this project's Joint Prototype Memory
-line (Scheme B / Scheme V3) -- the scripts and checkpoint reports were
+line (V2 / Scheme V3) -- the scripts and checkpoint reports were
 removed once superseded; conclusions are preserved in this file and
 condensed into `memory/joint-prototype-scheme-v3.md`'s lineage section.

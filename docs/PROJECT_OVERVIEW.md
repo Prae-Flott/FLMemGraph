@@ -10,10 +10,10 @@ See `docs/mem_phys_prompt_zh.md` for the original design spec (robo3er,
 per-feature memory + latent structure head), and
 `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md` for the
 Joint Prototype Memory design this project's main anomaly-detection line
-now implements as two consolidated final versions -- **Scheme B**
+now implements as two consolidated final versions -- **V2**
 (prototype + per-node deviation, no edges, mechanism-agnostic) and
 **Scheme V3** (adds typed relation-specific edges, pays off only when a
-verified physical relation exists) -- see `memory/joint-prototype-scheme-b.md`
+verified physical relation exists) -- see `memory/joint-prototype-scheme-v2.md`
 and `memory/joint-prototype-scheme-v3.md` for the cross-dataset results,
 and `memory/` generally for the rest of the development history.
 
@@ -36,7 +36,7 @@ FLMemGraph/
 │   │                     (discrete prototypical memory + memory-augmented GDN),
 │   │                     conv_autoencoder.py (reconstruction AE, used by IFCAAE baseline),
 │   │                     fl_model.py (federated memory+structure head), joint_prototype_model.py
-│   │                     (Scheme B + Scheme V3 -- SharedEncoder, JointPrototypeMemory,
+│   │                     (V2 + Scheme V3 -- SharedEncoder, JointPrototypeMemory,
 │   │                     TrendGraphAttentionHead, TypedRelationAnomalyHead, JointPrototypeGDNv3)
 │   ├── robo3er/          dataset.py (loader), feature_groups.py, kinematics.py (physics
 │   │                     residual), fl_dataset.py (per-client federated split),
@@ -47,7 +47,7 @@ FLMemGraph/
 │   └── decision_logic.py decision logic (incl. three_level_decision), general-purpose,
 │                         not tied to one dataset/model group
 ├── benchmark/            baseline methods + public-dataset registry, including real FedAvg,
-│                         IFCAAE, GDN-tuned, Scheme B/V3 runs per dataset, and a
+│                         IFCAAE, GDN-tuned, V2/V3 runs per dataset, and a
 │                         Sielaff-dataset GDN run (see benchmark/README.md for what's
 │                         implemented vs. scaffolded)
 ├── checkpoints/          trained model weights + evaluation reports, one subfolder per

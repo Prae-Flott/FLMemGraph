@@ -171,23 +171,23 @@ sample counts across the 2560 `.mat` files; one file that fails to parse
 with scipy). Full per-bearing table and follow-ups:
 `memory/paderborn-fl-model-run.md`.
 
-**Joint Prototype Memory: Scheme B and Scheme V3** -- this project's main
+**Joint Prototype Memory: V2 and Scheme V3** -- this project's main
 physics-informed anomaly detection line, now consolidated into two final
 versions after several intermediate iterations (fixed-edge lists,
 parameter-level physics residuals) were superseded and removed (code +
 checkpoints deleted, conclusions preserved in memory):
 
-- **Scheme B** (`src/joint_prototype_model.SharedEncoder` +
+- **V2** (`src/models/joint_prototype_model.SharedEncoder` +
   `JointPrototypeMemory`, no edges/relations at all -- mechanism-
   agnostic, needs no physics prior): best or near-best signal on 3 of 4
-  datasets tested -- Sielaff (`run_sielaff_joint_prototype_b.py`, 0.978
+  datasets tested -- Sielaff (`run_sielaff_joint_prototype_v2.py`, 0.978
   mean AUROC, beats the dataset's existing tuned-GDN baseline by +0.091
   with ZERO physics prior, since none exists for this dataset), robo3er
   (0.942), voraus-AD (0.756, wins/ties 11 of 12 fault categories).
   Recommended default for any new dataset before investing in physics-
   relation analysis. Full cross-dataset table:
-  `memory/joint-prototype-scheme-b.md`.
-- **Scheme V3** (`JointPrototypeGDNv3`: Scheme B + GDN-style learned
+  `memory/joint-prototype-scheme-v2.md`.
+- **Scheme V3** (`JointPrototypeGDNv3`: V2 + GDN-style learned
   attention over declared-edge-biased neighbors + typed relation-
   specific message functions + prototype-conditioned edge-residual
   standardization + anomaly attention): wins clearly ONLY on Paderborn
@@ -196,9 +196,9 @@ checkpoints deleted, conclusions preserved in memory):
   dataset with literature-verified physical relations (bearing
   vibration/force/torque/current coupling) a real fault mechanism
   actually breaks. Also run on robo3er (`run_robo3er_joint_prototype_v3.py`)
-  and voraus-AD (`run_voraus_ad_joint_prototype_v3.py`), where Scheme B
+  and voraus-AD (`run_voraus_ad_joint_prototype_v3.py`), where V2
   wins instead. Needs domain knowledge: a verified physical relation
-  must be declared as an edge before this adds anything Scheme B
+  must be declared as an edge before this adds anything V2
   doesn't already give -- per-dataset physical-prior reference docs
   (formulas + what's verified vs. untried, including datasets with no
   hard prior found) are in `benchmark/datasets/robo3er_physics.md`,

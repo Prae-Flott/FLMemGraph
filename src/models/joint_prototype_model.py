@@ -4,13 +4,13 @@ detection, per `docs/joint_prototype_three_level_anomaly_prompt.md` and
 `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
 
 This module now holds the two consolidated final versions this project's
-Joint Prototype Memory line converged on (see `memory/joint-prototype-scheme-b.md`
+Joint Prototype Memory line converged on (see `memory/joint-prototype-scheme-v2.md`
 and `memory/joint-prototype-scheme-v3.md` for the full cross-dataset
 results and rationale; earlier intermediate iterations -- a fixed-edge-
 list version and a physics-residual precursor -- were superseded and
 removed, their conclusions preserved in those memory files):
 
-- **Scheme B** (`SharedEncoder` + `JointPrototypeMemory`, no edge head at
+- **V2** (`SharedEncoder` + `JointPrototypeMemory`, no edge head at
   all): "has the WHOLE device been in roughly this joint state before"
   (`d_G`, device-level) + "has this ONE signal's value drifted from what
   it normally looks like in this operating regime" (`s_node`, per-node) --
@@ -19,7 +19,7 @@ removed, their conclusions preserved in those memory files):
   prototypes here are a full `[N, D]` snapshot of ALL nodes together, so
   node anomaly is inherently conditioned on which joint operating regime
   the memory thinks the device is in.
-- **Scheme V3** (`JointPrototypeGDNv3`): Scheme B's encoder/memory, PLUS
+- **Scheme V3** (`JointPrototypeGDNv3`): V2's encoder/memory, PLUS
   `TrendGraphAttentionHead` (GDN-style learned attention over neighbors,
   declared physics edges bias but don't restrict it) AND
   `TypedRelationAnomalyHead` (relation-specific message functions +
@@ -28,7 +28,7 @@ removed, their conclusions preserved in those memory files):
   relate and how (proportional/nonlinear) -- pays off specifically when a
   fault's failure mechanism matches a declared relation breaking (e.g.
   Paderborn's vibration/torque/current coupling, voraus-AD's
-  current-vs-torque miscommutation fault); Scheme B otherwise wins on
+  current-vs-torque miscommutation fault); V2 otherwise wins on
   faults that manifest as a single value drifting rather than a relation
   breaking (robo3er, most of voraus-AD, all of Sielaff).
 
