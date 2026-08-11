@@ -28,11 +28,11 @@ padded array, no further windowing needed).
 
 ## Aggregation fix (v3 of this script)
 
-The 66-node run (see `memory/voraus-ad-joint-prototype-v3.md`'s update
-note) found the typed-edge signal got WORSE than the 18-node version
+The 66-node run (see `memory/joint-prototype-scheme-v3.md`'s voraus-AD
+section) found the typed-edge signal got WORSE than the 18-node version
 despite adding the friction edge it was specifically missing -- diagnosed
-as the known max-aggregation noise-floor problem
-(`memory/paderborn-joint-prototype.md`), sharply worse here because
+as the known max-aggregation noise-floor problem (also documented in
+`memory/joint-prototype-scheme-v3.md`), sharply worse here because
 `s_node`/`s_edge`/`s_node_typed` each grew to 66 dimensions: taking a
 raw `.max(axis=1)` over more dimensions systematically inflates the
 right tail of the NORMAL test set's score distribution (more chances for

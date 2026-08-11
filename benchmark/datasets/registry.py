@@ -128,7 +128,12 @@ DATASETS = {
                         "crude 125x box-average decimation washes out the high-frequency impulsive "
                         "signature artificial single-point defects rely on -- see "
                         "memory/paderborn-fl-model-run.md for the full per-bearing table and "
-                        "untested follow-ups.",
+                        "untested follow-ups. Separately, this is also the dataset Joint Prototype "
+                        "Memory's typed-relation Scheme V3 was originally developed on and wins most "
+                        "clearly on (0.904 vs. a 0.819 fair GDN baseline) -- see "
+                        "memory/joint-prototype-scheme-v3.md and the "
+                        "joint-prototype-scheme-b/joint-prototype-scheme-v3 entries in "
+                        "benchmark/baselines/registry.py.",
     },
     "voraus-AD": {
         "category": "A",
@@ -173,28 +178,19 @@ DATASETS = {
                         "the reference paper: target/motor/joint tracking chain, current->torque "
                         "(the paper's own worked 'proportional' example, with miscommutation defined "
                         "as exactly this relation breaking), redundant torque-sensor cross-check, "
-                        "friction as a target/velocity->torque relation NOT currently declared as an "
-                        "edge, the 3-stage power-conservation chain, and the paper's own ablation "
-                        "finding that mechanical signals matter far more than electrical ones -- a "
-                        "strong, paper-corroborated explanation for the first V3 run's weak result) + "
-                        "benchmark/datasets/voraus_ad_adapter.py (now 66 nodes: full target/motor/"
-                        "joint tracking chain + both torque sensors + Iq/Id current x 6 joints, 54 "
-                        "within-joint-only declared edges including a friction edge "
-                        "joint_velocity->motor_torque) + benchmark/run_voraus_ad_joint_prototype_v3.py "
-                        "(now with a two-stage top-k-mean aggregation replacing raw max, and 40 "
-                        "training epochs, later pushed to 100 -- true convergence found at epoch 57, "
-                        "best-checkpoint selection recovers it automatically) implement four iterations "
-                        "of a V3 run. First pass (18 nodes) was weak (mean AUROC 0.66-0.68); expanding to "
-                        "66 nodes with the SAME raw-max aggregation made it WORSE (axis_friction regressed "
-                        "to 0.489 despite adding the exact edge predicted to help); fixing the aggregation "
-                        "+ more training confirmed the physics prediction (axis_friction D jumped to "
-                        "0.771, then 0.789 with further training). FINAL/BEST result: B (prototype+node, "
-                        "NO edge signal) is the top path at 0.756, winning/tying on 11/12 fault categories "
-                        "-- the sole exception, motor_commutation, is the one category whose fault is a "
-                        "textbook edge-relation break, same 'node beats edge except for the one relation-"
-                        "matched fault' pattern as robo3er, opposite of Paderborn. UNVALIDATED -- no fair "
-                        "GDN/AE baseline exists on this dataset yet. See "
-                        "memory/voraus-ad-joint-prototype-v3.md for the full four-iteration breakdown.",
+                        "friction as a target/velocity->torque relation, the 3-stage power-conservation "
+                        "chain, and the paper's own ablation finding that mechanical signals matter far "
+                        "more than electrical ones) + benchmark/datasets/voraus_ad_adapter.py (66 nodes: "
+                        "full target/motor/joint tracking chain + both torque sensors + Iq/Id current x "
+                        "6 joints, 54 within-joint-only declared edges) + "
+                        "benchmark/run_voraus_ad_joint_prototype_v3.py implement Scheme V3 here. FINAL "
+                        "result: Scheme B (prototype+node, no edges) is the top path at 0.756 mean "
+                        "AUROC, winning/tying on 11/12 fault categories -- the sole exception, "
+                        "motor_commutation, is the one category whose fault is a textbook edge-relation "
+                        "break. UNVALIDATED -- no fair GDN/AE baseline exists on this dataset yet. See "
+                        "memory/joint-prototype-scheme-v3.md and memory/joint-prototype-scheme-b.md for "
+                        "the full cross-dataset conclusions (this dataset's iteration history is "
+                        "condensed there, not kept separately).",
     },
     # ---------------------------------------------------------- category B --
     "MVTec-AD": {

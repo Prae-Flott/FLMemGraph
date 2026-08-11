@@ -1,59 +1,46 @@
 """
 Joint Prototype Memory + three-level (node/edge/device) anomaly
-detection, per `docs/joint_prototype_three_level_anomaly_prompt.md`.
+detection, per `docs/joint_prototype_three_level_anomaly_prompt.md` and
+`docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
 
-## How this differs from `fl_model.FLGDNMemory` (the previous design)
+This module now holds the two consolidated final versions this project's
+Joint Prototype Memory line converged on (see `memory/joint-prototype-scheme-b.md`
+and `memory/joint-prototype-scheme-v3.md` for the full cross-dataset
+results and rationale; earlier intermediate iterations -- a fixed-edge-
+list version and a physics-residual precursor -- were superseded and
+removed, their conclusions preserved in those memory files):
 
-`fl_model.py`'s memory head quantizes each node INDEPENDENTLY against its
-own shared codebook (per-feature normality: "has THIS feature's value
-been seen before, in isolation"). This module's `JointPrototypeMemory`
-instead maintains prototypes that are a full `[N, D]` snapshot of ALL
-nodes together -- a prototype answers "has the WHOLE device been in
-roughly this joint state before" (e.g. "1500rpm + 1000N + normal
-bearing"), not "has vibration alone looked like this." Retrieval picks
-ONE best-matching joint prototype for the whole window, then node anomaly
-is measured against THAT prototype's per-node component -- so node
-anomaly is inherently conditioned on which operating regime the memory
-thinks we're in, not compared against a pooled-across-all-regimes normal
-range.
+- **Scheme B** (`SharedEncoder` + `JointPrototypeMemory`, no edge head at
+  all): "has the WHOLE device been in roughly this joint state before"
+  (`d_G`, device-level) + "has this ONE signal's value drifted from what
+  it normally looks like in this operating regime" (`s_node`, per-node) --
+  mechanism-agnostic, needs no declared physics relations. `JointPrototypeMemory`
+  differs from `fl_model.FLGDNMemory`'s per-feature-independent codebook:
+  prototypes here are a full `[N, D]` snapshot of ALL nodes together, so
+  node anomaly is inherently conditioned on which joint operating regime
+  the memory thinks the device is in.
+- **Scheme V3** (`JointPrototypeGDNv3`): Scheme B's encoder/memory, PLUS
+  `TrendGraphAttentionHead` (GDN-style learned attention over neighbors,
+  declared physics edges bias but don't restrict it) AND
+  `TypedRelationAnomalyHead` (relation-specific message functions +
+  prototype-conditioned residual standardization + anomaly attention over
+  ONLY the declared edges). Needs domain knowledge of which signal pairs
+  relate and how (proportional/nonlinear) -- pays off specifically when a
+  fault's failure mechanism matches a declared relation breaking (e.g.
+  Paderborn's vibration/torque/current coupling, voraus-AD's
+  current-vs-torque miscommutation fault); Scheme B otherwise wins on
+  faults that manifest as a single value drifting rather than a relation
+  breaking (robo3er, most of voraus-AD, all of Sielaff).
 
-## Why the edge head predicts TREND (relative deviation), not absolute
-## value -- the key design change from this project's earlier physics
-## residual work
-
-Every `kinematics.py`-style exact-magnitude residual tried on Paderborn
-(`src/paderborn_physics.py`, `memory/paderborn-*-residual*.md`) made
-detection WORSE, and the diagnosis was specific: this dataset's 4
-discrete operating conditions confound the predictors (force/speed/
-torque aren't varied independently), so a regression fit across POOLED
-RAW MAGNITUDES can't reliably separate physical effects from
-which-condition-this-is.
-
-`TrendEdgeHead` sidesteps this by operating on DEVIATIONS from the
-locally-matched joint prototype (`d_i = z_i - p_i*`), not raw magnitudes.
-Physically: "does feature j's deviation from ITS OWN normal-for-this-
-regime baseline track feature i's deviation from ITS OWN baseline, the
-way their physical relation says it should" -- a trend/co-movement
-question, answerable consistently across different operating regimes,
-rather than "what absolute current value does this torque value predict"
--- a magnitude question that Paderborn's confounded 4-point design can't
-support a reliable answer to. This is the literal implementation of
-"关注趋势关系，不追求参数级别" from the design conversation that produced
-`docs/joint_prototype_three_level_anomaly_prompt.md`.
-
-## Simplifications vs. the full design doc (v1, deliberately scoped down)
-
-- Only ONE generic learned edge operator type (a linear map
-  `d_j_hat = W_ij @ d_i`, trained end-to-end with the encoder on healthy
-  data) is implemented, not the full typed-relation taxonomy (proportional/
-  integral/derivative/thermal/frequency-scaling/...) Sec 6.1 describes --
-  matches this project's repeated choice (`kinematics.py`, `gdn_model.py`)
-  to implement the simplest physically-motivated structure first, not a
-  claim the richer taxonomy isn't worth adding later.
-- The physics-edge SKELETON (which node pairs get an edge at all) is
-  still supplied by the caller (domain knowledge), not learned -- matches
-  Sec 6.1's "each edge needs a declared relation," just without yet
-  discriminating relation TYPES from each other.
+Both operate on DEVIATIONS from the locally-matched joint prototype
+(`d_i = z_i - p_i*`), not raw magnitudes -- "does feature j's deviation
+from ITS OWN normal-for-this-regime baseline track feature i's deviation
+from ITS OWN baseline the way their physical relation says it should," a
+trend/co-movement question answerable consistently across different
+operating regimes, unlike a raw-magnitude regression which can't
+separate a physical effect from which regime a sample happens to be in
+(the specific failure mode of this project's earlier, now-removed,
+physics-residual precursor on Paderborn).
 """
 import numpy as np
 import torch
@@ -123,47 +110,19 @@ class JointPrototypeMemory(nn.Module):
         return float((self.usage_count > 0).float().mean())
 
 
-class TrendEdgeHead(nn.Module):
-    """Typed physics-skeleton edges, TREND-based (see module docstring
-    for why): predicts node j's DEVIATION from its own matched-prototype
-    baseline from node i's deviation from ITS baseline, via one learned
-    linear map per edge -- not an absolute-value prediction."""
-
-    def __init__(self, edges, embed_dim: int):
-        """edges: list of (src_node_idx, dst_node_idx) int pairs, indices
-        into the shared node ordering used everywhere else in the model."""
-        super().__init__()
-        self.edges = edges
-        self.ops = nn.ModuleList([nn.Linear(embed_dim, embed_dim, bias=False) for _ in edges])
-
-    def forward(self, z, p_star):
-        """z, p_star: [B, N, D]. Returns edge_scores [B, num_edges]
-        (squared residual per edge) and preds (list of [B, D] predicted
-        deviations, for diagnostics)."""
-        d = z - p_star  # [B, N, D], deviation from matched prototype per node
-        edge_scores, preds = [], []
-        for (i, j), op in zip(self.edges, self.ops):
-            pred_dj = op(d[:, i])  # [B, D]
-            actual_dj = d[:, j]
-            s = (actual_dj - pred_dj).pow(2).sum(-1)  # [B]
-            edge_scores.append(s)
-            preds.append(pred_dj)
-        return torch.stack(edge_scores, dim=1), preds
-
-
 class TrendGraphAttentionHead(nn.Module):
-    """v2 edge/structural head, per the design correction: edge anomaly
-    should be computed by GDN-style learned ATTENTION over each node's
-    neighbors (TopK by learned embedding similarity, same mechanism as
-    `gdn_model.GDN` / `fl_model.StructureHead`), not a fixed hand-declared
-    edge list with one linear map per edge (`TrendEdgeHead` above, v1) --
+    """Scheme V3's edge/structural head: edge anomaly is computed by
+    GDN-style learned ATTENTION over each node's neighbors (TopK by
+    learned embedding similarity, same mechanism as `gdn_model.GDN` /
+    `fl_model.StructureHead`), not a fixed hand-declared edge list with
+    one linear map per edge (an earlier, removed design) --
     "对于物理先验没有表示的边，GDN也可以学习他们之间的关系" (for edges the
     physics prior doesn't cover, GDN can still learn them).
 
-    Keeps the ONE genuinely new idea from v1 (operate on deviations from
-    the matched joint prototype, `d = z - p_star`, not raw `z` -- see
-    module docstring for why this sidesteps Paderborn's confounded-
-    operating-condition collinearity problem): attention aggregates
+    Operates on deviations from the matched joint prototype
+    (`d = z - p_star`, not raw `z` -- see module docstring for why this
+    sidesteps Paderborn's confounded-operating-condition collinearity
+    problem): attention aggregates
     NEIGHBORS' deviations to predict THIS node's deviation, exactly the
     way `StructureHead` predicts z_i from other nodes' z_j, but now in
     deviation space.
@@ -196,11 +155,9 @@ class TrendGraphAttentionHead(nn.Module):
         )
 
         # prior_mask[target, source] = 1 if (source -> target) is a declared physics edge.
-        # A single LEARNED scalar strength scales the whole mask (matches this project's
-        # earlier archived FTA-prior experiment's scalar-bias variant -- see
-        # memory/paderborn-joint-prototype.md's "what's not done" list; the typed
-        # per-relation-strength version found there is a natural future extension, not
-        # implemented here).
+        # A single LEARNED scalar strength scales the whole mask -- see
+        # memory/joint-prototype-scheme-v3.md for why a per-relation-TYPE strength
+        # (TypedRelationAnomalyHead below) was added on top of this single shared scalar.
         prior_mask = torch.zeros(num_nodes, num_nodes)
         if prior_edges:
             for src, dst in prior_edges:
@@ -242,48 +199,6 @@ class TrendGraphAttentionHead(nn.Module):
 
         s_node_edge = (d - d_hat).pow(2).sum(dim=-1)  # [B, N]
         return d_hat, s_node_edge
-
-
-class JointPrototypeGDNv2(nn.Module):
-    """v2: same encoder + joint prototype memory as JointPrototypeGDN,
-    but the edge/structural head is TrendGraphAttentionHead (learned
-    attention over neighbors, physics-informed but not physics-
-    restricted) instead of TrendEdgeHead (fixed edge list, one linear map
-    each). See TrendGraphAttentionHead's docstring for the design
-    correction this implements."""
-
-    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
-                 num_prototypes: int, prior_edges=None, top_k: int = None, node_weights=None):
-        super().__init__()
-        self.num_nodes = num_nodes
-        self.encoder = SharedEncoder(window_size, embed_dim)
-        self.memory = JointPrototypeMemory(num_prototypes, num_nodes, embed_dim)
-        self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k, prior_edges=prior_edges)
-        self.decoder = nn.Linear(embed_dim, window_size)  # training-only
-        self.register_buffer(
-            "node_weights",
-            node_weights if node_weights is not None else torch.ones(num_nodes) / num_nodes,
-        )
-
-    def forward(self, x, training_mode=False):
-        """x: [B, T, N]. Returns dict with z, memory outputs (idx, p_star,
-        d_G, s_node), s_edge [B, N] (per-node structural anomaly from
-        attention over deviations). `training_mode=True` also runs the
-        decoder (dropped otherwise)."""
-        B, T, N = x.shape
-        assert N == self.num_nodes
-
-        z = self.encoder(x)
-        mem_out = self.memory(z, self.node_weights)
-        d_hat, s_edge = self.edge_head(z, mem_out["p_star"])
-
-        out = {"z": z, "d_hat": d_hat, "s_edge": s_edge, **mem_out}
-        if training_mode:
-            out["x_hat"] = self.decoder(z).transpose(1, 2)
-        return out
-
-    def device_score(self, s_node, s_edge, lambda_n: float = 1.0, lambda_e: float = 1.0):
-        return lambda_n * s_node.mean(axis=-1) + lambda_e * s_edge.mean(axis=-1)
 
 
 class TypedRelationAnomalyHead(nn.Module):
@@ -464,46 +379,3 @@ class JointPrototypeGDNv3(nn.Module):
                       lambda_e: float = 1.0, lambda_t: float = 1.0):
         return (lambda_n * s_node.mean(axis=-1) + lambda_e * s_edge.mean(axis=-1)
                 + lambda_t * s_node_typed.mean(axis=-1))
-
-
-class JointPrototypeGDN(nn.Module):
-    """Full model: shared encoder + joint prototype memory (device-level
-    novelty + node anomaly) + trend edge head (edge anomaly) +
-    training-only decoder (grounds z against representation collapse,
-    dropped at inference -- same "解码器可裁" convention as
-    fl_model.FLGDNMemory)."""
-
-    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
-                 num_prototypes: int, edges, node_weights=None):
-        super().__init__()
-        self.num_nodes = num_nodes
-        self.encoder = SharedEncoder(window_size, embed_dim)
-        self.memory = JointPrototypeMemory(num_prototypes, num_nodes, embed_dim)
-        self.edge_head = TrendEdgeHead(edges, embed_dim)
-        self.decoder = nn.Linear(embed_dim, window_size)  # training-only
-        self.register_buffer(
-            "node_weights",
-            node_weights if node_weights is not None else torch.ones(num_nodes) / num_nodes,
-        )
-
-    def forward(self, x, training_mode=False):
-        """x: [B, T, N]. Returns dict with z, memory outputs (idx, p_star,
-        d_G, s_node), edge_scores [B, num_edges]. `training_mode=True`
-        also runs the decoder (dropped otherwise)."""
-        B, T, N = x.shape
-        assert N == self.num_nodes
-
-        z = self.encoder(x)  # [B, N, D]
-        mem_out = self.memory(z, self.node_weights)
-        edge_scores, _ = self.edge_head(z, mem_out["p_star"])
-
-        out = {"z": z, "edge_scores": edge_scores, **mem_out}
-        if training_mode:
-            out["x_hat"] = self.decoder(z).transpose(1, 2)  # [B, N, T] -> [B, T, N]
-        return out
-
-    def device_score(self, s_node, edge_scores, lambda_n: float = 1.0, lambda_e: float = 1.0):
-        """S_device = lambda_n * mean(node scores) + lambda_e * mean(edge
-        scores), Sec 8.1's simplest aggregation. s_node: [*, N],
-        edge_scores: [*, num_edges] (numpy or torch, same leading dims)."""
-        return lambda_n * s_node.mean(axis=-1) + lambda_e * edge_scores.mean(axis=-1)
