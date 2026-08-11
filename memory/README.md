@@ -8,8 +8,17 @@ where this work started (see each file's own note on provenance).
   2122 samples, 12 named fault categories, 112 machine-data signals: a
   full per-joint kinematic+electromechanical chain, six joints x 18
   signals each). Richest physics-graph structure of any dataset in this
-  project so far — a strong next JointPrototypeGDNv3 target. Download +
-  structure verification only; no adapter/pipeline built yet.
+  project so far — a strong next JointPrototypeGDNv3 target.
+- [`voraus-ad-joint-prototype-v3.md`](voraus-ad-joint-prototype-v3.md) —
+  first V3 run on voraus-AD (18 nodes: 3 signals x 6 joints,
+  within-joint-only typed edges). Result is WEAK across the board (mean
+  AUROC 0.66-0.68, most categories 0.55-0.72, `entangled` near/below
+  chance) — but **unlike Paderborn/robo3er, no fair GDN/AE baseline
+  exists yet on this dataset**, so these numbers can't be read as
+  good/bad/better-than-v2 until that comparison is built. Several
+  untested hypotheses noted (no cross-joint edges, zero-padding dilution
+  from variable-length samples, untuned hyperparameters for the much
+  larger 18-node/1164-timestep scale).
 - [`fl-memory-physics-system.md`](fl-memory-physics-system.md) — the
   federated memory+structure system itself: encoder/memory-head/
   structure-head design, cross-robot codebook alignment, two real bugs

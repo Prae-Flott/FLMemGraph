@@ -159,7 +159,7 @@ DATASETS = {
                           "physical mechanisms (friction, added weight, 3 collision types, gripper/"
                           "part handling faults, motor commutation) give much finer-grained "
                           "comparison than Paderborn's 3-category damage taxonomy.",
-        "status": "downloaded",
+        "status": "implemented",
         "path": "data/voraus_ad/voraus-ad-dataset-100hz.parquet (~1.1GB, the 100Hz variant used by "
                  "the reference repo; a 500Hz/~5.3GB variant also exists but was not fetched), "
                  "reference paper in docs/voraus_ad_paper.pdf.",
@@ -167,10 +167,15 @@ DATASETS = {
                    "no registration; code/loader reference at "
                    "https://github.com/vorausrobotik/voraus-ad-dataset). Dataset itself is CC "
                    "BY-NC-SA 4.0 (non-commercial), repo code is MIT.",
-        "note_extra": "No adapter/pipeline built yet -- this is a download-and-document-only step. "
-                        "See memory/voraus-ad-dataset.md for the verified structure and the "
-                        "train/test split convention (train = variant PRE_A only, i.e. setting==72; "
-                        "test = every other variant, normal and anomalous).",
+        "note_extra": "benchmark/datasets/voraus_ad_adapter.py (18 nodes: motor_iq/motor_torque/"
+                        "torque_sensor_a x 6 joints, 12 within-joint-only declared edges) + "
+                        "benchmark/run_voraus_ad_joint_prototype_v3.py implement a first V3 run. "
+                        "Result is WEAK across the board (mean AUROC 0.66-0.68) but UNVALIDATED -- "
+                        "no fair GDN/AE baseline exists on this dataset yet, so these numbers can't "
+                        "be judged good/bad until that comparison is built. See "
+                        "memory/voraus-ad-joint-prototype-v3.md for the full breakdown and untested "
+                        "hypotheses (no cross-joint edges, zero-padding dilution, untuned "
+                        "hyperparameters at this much larger 18-node/1164-timestep scale).",
     },
     # ---------------------------------------------------------- category B --
     "MVTec-AD": {

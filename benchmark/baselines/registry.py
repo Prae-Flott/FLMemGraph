@@ -177,6 +177,25 @@ BASELINES = {
                                          "memory/paderborn-joint-prototype-v3-typed-attention.md for the full "
                                          "table, per-bearing breakdown, and honest analysis of what did/didn't "
                                          "work."},
+    "voraus-ad-joint-prototype-v3": {"category": "③", "type": "physics_prior", "status": "implemented",
+                                "module": "benchmark/run_voraus_ad_joint_prototype_v3.py, "
+                                           "src.joint_prototype_model.JointPrototypeGDNv3",
+                                "note": "Third dataset for JointPrototypeGDNv3, after Paderborn and robo3er -- "
+                                         "18 nodes (motor_iq/motor_torque/torque_sensor_a x 6 joints), 12 "
+                                         "declared edges replicated within each joint ('proportional' current-"
+                                         "torque, 'nonlinear' motor-torque-to-sensor), NO cross-joint edges "
+                                         "(arm kinematic coupling not characterized yet). Official train/test "
+                                         "split from the reference repo (train=variant PRE_A only, 948 "
+                                         "pure-normal samples; 12 named fault categories scored separately). "
+                                         "Result is WEAK across the board (mean AUROC 0.66-0.68, most "
+                                         "categories 0.55-0.72, one near-chance at n=10) and, critically, "
+                                         "UNVALIDATED -- no fair GDN/AE baseline exists on this dataset's "
+                                         "18-node graph yet, so unlike the robo3er comparison this is NOT a "
+                                         "confirmed negative result, just a first-pass number with no yardstick "
+                                         "to compare against. See memory/voraus-ad-joint-prototype-v3.md for "
+                                         "the full breakdown and untested hypotheses for the weak scores (no "
+                                         "cross-joint edges, zero-padding dilution from variable-length "
+                                         "samples, hyperparameters untuned for this much larger scale)."},
     "robo3er-joint-prototype-v3": {"category": "③", "type": "physics_prior", "status": "implemented",
                                 "module": "benchmark/run_robo3er_joint_prototype_v3.py, "
                                            "src.joint_prototype_model.JointPrototypeGDNv3",
