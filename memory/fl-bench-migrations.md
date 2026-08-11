@@ -26,7 +26,7 @@ the framework over.
    `status: "implemented"` pointing at FL-bench's `src.server.fedavg` --
    that was never actually runnable from inside this repo, a stale/false
    claim, now fixed. Runs the IDENTICAL model + 5-robot client split as
-   `src/train_fl_memory_gdn.py`, only the aggregation rule changes: full-
+   `src/training/train_fl_memory_gdn.py`, only the aggregation rule changes: full-
    parameter size-weighted averaging (one shared global model) instead of
    memory-only codebook alignment. Result: FedAvg loses 0.16+ AUROC on
    `stuck` (robot04's fault, but robot04 is 79% of all data) vs. our

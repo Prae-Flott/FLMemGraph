@@ -31,15 +31,21 @@ FLMemGraph/
 ├── data/voraus_ad/       fourth real dataset: vorausrobotik 6-DOF pick-and-place arm,
 │                         2122 samples, 12 named fault categories, 130 machine-data
 │                         signals -- see memory/voraus-ad-dataset.md
-├── src/                  all project code: gdn_model.py (GDN class, no memory/federation),
-│                         conv_autoencoder.py (reconstruction AE, used by IFCAAE baseline),
-│                         joint_prototype_model.py (Scheme B + Scheme V3 -- SharedEncoder,
-│                         JointPrototypeMemory, TrendGraphAttentionHead,
-│                         TypedRelationAnomalyHead, JointPrototypeGDNv3), kinematics
-│                         residual, feature groups, discrete prototypical memory,
-│                         latent-space structure head, federated cross-robot memory
-│                         alignment, decision logic (incl. three_level_decision), and
-│                         every train_*.py entry point
+├── src/                  all project code, organized by role:
+│   ├── models/           gdn_model.py (GDN, no memory/federation), gdn_memory_model.py
+│   │                     (discrete prototypical memory + memory-augmented GDN),
+│   │                     conv_autoencoder.py (reconstruction AE, used by IFCAAE baseline),
+│   │                     fl_model.py (federated memory+structure head), joint_prototype_model.py
+│   │                     (Scheme B + Scheme V3 -- SharedEncoder, JointPrototypeMemory,
+│   │                     TrendGraphAttentionHead, TypedRelationAnomalyHead, JointPrototypeGDNv3)
+│   ├── robo3er/          dataset.py (loader), feature_groups.py, kinematics.py (physics
+│   │                     residual), fl_dataset.py (per-client federated split),
+│   │                     correlation_shift_analysis.py
+│   ├── federated/        federated_memory.py (cross-robot codebook alignment)
+│   ├── training/         train_fl_memory_gdn.py, train_gdn_memory.py, train_gdn_physics.py
+│   │                     -- every train_*.py entry point
+│   └── decision_logic.py decision logic (incl. three_level_decision), general-purpose,
+│                         not tied to one dataset/model group
 ├── benchmark/            baseline methods + public-dataset registry, including real FedAvg,
 │                         IFCAAE, GDN-tuned, Scheme B/V3 runs per dataset, and a
 │                         Sielaff-dataset GDN run (see benchmark/README.md for what's
@@ -53,7 +59,7 @@ FLMemGraph/
 
 ## Where things stand (2026-08-05)
 
-- **Single-robot, physics-residual GDN** (`src/train_gdn_physics.py`):
+- **Single-robot, physics-residual GDN** (`src/training/train_gdn_physics.py`):
   best `stuck` result in the project's history (AUROC ~0.72-0.74) via a
   differential-drive kinematic residual that sidesteps the shrinkage bias
   every prior forecasting-based method hit on that fault type.
@@ -76,13 +82,13 @@ FLMemGraph/
 
 ```bash
 # single-robot physics-residual GDN
-python3 src/train_gdn_physics.py
+python3 src/training/train_gdn_physics.py
 
 # + discrete memory
-python3 src/train_gdn_memory.py
+python3 src/training/train_gdn_memory.py
 
 # federated multi-robot system (this project's own memory+structure design)
-python3 src/train_fl_memory_gdn.py
+python3 src/training/train_fl_memory_gdn.py
 
 # federated baselines, same model/data/schedule as train_fl_memory_gdn.py,
 # only the aggregation rule differs -- direct ablation comparisons

@@ -39,11 +39,11 @@ BASELINES = {
     "InterFusion": {"category": "②", "type": "deep_reconstruction", "status": "planned"},
     # ------------------------------------------------------------- ③ --
     "GDN": {"category": "③", "type": "graph_structure", "status": "implemented",
-             "module": "src.gdn_model.GDN",
+             "module": "src.models.gdn_model.GDN",
              "note": "This project's own graph-attention forecaster -- run as the mandatory "
                       "'no memory, no federation' structure-only ablation baseline."},
     "Paderborn-fl-model-single-machine": {"category": "④", "type": "federated_uad", "status": "implemented",
-                                "module": "benchmark/run_paderborn_fl_model.py, reuses src.fl_model.FLGDNMemory unchanged",
+                                "module": "benchmark/run_paderborn_fl_model.py, reuses src.models.fl_model.FLGDNMemory unchanged",
                                 "note": "This project's full memory+structure pipeline minus federation, "
                                          "on the Paderborn KAt bearing dataset (datasets/registry.py's "
                                          "Paderborn-KAt-bearing entry). Unlike the deleted IMS bearing "
@@ -60,7 +60,7 @@ BASELINES = {
                                          "fatigue damage's broader signature survives -- untested. See "
                                          "memory/paderborn-fl-model-run.md for the full per-bearing table."},
     "joint-prototype-scheme-b": {"category": "③", "type": "physics_prior", "status": "implemented",
-                                "module": "src.joint_prototype_model.SharedEncoder + JointPrototypeMemory "
+                                "module": "src.models.joint_prototype_model.SharedEncoder + JointPrototypeMemory "
                                            "(no edge head). Sielaff: benchmark/run_sielaff_joint_prototype_b.py. "
                                            "Also present as the A/B ablation columns inside each dataset's "
                                            "Scheme V3 run script (Paderborn/robo3er/voraus-AD).",
@@ -78,7 +78,7 @@ BASELINES = {
                                          "analysis. See memory/joint-prototype-scheme-b.md for the full "
                                          "cross-dataset table and per-category pattern."},
     "joint-prototype-scheme-v3": {"category": "③", "type": "physics_prior", "status": "implemented",
-                                "module": "src.joint_prototype_model.JointPrototypeGDNv3 (TrendGraphAttentionHead "
+                                "module": "src.models.joint_prototype_model.JointPrototypeGDNv3 (TrendGraphAttentionHead "
                                            "+ TypedRelationAnomalyHead). Paderborn: "
                                            "benchmark/run_paderborn_joint_prototype_v3.py. robo3er: "
                                            "benchmark/run_robo3er_joint_prototype_v3.py. voraus-AD: "
@@ -133,7 +133,7 @@ BASELINES = {
                           "driver benchmark/run_fedavg_baseline.py",
                 "note": "Standalone reimplementation (McMahan et al., AISTATS 2017) over this "
                          "project's own FLGDNMemory architecture and 5-robot client split -- "
-                         "identical to src.train_fl_memory_gdn except full-parameter weighted "
+                         "identical to src.training.train_fl_memory_gdn except full-parameter weighted "
                          "averaging replaces memory-only codebook alignment. Previously listed as "
                          "'implemented' pointing at ~/Projects/FL-bench's src.server.fedavg, which "
                          "was never actually runnable from this repo -- that was a stale claim, "
@@ -143,7 +143,7 @@ BASELINES = {
                           "hydra/ray/classification framework FedAvg was; would need the same "
                           "standalone-reimplementation treatment as fedavg_baseline.py."},
     "IFCAAE": {"category": "④", "type": "federated_clustering", "status": "implemented",
-                "module": "benchmark/run_ifcaae_baseline.py, model src.conv_autoencoder.ConvAutoEncoder",
+                "module": "benchmark/run_ifcaae_baseline.py, model src.models.conv_autoencoder.ConvAutoEncoder",
                 "paper": "Ghosh, Chung, Yin, Ramchandran (IFCA), IEEE Trans. Information Theory 2022",
                 "note": "Standalone reimplementation of FL-bench's src/server|client/ifcaae.py -- "
                          "unsupervised, reconstruction-based IFCA adaptation (label-free clustering + "
@@ -165,9 +165,9 @@ BASELINES = {
     "FEDPM": {"category": "④", "type": "federated_forecast_memory", "status": "external",
                "paper": "arXiv:2604.04475",
                "note": "The paper this project's memory module is adapted from -- see "
-                        "src/gdn_memory_model.py."},
+                        "src/models/gdn_memory_model.py."},
     "ours_gdn_memory": {"category": "④", "type": "federated_uad", "status": "implemented",
-                          "module": "src.train_fl_memory_gdn",
+                          "module": "src.training.train_fl_memory_gdn",
                           "note": "This project's own memory+structure+federation system."},
 }
 

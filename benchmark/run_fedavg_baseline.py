@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 FedAvg baseline over the identical model/data/schedule as
-`src/train_fl_memory_gdn.py`, differing ONLY in the aggregation rule (see
+`src/training/train_fl_memory_gdn.py`, differing ONLY in the aggregation rule (see
 `baselines/fedavg_baseline.py`'s module docstring for why this is the right
 apples-to-apples comparison): standard size-weighted full-parameter
 averaging every round instead of memory-only codebook alignment.
@@ -34,7 +34,8 @@ import torch
 from sklearn import metrics as sk_metrics
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "robo3er"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fl_model import FLGDNMemory  # noqa: E402
 from fl_dataset import load_fl_clients  # noqa: E402

@@ -3,7 +3,7 @@ Adapter presenting robo3er through the benchmark's common interface:
 `load()` -> (fit_windows, calib_windows, test_normal_windows,
 {fault_name: fault_windows}), all [N, T, F] float32 arrays, normal-only
 splits already scaled by a scaler fit on the fit split. Wraps
-`src/dataset.py` (already this project's own canonical robo3er
+`src/robo3er/dataset.py` (already this project's own canonical robo3er
 loader) rather than re-deriving anything.
 """
 import sys
@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "robo3er"))
 from dataset import load_robo3er, split_normal, fit_scaler, scale  # noqa: E402
 
 

@@ -20,7 +20,7 @@ round's local training to start from. See `federated_average` below.
 
 ## Why this is the right FedAvg baseline for THIS project specifically
 
-`src/train_fl_memory_gdn.py` (this project's own system) already uses the
+`src/training/train_fl_memory_gdn.py` (this project's own system) already uses the
 exact same architecture (`fl_model.FLGDNMemory`: shared encoder -> memory
 head + structure head) and the exact same 5-robot non-IID client split
 (`fl_dataset.load_fl_clients`) -- the ONLY thing that differs is what gets

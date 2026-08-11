@@ -120,7 +120,7 @@ DATASETS = {
         "note_extra": "benchmark/datasets/paderborn_adapter.py (loader, 3 of 7 channels used -- "
                         "vibration_1 + phase_current_1/2, see its docstring) + "
                         "benchmark/run_paderborn_fl_model.py (single-machine, no federation, reuses "
-                        "src.fl_model.FLGDNMemory unchanged) implement this project's full memory+"
+                        "src.models.fl_model.FLGDNMemory unchanged) implement this project's full memory+"
                         "structure pipeline here. Result: strong category-mean AUROC (combined 1.000, "
                         "inner_ring 0.750, outer_ring 0.641) but a real bimodal split underneath -- "
                         "15/26 damaged bearings near-perfect, 10/26 BELOW 0.5 AUROC (score direction "

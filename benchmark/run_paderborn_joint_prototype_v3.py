@@ -43,7 +43,7 @@ from sklearn import metrics as sk_metrics
 from sklearn.preprocessing import StandardScaler
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from joint_prototype_model import JointPrototypeGDNv3  # noqa: E402
 from datasets.paderborn_adapter import (  # noqa: E402

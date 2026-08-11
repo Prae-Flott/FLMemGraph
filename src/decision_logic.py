@@ -86,7 +86,7 @@ class ThreeLevelDecision(Enum):
     generalizes Decision above from the two-signal (d, r) case to the
     three-signal (d_G, S_node, S_edge) joint-prototype design. Distinct
     enum, not a rename of Decision, since the underlying model
-    (src/joint_prototype_model.py) and its signals are different from
+    (src/models/joint_prototype_model.py) and its signals are different from
     fl_model.FLGDNMemory's d/r."""
 
     KNOWN_NORMAL = "known_normal"

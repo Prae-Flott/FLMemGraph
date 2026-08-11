@@ -24,7 +24,7 @@ import numpy as np
 import torch
 
 REPO_ROOT = Path(__file__).resolve().parents[2]  # FLMemGraph itself
-sys.path.insert(0, str(REPO_ROOT / "src"))  # gdn_model.py lives in src/ (merged from test_gdn/)
+sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 from gdn_model import GDN  # noqa: E402
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
