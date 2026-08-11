@@ -1,0 +1,215 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 5,
+    "window_len": 1164,
+    "epochs": 12,
+    "prior_edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ],
+      [
+        4,
+        5
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        9,
+        10
+      ],
+      [
+        10,
+        11
+      ],
+      [
+        12,
+        13
+      ],
+      [
+        13,
+        14
+      ],
+      [
+        15,
+        16
+      ],
+      [
+        16,
+        17
+      ]
+    ],
+    "edge_types": [
+      "proportional",
+      "nonlinear",
+      "proportional",
+      "nonlinear",
+      "proportional",
+      "nonlinear",
+      "proportional",
+      "nonlinear",
+      "proportional",
+      "nonlinear",
+      "proportional",
+      "nonlinear"
+    ],
+    "min_proto_samples": 5
+  },
+  "nodes": [
+    "motor_iq_1",
+    "motor_torque_1",
+    "torque_sensor_a_1",
+    "motor_iq_2",
+    "motor_torque_2",
+    "torque_sensor_a_2",
+    "motor_iq_3",
+    "motor_torque_3",
+    "torque_sensor_a_3",
+    "motor_iq_4",
+    "motor_torque_4",
+    "torque_sensor_a_4",
+    "motor_iq_5",
+    "motor_torque_5",
+    "torque_sensor_a_5",
+    "motor_iq_6",
+    "motor_torque_6",
+    "torque_sensor_a_6"
+  ],
+  "final_prior_bias_strength": 0.9920819401741028,
+  "final_typed_temperature": 1.0,
+  "n_valid_prototypes_for_typed_calib": 2,
+  "fault_categories": {
+    "axis_friction": {
+      "n": 144,
+      "A_prototype_only": 0.6038517634579688,
+      "B_prototype_plus_node": 0.5682345531689207,
+      "C_edge_only": 0.5655993105277115,
+      "D_full_v2": 0.566394855476001,
+      "E_typed_edge_only": 0.5397938212675683,
+      "F_full_v3": 0.5398269689737472
+    },
+    "axis_weight": {
+      "n": 156,
+      "A_prototype_only": 0.6624135609815801,
+      "B_prototype_plus_node": 0.6497460375741998,
+      "C_edge_only": 0.6527599290129122,
+      "D_full_v2": 0.6547487913836362,
+      "E_typed_edge_only": 0.6335291597821432,
+      "F_full_v3": 0.6335138608408298
+    },
+    "collision_foam": {
+      "n": 72,
+      "A_prototype_only": 0.6724343675417661,
+      "B_prototype_plus_node": 0.6614956245027843,
+      "C_edge_only": 0.6533412887828162,
+      "D_full_v2": 0.6539379474940334,
+      "E_typed_edge_only": 0.6408114558472553,
+      "F_full_v3": 0.6399827631927871
+    },
+    "collision_cable": {
+      "n": 48,
+      "A_prototype_only": 0.5998408910103421,
+      "B_prototype_plus_node": 0.6279335719968178,
+      "C_edge_only": 0.6329057279236276,
+      "D_full_v2": 0.6375298329355609,
+      "E_typed_edge_only": 0.6338504375497215,
+      "F_full_v3": 0.6343973747016707
+    },
+    "collision_carton": {
+      "n": 22,
+      "A_prototype_only": 0.7125189845953569,
+      "B_prototype_plus_node": 0.6976567585159471,
+      "C_edge_only": 0.719678889129963,
+      "D_full_v2": 0.7072032978954219,
+      "E_typed_edge_only": 0.7248860924278585,
+      "F_full_v3": 0.7244521588197006
+    },
+    "miss_can": {
+      "n": 11,
+      "A_prototype_only": 0.9759166847472337,
+      "B_prototype_plus_node": 0.982642655673682,
+      "C_edge_only": 0.9839444564981558,
+      "D_full_v2": 0.9830765892818399,
+      "E_typed_edge_only": 0.9852462573226296,
+      "F_full_v3": 0.9852462573226296
+    },
+    "lose_can": {
+      "n": 74,
+      "A_prototype_only": 0.5814681029478165,
+      "B_prototype_plus_node": 0.5980455395729859,
+      "C_edge_only": 0.5711797716570987,
+      "D_full_v2": 0.5858220989485907,
+      "E_typed_edge_only": 0.5936592917499839,
+      "F_full_v3": 0.5942398245500871
+    },
+    "can_weight": {
+      "n": 80,
+      "A_prototype_only": 0.5385143198090693,
+      "B_prototype_plus_node": 0.5507159904534606,
+      "C_edge_only": 0.5223150357995227,
+      "D_full_v2": 0.5355011933174224,
+      "E_typed_edge_only": 0.5149463007159905,
+      "F_full_v3": 0.5151551312649165
+    },
+    "entangled": {
+      "n": 10,
+      "A_prototype_only": 0.4505966587112172,
+      "B_prototype_plus_node": 0.4708830548926014,
+      "C_edge_only": 0.5004773269689737,
+      "D_full_v2": 0.4823389021479714,
+      "E_typed_edge_only": 0.4525059665871121,
+      "F_full_v3": 0.45107398568019086
+    },
+    "invalid_position": {
+      "n": 12,
+      "A_prototype_only": 0.6839697692919651,
+      "B_prototype_plus_node": 0.7607398568019093,
+      "C_edge_only": 0.770684168655529,
+      "D_full_v2": 0.7718774860779634,
+      "E_typed_edge_only": 0.7720763723150358,
+      "F_full_v3": 0.7750596658711217
+    },
+    "motor_commutation": {
+      "n": 89,
+      "A_prototype_only": 0.7171703628221286,
+      "B_prototype_plus_node": 0.7573409133571103,
+      "C_edge_only": 0.7566436941889464,
+      "D_full_v2": 0.764179024429487,
+      "E_typed_edge_only": 0.7022605990721622,
+      "F_full_v3": 0.7043522565766538
+    },
+    "wobbling_station": {
+      "n": 37,
+      "A_prototype_only": 0.7222473069728439,
+      "B_prototype_plus_node": 0.822421466812875,
+      "C_edge_only": 0.8166161388118429,
+      "D_full_v2": 0.818680255434432,
+      "E_typed_edge_only": 0.7932658195188029,
+      "F_full_v3": 0.7942333741856415
+    }
+  },
+  "summary_mean_auroc": {
+    "A_prototype_only": 0.6600785644074406,
+    "B_prototype_plus_node": 0.6789880019436079,
+    "C_edge_only": 0.6788454781630917,
+    "D_full_v2": 0.6801075229018633,
+    "E_typed_edge_only": 0.6655692978463553,
+    "F_full_v3": 0.665961135164998
+  }
+}
