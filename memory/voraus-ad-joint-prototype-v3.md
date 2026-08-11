@@ -62,6 +62,34 @@ relative to a simpler baseline -- unknown until that comparison exists.
 Treat these numbers as a first-pass sanity check only, not a claim about
 v3's typed-edge mechanism's value on this dataset.
 
+## UPDATE: the reference paper directly explains most of this (2026-08-11)
+
+After reading `docs/voraus_ad_paper.pdf` in full and writing
+`benchmark/datasets/voraus_ad_physics.md`, hypothesis #1 below is no
+longer the leading explanation -- the paper's OWN ablation (Fig. 13a)
+found mean AUROC by signal subset: **electrical alone ~65%, mechanical
+alone ~92%, all signals ~93%**. This run's 18-node graph
+(`motor_iq`/`motor_torque`/`torque_sensor_a` x 6 joints) is built almost
+entirely from what the paper calls "electrical" (current) plus one
+narrow mechanical signal -- it has ZERO position/velocity nodes, the
+exact category the paper says matters most. **This run's overall mean
+(0.66-0.68) landing almost exactly at the paper's own "electrical alone"
+figure (~65%) is very unlikely to be a coincidence.**
+
+The paper also gives a precise, dataset-verified mechanism for why
+`axis_friction` scored worst among the larger-sample categories
+(0.540-0.566): friction is explicitly defined as *"a higher torque of
+the motor is needed for the same movement"* -- i.e. it breaks the
+target/velocity-vs-torque relation, NOT the current-vs-torque relation
+(#2 in `voraus_ad_physics.md`) this graph actually has. The one relation
+friction breaks isn't declared as an edge anywhere in this run.
+
+**Revised next step**: adding `joint_velocity_i`/`joint_position_i` (or
+the full target->motor->joint tracking chain from `voraus_ad_physics.md`
+#1) as nodes is now the best-evidenced single change to try before
+anything else on this list -- ahead of cross-joint edges, hyperparameter
+tuning, or the padding/windowing choice.
+
 ## Plausible reasons this run is weak (untested hypotheses, not diagnosed)
 
 1. **No cross-joint edges.** Several fault categories (collision_*,
