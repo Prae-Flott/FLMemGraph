@@ -109,7 +109,7 @@ mechanism (a collision should show up very differently from a motor
 commutation fault or an added can weight) -- directly extending the
 "does the diagnosis signal differ by fault type" question this project
 already investigated on Paderborn and robo3er -- see
-`memory/joint-prototype-scheme-v3.md` and `memory/joint-prototype-scheme-b.md`
+`memory/joint-prototype-scheme-v3.md` and `memory/joint-prototype-scheme-v2.md`
 for the consolidated cross-dataset conclusions, including this dataset's
 own results.
 

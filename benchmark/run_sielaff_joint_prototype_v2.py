@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
 """
-Joint Prototype Memory on Sielaff -- "path B" ONLY (prototype + per-node
+Joint Prototype Memory on Sielaff -- "V2" ONLY (prototype + per-node
 deviation, `A_prototype_only` + `B_prototype_plus_node` from the
 Paderborn/robo3er/voraus-AD JointPrototypeGDNv3 ablation naming), with NO
-edge/relation head at all.
+edge/relation head at all. (Naming note: this "V2" is NOT the historical
+`JointPrototypeGDNv2` class -- that had generic edge attention and was
+removed in an earlier cleanup pass. This V2 has no edge signal of any
+kind; see `memory/joint-prototype-scheme-v2.md` for the naming history.)
 
 This is a deliberate, well-motivated scope, not a simplification for its
 own sake: `benchmark/datasets/sielaff_physics.md` documents that this
 dataset has NO verified physical prior -- no declared edges exist to feed
-`TrendGraphAttentionHead`/`TypedRelationAnomalyHead` (v2/v3's edge
-mechanisms), so running the full `JointPrototypeGDNv2`/`v3` would mean
-either leaving `prior_edges=None` (pure GDN-style generic attention, not
+`TrendGraphAttentionHead`/`TypedRelationAnomalyHead` (V3's edge
+mechanisms), so running the full `JointPrototypeGDNv3` would mean either
+leaving `prior_edges=None` (pure GDN-style generic attention, not
 actually testing anything about Joint Prototype's node/edge distinction)
 or inventing edges with no physical justification, which this project
-has consistently avoided doing elsewhere. Path B needs NEITHER of those
+has consistently avoided doing elsewhere. V2 needs NEITHER of those
 -- it only needs `SharedEncoder` + `JointPrototypeMemory`, reused directly
 from `src/models/joint_prototype_model.py` (no new model code). This directly
 answers the cross-dataset finding from voraus-AD/robo3er
-(`memory/joint-prototype-scheme-v3.md`, which also documents Scheme B's
-generalization back to `memory/joint-prototype-scheme-b.md`):
-path B (node-level deviation from the matched joint prototype) wins or
+(`memory/joint-prototype-scheme-v3.md`, which also documents V2's
+generalization back to `memory/joint-prototype-scheme-v2.md`):
+V2 (node-level deviation from the matched joint prototype) wins or
 ties on the vast majority of fault categories on BOTH those datasets
 EVEN WHEN edges/relations were available -- so testing it here, where no
 edges exist at all, is the most direct apples-to-apples way to see
@@ -38,7 +41,7 @@ Joint Prototype reconstructs the whole window per node, it doesn't
 forecast the next step the way GDN does).
 
 Usage:
-    python3 run_sielaff_joint_prototype_b.py
+    python3 run_sielaff_joint_prototype_v2.py
 """
 import json
 import pickle
@@ -77,7 +80,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class JointPrototypeMemoryOnly(nn.Module):
     """Encoder + Joint Prototype Memory + a training-only decoder -- NO
     edge head. Produces exactly A (`d_G`) and the per-node deviation
-    (`s_node`) that path B combines with A, nothing else."""
+    (`s_node`) that V2 combines with A, nothing else."""
 
     def __init__(self, num_nodes: int, window_size: int, embed_dim: int, num_prototypes: int):
         super().__init__()
@@ -209,7 +212,7 @@ def main():
           f"nodes(sensors)={num_nodes}")
 
     print(f"\ntraining JointPrototypeMemoryOnly (nodes={num_nodes}, M={NUM_PROTOTYPES}, "
-          f"embed_dim={EMBED_DIM}, window_len={WINDOW_LEN}) -- path B only, no edges ...")
+          f"embed_dim={EMBED_DIM}, window_len={WINDOW_LEN}) -- V2 only, no edges ...")
     model = JointPrototypeMemoryOnly(num_nodes=num_nodes, window_size=WINDOW_LEN,
                                        embed_dim=EMBED_DIM, num_prototypes=NUM_PROTOTYPES).to(DEVICE)
     model = train(model, fit_arr, calib_arr)
@@ -275,11 +278,11 @@ def main():
         print(f"{key:<24}{mean_auroc:>28.3f}")
 
     report["summary_mean_auroc"] = summary
-    with open(OUT_DIR / "sielaff_joint_prototype_b_report.json", "w") as f:
+    with open(OUT_DIR / "sielaff_joint_prototype_v2_report.json", "w") as f:
         json.dump(report, f, indent=2)
     torch.save({"model_state_dict": model.state_dict(), "report": report},
-                OUT_DIR / "sielaff_joint_prototype_b.pth")
-    print(f"\nsaved -> {OUT_DIR / 'sielaff_joint_prototype_b_report.json'}")
+                OUT_DIR / "sielaff_joint_prototype_v2.pth")
+    print(f"\nsaved -> {OUT_DIR / 'sielaff_joint_prototype_v2_report.json'}")
 
 
 if __name__ == "__main__":

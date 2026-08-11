@@ -59,12 +59,12 @@ BASELINES = {
                                          "signature artificial single-point defects rely on, while real "
                                          "fatigue damage's broader signature survives -- untested. See "
                                          "memory/paderborn-fl-model-run.md for the full per-bearing table."},
-    "joint-prototype-scheme-b": {"category": "③", "type": "physics_prior", "status": "implemented",
+    "joint-prototype-scheme-v2": {"category": "③", "type": "physics_prior", "status": "implemented",
                                 "module": "src.models.joint_prototype_model.SharedEncoder + JointPrototypeMemory "
-                                           "(no edge head). Sielaff: benchmark/run_sielaff_joint_prototype_b.py. "
+                                           "(no edge head). Sielaff: benchmark/run_sielaff_joint_prototype_v2.py. "
                                            "Also present as the A/B ablation columns inside each dataset's "
                                            "Scheme V3 run script (Paderborn/robo3er/voraus-AD).",
-                                "note": "Scheme B: Joint Prototype Memory only (device-level + per-node "
+                                "note": "V2: Joint Prototype Memory only (device-level + per-node "
                                          "deviation from the matched joint prototype), NO edges/relations at "
                                          "all -- mechanism-agnostic, needs no physics prior. Best or "
                                          "near-best signal on 3 of 4 datasets tested: Sielaff (0.978 mean "
@@ -73,9 +73,9 @@ BASELINES = {
                                          "best), voraus-AD (0.756, wins/ties 11 of 12 fault categories). "
                                          "Loses clearly only on Paderborn, the one dataset with literature-"
                                          "verified physical relations a real fault mechanism actually breaks "
-                                         "-- see joint-prototype-scheme-v3. Recommended default: run Scheme B "
+                                         "-- see joint-prototype-scheme-v3. Recommended default: run V2 "
                                          "first on any new dataset before investing in physics-relation "
-                                         "analysis. See memory/joint-prototype-scheme-b.md for the full "
+                                         "analysis. See memory/joint-prototype-scheme-v2.md for the full "
                                          "cross-dataset table and per-category pattern."},
     "joint-prototype-scheme-v3": {"category": "③", "type": "physics_prior", "status": "implemented",
                                 "module": "src.models.joint_prototype_model.JointPrototypeGDNv3 (TrendGraphAttentionHead "
@@ -83,12 +83,12 @@ BASELINES = {
                                            "benchmark/run_paderborn_joint_prototype_v3.py. robo3er: "
                                            "benchmark/run_robo3er_joint_prototype_v3.py. voraus-AD: "
                                            "benchmark/run_voraus_ad_joint_prototype_v3.py.",
-                                "note": "Scheme V3: Scheme B + GDN-style learned attention over declared-edge-"
+                                "note": "Scheme V3: V2 + GDN-style learned attention over declared-edge-"
                                          "biased neighbors + relation-specific typed message functions + "
                                          "prototype-conditioned edge-residual standardization + anomaly "
                                          "attention. Needs domain knowledge: a verified physical relation "
                                          "between two signals must be declared as an edge (proportional/"
-                                         "nonlinear) before this adds anything Scheme B doesn't already give. "
+                                         "nonlinear) before this adds anything V2 doesn't already give. "
                                          "Lineage (intermediate code removed, conclusions preserved): a "
                                          "physics-residual precursor on Paderborn (OLS-fit current/torque "
                                          "residual, 3 consecutive negative results, root cause: Paderborn's 4 "
@@ -101,8 +101,8 @@ BASELINES = {
                                          "on top. RESULT: v3 wins clearly ONLY on Paderborn (0.904 edge-signal "
                                          "vs 0.819 GDN baseline) -- the one dataset with textbook physical "
                                          "relations (bearing vibration/force/torque/current coupling) a real "
-                                         "fault mechanism breaks. On robo3er and voraus-AD, Scheme B (no edges) "
-                                         "wins instead -- see joint-prototype-scheme-b. Also documents the "
+                                         "fault mechanism breaks. On robo3er and voraus-AD, V2 (no edges) "
+                                         "wins instead -- see joint-prototype-scheme-v2. Also documents the "
                                          "max-aggregation noise-floor problem (expanding voraus-AD's graph "
                                          "18->66 nodes made results WORSE under raw max() despite adding a "
                                          "physically correct friction edge) and its fix (top-k-mean + a second "
