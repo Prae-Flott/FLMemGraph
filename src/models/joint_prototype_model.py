@@ -222,6 +222,57 @@ class JointPrototypeMemory(nn.Module):
         self.ema_global_var.fill_(1.0)
         self.ema_global_initialized.zero_()
 
+    @torch.no_grad()
+    def load_fed_ema_stats(self, n: np.ndarray, mean: np.ndarray, var: np.ndarray):
+        """"federated_ema" of `memory/calib-in-prototype-ab.md`: load
+        server-merged per-prototype deviation statistics directly into the
+        SAME `ema_mean`/`ema_var`/`ema_initialized` buffers `update_ema()`/
+        `ema_zscore()` already use (so `ema_zscore()` is reused unchanged for
+        scoring) -- but populated by a one-shot per-round sufficient-
+        statistics merge (`federated_memory.align_and_split`'s
+        `client_dev_stats` path) instead of `update_ema()`'s decayed online
+        accumulation. Call once per round, right after `load_memory()` (which
+        resets these buffers to scratch) -- this then overwrites them with
+        the real per-round values instead of leaving them at scratch.
+
+        `n` [M] (per-prototype sample count from this round's merge, 0 for
+        slots nobody routed traffic to), `mean`/`var` [M, num_nodes] (merged
+        for shared-cluster slots; this client's own freshly-computed values,
+        untouched, for personalized slots -- see `align_and_split`'s
+        docstring for why personalized slots don't need a cross-client
+        merge). Slots with `n <= 0` are marked NOT initialized (so
+        `ema_zscore()` falls back to the global estimate below for them,
+        same convention as the plain `ema` mode), not left at `load_memory()`'s
+        raw 0/1 scratch defaults.
+
+        The (client-local, NOT federated) global fallback estimate is
+        recomputed here as the sample-count-weighted pool of every
+        populated prototype slot THIS client has this round -- the design
+        only specifies federating the per-prototype merge; the global
+        fallback is the same "hardly used once per-prototype coverage
+        improves" role it already plays in `ema_zscore()`, so it is not
+        additionally federated across clients."""
+        device = self.ema_mean.device
+        n_t = torch.tensor(n, dtype=torch.float32, device=device)
+        valid = n_t > 0
+        mean_t = torch.tensor(mean, dtype=torch.float32, device=device)
+        var_t = torch.tensor(var, dtype=torch.float32, device=device).clamp(min=1e-6)
+
+        self.ema_mean = torch.where(valid.unsqueeze(1), mean_t, self.ema_mean)
+        self.ema_var = torch.where(valid.unsqueeze(1), var_t, self.ema_var)
+        self.ema_initialized = valid
+
+        if bool(valid.any()):
+            n_v = n_t[valid]
+            mean_v = mean_t[valid]
+            var_v = var_t[valid]
+            total_n = n_v.sum()
+            g_mean = (n_v.unsqueeze(1) * mean_v).sum(0) / total_n
+            g_m2 = (n_v.unsqueeze(1) * var_v + n_v.unsqueeze(1) * (mean_v - g_mean.unsqueeze(0)) ** 2).sum(0)
+            self.ema_global_mean = g_mean
+            self.ema_global_var = (g_m2 / total_n).clamp(min=1e-6)
+            self.ema_global_initialized[0] = True
+
 
 class DeviationCovarianceHead(nn.Module):
     """No-prior anomaly signal: per-prototype covariance of per-node deviation
