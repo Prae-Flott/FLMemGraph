@@ -1,0 +1,597 @@
+{
+  "config": {
+    "rounds": 5,
+    "local_epochs": 30,
+    "num_prototypes": 2,
+    "embed_dim": 64,
+    "window_len": 8,
+    "gamma": 0.5,
+    "delta": 0.5,
+    "reliability_ratio": 0.05,
+    "calib_mode": "per_prototype"
+  },
+  "nodes": [
+    "Helligkeit_Flaschenerkennung",
+    "journal_count",
+    "total_quantity",
+    "total_deposit",
+    "total_weight",
+    "unique_categories",
+    "reject_count",
+    "has_reject",
+    "cleaning_count",
+    "cleaning_duration",
+    "cleaning_begin_pixels",
+    "cleaning_end_pixels",
+    "receipt_count",
+    "schlie\u00dfen_Weiche 1",
+    "schlie\u00dfen_Weiche 2",
+    "\u00f6ffnen_Weiche 1",
+    "\u00f6ffnen_Weiche 2",
+    "schlie\u00dfen_Weiche 3",
+    "schlie\u00dfen_Weiche 4",
+    "schlie\u00dfen_Weiche 5",
+    "schlie\u00dfen_Weiche 6",
+    "schlie\u00dfen_Weiche 7",
+    "\u00f6ffnen_Weiche 3",
+    "\u00f6ffnen_Weiche 4",
+    "\u00f6ffnen_Weiche 5",
+    "\u00f6ffnen_Weiche 6",
+    "\u00f6ffnen_Weiche 7",
+    "read SM_RingCamera 1",
+    "read SM_RingCamera 2",
+    "read SM_RingCamera 3",
+    "read SM_RingCamera 4",
+    "read SM_RingCamera 5",
+    "read SM_RingCamera 6",
+    "read barcode_RingCamera 1",
+    "read barcode_RingCamera 2",
+    "read barcode_RingCamera 3",
+    "read barcode_RingCamera 4",
+    "read barcode_RingCamera 5",
+    "read barcode_RingCamera 6"
+  ],
+  "alignment_log": [
+    {
+      "num_components": 4,
+      "num_multi_client_clusters": 2,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 1
+    },
+    {
+      "num_components": 3,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 2
+    },
+    {
+      "num_components": 3,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 3
+    },
+    {
+      "num_components": 3,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 4
+    },
+    {
+      "num_components": 2,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 5
+    }
+  ],
+  "clients": {
+    "machine0": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 0,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 79,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 1.0
+        },
+        "mechanical_jam": {
+          "n": 1,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 1.0
+        },
+        "compactor_status": {
+          "n": 1,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 1.0
+        },
+        "other": {
+          "n": 34,
+          "B_node_max": 0.7647058823529411,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 0.7647058823529411,
+          "I_node_cov_max": 0.7647058823529411
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 0.9411764705882353,
+        "C_struct_max": 1.0,
+        "H_cov_mahal": 0.9411764705882353,
+        "I_node_cov_max": 0.9411764705882353
+      }
+    },
+    "machine1": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 382,
+          "B_node_max": 0.9999282794233665,
+          "C_struct_max": 0.9998206985584165,
+          "H_cov_mahal": 0.9999282794233666,
+          "I_node_cov_max": 0.9999282794233665
+        },
+        "mechanical_jam": {
+          "n": 20,
+          "B_node_max": 0.9993150684931507,
+          "C_struct_max": 0.9986301369863014,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 0.9993150684931507
+        },
+        "compactor_status": {
+          "n": 26,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 1.0
+        },
+        "crate_recognition": {
+          "n": 14,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 1.0
+        },
+        "other": {
+          "n": 30,
+          "B_node_max": 0.9789954337899542,
+          "C_struct_max": 0.9634703196347033,
+          "H_cov_mahal": 0.9739726027397261,
+          "I_node_cov_max": 0.9789954337899542
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 0.9956477563412942,
+        "C_struct_max": 0.9923842310358844,
+        "H_cov_mahal": 0.9947801764326186,
+        "I_node_cov_max": 0.9956477563412942
+      }
+    },
+    "machine2": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 477,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 0.9999908051050057,
+          "I_node_cov_max": 1.0
+        },
+        "mechanical_jam": {
+          "n": 16,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 1.0
+        },
+        "compactor_status": {
+          "n": 75,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 0.9984795321637426,
+          "I_node_cov_max": 1.0
+        },
+        "crate_recognition": {
+          "n": 8,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 0.9986293859649124,
+          "I_node_cov_max": 1.0
+        },
+        "other": {
+          "n": 17,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 0.9961300309597524,
+          "I_node_cov_max": 1.0
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 1.0,
+        "C_struct_max": 1.0,
+        "H_cov_mahal": 0.9986459508386826,
+        "I_node_cov_max": 1.0
+      }
+    },
+    "machine3": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 418,
+          "B_node_max": 0.9950033765823239,
+          "C_struct_max": 0.9965587597166544,
+          "H_cov_mahal": 0.9922985186143081,
+          "I_node_cov_max": 0.9950033765823239
+        },
+        "mechanical_jam": {
+          "n": 20,
+          "B_node_max": 0.9972222222222222,
+          "C_struct_max": 0.9939939939939939,
+          "H_cov_mahal": 0.9917417417417417,
+          "I_node_cov_max": 0.9972222222222222
+        },
+        "compactor_status": {
+          "n": 122,
+          "B_node_max": 0.9889110421897307,
+          "C_struct_max": 0.9921478855905085,
+          "H_cov_mahal": 0.9848619110914193,
+          "I_node_cov_max": 0.9889110421897307
+        },
+        "other": {
+          "n": 42,
+          "B_node_max": 0.9720434720434722,
+          "C_struct_max": 0.9736164736164736,
+          "H_cov_mahal": 0.9885599885599886,
+          "I_node_cov_max": 0.9720434720434722
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 0.9882950282594372,
+        "C_struct_max": 0.9890792782294076,
+        "H_cov_mahal": 0.9893655400018644,
+        "I_node_cov_max": 0.9882950282594372
+      }
+    },
+    "machine4": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 359,
+          "B_node_max": 0.999571459181487,
+          "C_struct_max": 0.9996785943861153,
+          "H_cov_mahal": 0.998561327252135,
+          "I_node_cov_max": 0.999571459181487
+        },
+        "mechanical_jam": {
+          "n": 10,
+          "B_node_max": 0.9999999999999999,
+          "C_struct_max": 0.9989010989010989,
+          "H_cov_mahal": 0.9620879120879121,
+          "I_node_cov_max": 0.9999999999999999
+        },
+        "compactor_status": {
+          "n": 36,
+          "B_node_max": 0.9720695970695971,
+          "C_struct_max": 0.9891636141636142,
+          "H_cov_mahal": 0.9685592185592186,
+          "I_node_cov_max": 0.9720695970695971
+        },
+        "other": {
+          "n": 26,
+          "B_node_max": 0.9657650042265427,
+          "C_struct_max": 0.970414201183432,
+          "H_cov_mahal": 0.9697802197802198,
+          "I_node_cov_max": 0.9657650042265427
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 0.9843515151194067,
+        "C_struct_max": 0.9895393771585651,
+        "H_cov_mahal": 0.9747471694198714,
+        "I_node_cov_max": 0.9843515151194067
+      }
+    },
+    "machine5": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 523,
+          "B_node_max": 0.9993415036468885,
+          "C_struct_max": 0.9995274577665378,
+          "H_cov_mahal": 0.9972347528560365,
+          "I_node_cov_max": 0.9993415036468885
+        },
+        "mechanical_jam": {
+          "n": 17,
+          "B_node_max": 1.0,
+          "C_struct_max": 0.9991923542872526,
+          "H_cov_mahal": 0.9983847085745052,
+          "I_node_cov_max": 1.0
+        },
+        "compactor_status": {
+          "n": 48,
+          "B_node_max": 0.9969012204424104,
+          "C_struct_max": 0.9984744469870328,
+          "H_cov_mahal": 0.9916571319603356,
+          "I_node_cov_max": 0.9969012204424104
+        },
+        "crate_recognition": {
+          "n": 8,
+          "B_node_max": 0.9965675057208239,
+          "C_struct_max": 0.9977116704805492,
+          "H_cov_mahal": 0.9948512585812357,
+          "I_node_cov_max": 0.9965675057208239
+        },
+        "other": {
+          "n": 40,
+          "B_node_max": 0.99279176201373,
+          "C_struct_max": 0.9930778032036613,
+          "H_cov_mahal": 0.9916475972540045,
+          "I_node_cov_max": 0.99279176201373
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 0.9971203983647705,
+        "C_struct_max": 0.9975967465450066,
+        "H_cov_mahal": 0.9947550898452235,
+        "I_node_cov_max": 0.9971203983647705
+      }
+    },
+    "machine6": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 350,
+          "B_node_max": 0.9838801843317972,
+          "C_struct_max": 0.9842211981566821,
+          "H_cov_mahal": 0.9864331797235023,
+          "I_node_cov_max": 0.9838801843317972
+        },
+        "mechanical_jam": {
+          "n": 7,
+          "B_node_max": 0.9612903225806452,
+          "C_struct_max": 0.976036866359447,
+          "H_cov_mahal": 0.9631336405529953,
+          "I_node_cov_max": 0.9612903225806452
+        },
+        "compactor_status": {
+          "n": 19,
+          "B_node_max": 0.968760611205433,
+          "C_struct_max": 0.9633276740237691,
+          "H_cov_mahal": 0.968421052631579,
+          "I_node_cov_max": 0.968760611205433
+        },
+        "other": {
+          "n": 20,
+          "B_node_max": 0.9574193548387097,
+          "C_struct_max": 0.605483870967742,
+          "H_cov_mahal": 0.927741935483871,
+          "I_node_cov_max": 0.9574193548387097
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 0.9678376182391463,
+        "C_struct_max": 0.8822674023769099,
+        "H_cov_mahal": 0.9614324520979869,
+        "I_node_cov_max": 0.9678376182391463
+      }
+    },
+    "machine7": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 534,
+          "B_node_max": 0.9834600461997355,
+          "C_struct_max": 0.9799502119356792,
+          "H_cov_mahal": 0.9818228711117092,
+          "I_node_cov_max": 0.9834600461997355
+        },
+        "mechanical_jam": {
+          "n": 5,
+          "B_node_max": 0.9580838323353295,
+          "C_struct_max": 0.9580838323353293,
+          "H_cov_mahal": 0.9616766467065868,
+          "I_node_cov_max": 0.9580838323353295
+        },
+        "compactor_status": {
+          "n": 29,
+          "B_node_max": 0.9128639273177782,
+          "C_struct_max": 0.8988230435680363,
+          "H_cov_mahal": 0.9599421845963245,
+          "I_node_cov_max": 0.9128639273177782
+        },
+        "crate_recognition": {
+          "n": 7,
+          "B_node_max": 0.9854576561163387,
+          "C_struct_max": 0.9854576561163387,
+          "H_cov_mahal": 0.9854576561163387,
+          "I_node_cov_max": 0.9854576561163387
+        },
+        "other": {
+          "n": 29,
+          "B_node_max": 0.7270287012182531,
+          "C_struct_max": 0.6683873632046252,
+          "H_cov_mahal": 0.9432170142473674,
+          "I_node_cov_max": 0.727028701218253
+        }
+      },
+      "n_valid_score_node_prototypes": 2,
+      "n_valid_score_struct_prototypes": 2,
+      "client_mean_auroc": {
+        "B_node_max": 0.9133788326374871,
+        "C_struct_max": 0.8981404214320019,
+        "H_cov_mahal": 0.9664232745556653,
+        "I_node_cov_max": 0.913378832637487
+      }
+    },
+    "machine8": {
+      "excluded_nodes": [],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 271,
+          "B_node_max": 0.9662470154113306,
+          "C_struct_max": 0.9642392012155416,
+          "H_cov_mahal": 0.9649446494464945,
+          "I_node_cov_max": 0.9662470154113306
+        },
+        "mechanical_jam": {
+          "n": 4,
+          "B_node_max": 0.8970588235294117,
+          "C_struct_max": 0.9044117647058825,
+          "H_cov_mahal": 0.8713235294117647,
+          "I_node_cov_max": 0.8970588235294117
+        },
+        "compactor_status": {
+          "n": 36,
+          "B_node_max": 0.9460784313725491,
+          "C_struct_max": 0.945669934640523,
+          "H_cov_mahal": 0.9473039215686275,
+          "I_node_cov_max": 0.9460784313725491
+        },
+        "crate_recognition": {
+          "n": 53,
+          "B_node_max": 0.8490566037735849,
+          "C_struct_max": 0.8576581576026637,
+          "H_cov_mahal": 0.8490566037735849,
+          "I_node_cov_max": 0.8490566037735849
+        },
+        "other": {
+          "n": 8,
+          "B_node_max": 0.9117647058823529,
+          "C_struct_max": 0.9080882352941178,
+          "H_cov_mahal": 0.8970588235294118,
+          "I_node_cov_max": 0.9117647058823529
+        }
+      },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
+      "client_mean_auroc": {
+        "B_node_max": 0.914041115993846,
+        "C_struct_max": 0.9160134586917458,
+        "H_cov_mahal": 0.9059375055459767,
+        "I_node_cov_max": 0.914041115993846
+      }
+    },
+    "machine9": {
+      "excluded_nodes": [
+        "reject_count"
+      ],
+      "n_valid_cov_prototypes": 2,
+      "num_prototypes": 2,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 419,
+          "B_node_max": 0.9876861986667764,
+          "C_struct_max": 0.98451773516583,
+          "H_cov_mahal": 0.9930046909719364,
+          "I_node_cov_max": 0.9876861986667764
+        },
+        "mechanical_jam": {
+          "n": 16,
+          "B_node_max": 0.9946120689655172,
+          "C_struct_max": 0.9870689655172413,
+          "H_cov_mahal": 0.998114224137931,
+          "I_node_cov_max": 0.9946120689655172
+        },
+        "compactor_status": {
+          "n": 22,
+          "B_node_max": 0.9815830721003135,
+          "C_struct_max": 0.9802115987460815,
+          "H_cov_mahal": 0.9880485893416928,
+          "I_node_cov_max": 0.9815830721003135
+        },
+        "crate_recognition": {
+          "n": 48,
+          "B_node_max": 0.3564565373563218,
+          "C_struct_max": 0.41038074712643674,
+          "H_cov_mahal": 0.5959051724137931,
+          "I_node_cov_max": 0.35726472701149425
+        },
+        "other": {
+          "n": 28,
+          "B_node_max": 0.9947660098522166,
+          "C_struct_max": 0.9958435960591132,
+          "H_cov_mahal": 0.9975369458128079,
+          "I_node_cov_max": 0.9947660098522166
+        }
+      },
+      "n_valid_score_node_prototypes": 2,
+      "n_valid_score_struct_prototypes": 2,
+      "client_mean_auroc": {
+        "B_node_max": 0.863020777388229,
+        "C_struct_max": 0.8716045285229406,
+        "H_cov_mahal": 0.9145219245356323,
+        "I_node_cov_max": 0.8631824153192635
+      }
+    }
+  },
+  "summary_mean_auroc_overall": {
+    "B_node_max": 0.9552758028794138,
+    "C_struct_max": 0.9526574165695092,
+    "H_cov_mahal": 0.9639610029826268,
+    "I_node_cov_max": 0.9552933722197438
+  },
+  "summary_n_valid_score_node_prototypes": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    2
+  ],
+  "summary_n_valid_score_struct_prototypes": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    2
+  ]
+}

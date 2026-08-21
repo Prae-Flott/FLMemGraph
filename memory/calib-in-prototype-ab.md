@@ -227,7 +227,15 @@ implementation does not do -- see "What's still open").
 - **Per-prototype's Sielaff regression mechanism (small per-prototype calib
   counts vs. `min_samples=5`) was not directly diagnosed** -- flagged above
   as the most likely cause but not verified by inspecting the actual
-  per-prototype window-count distribution.
+  per-prototype window-count distribution. **Update:** partially diagnosed
+  by [[sielaff-num-prototypes-sweep]], which swept `NUM_PROTOTYPES` on
+  Sielaff and found the hypothesis confirmed IN PART (the fraction of valid
+  per-prototype calib estimates tracks the AUROC regression closely across
+  the grid) but NOT the complete explanation (even at `NUM_PROTOTYPES=2`,
+  with 60% of prototype slots individually valid, `per_prototype` still
+  underperforms `global` by a real margin) -- no `NUM_PROTOTYPES` value
+  makes `per_prototype` beat `global` on Sielaff, so the recommendation to
+  keep `global` for Sielaff (below) stands unchanged.
 - Single seed everywhere, per this project's standing convention -- every
   delta above (especially the smaller ones, e.g. robo3er's F/I/J moving by
   ~0.001-0.003) should be read with that in mind; the large, clearly

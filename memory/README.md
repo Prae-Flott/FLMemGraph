@@ -27,6 +27,7 @@ closed.
 
 - [`calib-in-prototype-ab.md`](calib-in-prototype-ab.md) — per-prototype vs.
   EMA calibration for B/C/K (`--calib-mode`): helps robo3er, hurts Sielaff.
+- [`sielaff-num-prototypes-sweep.md`](sielaff-num-prototypes-sweep.md) — `NUM_PROTOTYPES` sweep: partially, not fully, explains Sielaff's regression.
 - [`three-dataset-bck-comparison.md`](three-dataset-bck-comparison.md) —
   **cross-dataset B/C/K/BK/CK comparison, detection AUROC vs. diagnosis
   accuracy, all 3 datasets.** Headline finding (robo3er + Paderborn, on

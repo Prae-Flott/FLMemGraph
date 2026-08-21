@@ -92,6 +92,7 @@
     "machine0": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 0,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 79,
@@ -122,6 +123,8 @@
           "I_node_cov_max": 0.7647058823529411
         }
       },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
       "client_mean_auroc": {
         "B_node_max": 0.9411764705882353,
         "C_struct_max": 1.0,
@@ -132,6 +135,7 @@
     "machine1": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 382,
@@ -169,6 +173,8 @@
           "I_node_cov_max": 0.6726027397260274
         }
       },
+      "n_valid_score_node_prototypes": 2,
+      "n_valid_score_struct_prototypes": 2,
       "client_mean_auroc": {
         "B_node_max": 0.9342107150541491,
         "C_struct_max": 0.9321102584331445,
@@ -179,6 +185,7 @@
     "machine2": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 477,
@@ -216,6 +223,8 @@
           "I_node_cov_max": 1.0
         }
       },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
       "client_mean_auroc": {
         "B_node_max": 1.0,
         "C_struct_max": 0.9999683522531819,
@@ -226,6 +235,7 @@
     "machine3": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 418,
@@ -256,6 +266,8 @@
           "I_node_cov_max": 0.972007722007722
         }
       },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
       "client_mean_auroc": {
         "B_node_max": 0.9879800180490431,
         "C_struct_max": 0.9863271363594919,
@@ -266,6 +278,7 @@
     "machine4": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 359,
@@ -296,6 +309,8 @@
           "I_node_cov_max": 0.9510777683854608
         }
       },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
       "client_mean_auroc": {
         "B_node_max": 0.9791336856367926,
         "C_struct_max": 0.9812094956325725,
@@ -306,6 +321,7 @@
     "machine5": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 523,
@@ -343,6 +359,8 @@
           "I_node_cov_max": 0.9891304347826086
         }
       },
+      "n_valid_score_node_prototypes": 3,
+      "n_valid_score_struct_prototypes": 3,
       "client_mean_auroc": {
         "B_node_max": 0.9126643323955411,
         "C_struct_max": 0.9528296085028776,
@@ -353,6 +371,7 @@
     "machine6": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 350,
@@ -383,6 +402,8 @@
           "I_node_cov_max": 0.4819354838709678
         }
       },
+      "n_valid_score_node_prototypes": 2,
+      "n_valid_score_struct_prototypes": 2,
       "client_mean_auroc": {
         "B_node_max": 0.8492141644433665,
         "C_struct_max": 0.8424997574581615,
@@ -393,6 +414,7 @@
     "machine7": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 534,
@@ -430,6 +452,8 @@
           "I_node_cov_max": 0.7555234358868469
         }
       },
+      "n_valid_score_node_prototypes": 2,
+      "n_valid_score_struct_prototypes": 2,
       "client_mean_auroc": {
         "B_node_max": 0.9200087631235563,
         "C_struct_max": 0.8852373738160475,
@@ -440,6 +464,7 @@
     "machine8": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 271,
@@ -477,6 +502,8 @@
           "I_node_cov_max": 0.9191176470588235
         }
       },
+      "n_valid_score_node_prototypes": 1,
+      "n_valid_score_struct_prototypes": 1,
       "client_mean_auroc": {
         "B_node_max": 0.9181847625912442,
         "C_struct_max": 0.9149289557545963,
@@ -489,6 +516,7 @@
         "cleaning_duration"
       ],
       "n_valid_cov_prototypes": 2,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 419,
@@ -526,6 +554,8 @@
           "I_node_cov_max": 0.60621921182266
         }
       },
+      "n_valid_score_node_prototypes": 4,
+      "n_valid_score_struct_prototypes": 4,
       "client_mean_auroc": {
         "B_node_max": 0.4639429188706255,
         "C_struct_max": 0.9349634311625609,
@@ -539,5 +569,29 @@
     "C_struct_max": 0.9421812055959335,
     "H_cov_mahal": 0.964336978477719,
     "I_node_cov_max": 0.8892956504613356
-  }
+  },
+  "summary_n_valid_score_node_prototypes": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    3,
+    2,
+    2,
+    1,
+    4
+  ],
+  "summary_n_valid_score_struct_prototypes": [
+    1,
+    2,
+    1,
+    1,
+    1,
+    3,
+    2,
+    2,
+    1,
+    4
+  ]
 }
