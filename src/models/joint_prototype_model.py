@@ -64,7 +64,7 @@ class JointPrototypeMemory(nn.Module):
     convention but jointly over all N nodes instead of per-node."""
 
     def __init__(self, num_prototypes: int, num_nodes: int, embed_dim: int,
-                 ema_decay: float = 0.99, ema_warmup_steps: int = 200):
+                 ema_decay: float = 0.99, ema_warmup_steps: int = 20):
         super().__init__()
         self.num_prototypes = num_prototypes
         self.num_nodes = num_nodes
@@ -189,10 +189,38 @@ class JointPrototypeMemory(nn.Module):
     def load_memory(self, prototypes: torch.Tensor):
         """Overwrite this client's codebook with a server-broadcast [M, N, D]
         tensor (`federated_memory.align_and_split`'s P_G,n) and reset usage
-        counts for the new round -- same convention as `fl_model.FLGDNMemory.load_memory`."""
+        counts for the new round -- same convention as `fl_model.FLGDNMemory.load_memory`.
+
+        Also resets ALL EMA calibration state (Path A, `calib_mode="ema"`).
+        Bug fix (2026-08-21): this used to only zero `usage_count`, leaving
+        `ema_mean`/`ema_var`/`ema_initialized`/`ema_step`/the global EMA
+        buffers untouched across rounds. Since the codebook is a completely
+        different set of vectors after each `load_memory()` call, slot index
+        `m`'s "meaning" changes every round, but the old EMA stats (indexed
+        purely by `m`) kept being blended in at `ema_decay` (0.99, i.e. 99%
+        weight on the stale value) via `update_ema()` -- and since `ema_step`
+        was never reset either, `ema_warmup_steps`'s "don't trust early
+        updates" gate only ever fired once, at the very start of round 1, not
+        again after every subsequent codebook swap. Net effect: from round 2
+        onward, every EMA update was dominated by statistics computed under a
+        codebook geometry that no longer existed. This was the dominant cause
+        of Path A's measured AUROC regression, not the (also real, but
+        smaller) fit-split bias risk it was originally flagged for -- see
+        [[calib-in-prototype-ab]]. Resetting here means each round must earn
+        its own warm-up again; `ema_warmup_steps` was lowered from 200 to 20
+        to fit within a single round's local-epoch step budget (robo3er's
+        smallest federated client has ~135 fit windows / batch_size=256, i.e.
+        as few as ~12 steps per local epoch)."""
         with torch.no_grad():
             self.codebook.copy_(prototypes.to(self.codebook.device))
         self.usage_count.zero_()
+        self.ema_step.zero_()
+        self.ema_mean.zero_()
+        self.ema_var.fill_(1.0)
+        self.ema_initialized.zero_()
+        self.ema_global_mean.zero_()
+        self.ema_global_var.fill_(1.0)
+        self.ema_global_initialized.zero_()
 
 
 class DeviationCovarianceHead(nn.Module):
