@@ -26,15 +26,16 @@ other federated group score here, for consistency.
 
 Usage:
     python3 run_robo3er_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior]
-        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema}]
+        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema,shrinkage}] [--alpha 20]
 
 `--calib-mode` (default `global`, UNCHANGED behavior): see
 `run_robo3er_v3_1_federated.py`'s module docstring and
-`memory/calib-in-prototype-ab.md` for the full Path A/B explanation.
-Applies identically here to signal K (`k_resid`) on top of B/C/E/H --
-`per_prototype` fits `model.score_calib_k` from the calib split's PAIRED
-k_resid array (via `set_k_calibration`); `ema` mode has no online EMA
-hook for K in this script (matches C's fallback) and stays global for K.
+`memory/calib-in-prototype-ab.md` for the full Path A/B/shrinkage
+explanation. Applies identically here to signal K (`k_resid`) on top of
+B/C/E/H -- `per_prototype` fits `model.score_calib_k` from the calib
+split's PAIRED k_resid array (via `set_k_calibration`); `ema`/`shrinkage`
+modes have no online/federated hook for K in this script (matches C's
+fallback) and stay global for K.
 """
 import argparse
 import json
@@ -54,7 +55,8 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from joint_prototype_model import JointPrototypeV31Forecast  # noqa: E402
 from dataset import load_robo3er  # noqa: E402
 import feature_groups  # noqa: E402
-from federated_memory import align_and_split, fedavg_state_dict  # noqa: E402
+from federated_memory import (align_and_split, fedavg_state_dict,  # noqa: E402
+                               compute_prototype_dev_stats, compute_shrinkage_stats)
 
 SYNC_ENCODER_DECODER = True
 
@@ -312,8 +314,8 @@ def add_forecast_scores(base, forecast_score, mask):
     return out
 
 
-def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global"):
-    assert calib_mode in ("global", "per_prototype", "ema")
+def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global", alpha=20.0):
+    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     forecast_h = STRIDE * horizon_mult
@@ -373,6 +375,22 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
 
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
+
+        if calib_mode == "shrinkage":
+            # one-shot local pass over each client's OWN fit pairs, using this
+            # round's just-received aligned codebook -- see
+            # federated_memory.compute_shrinkage_stats' docstring for why
+            # this must happen AFTER load_memory().
+            client_dev_stats = []
+            for c, model, scaler, (vi, x_in_raw, x_future_raw) in zip(clients, models, scalers, fit_pairs):
+                n, t, f = x_in_raw.shape
+                x_in = scaler.transform(x_in_raw.reshape(-1, f)).reshape(n, t, f).astype(np.float32)
+                _, d_node_fit, _, _, idx_fit, _, _ = per_sample_scores(model, x_in)
+                client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, NUM_PROTOTYPES))
+            num_shared = diag["num_shared_prototypes"]
+            shrink_stats = compute_shrinkage_stats(client_dev_stats, num_shared, alpha)
+            for model, (mean_s, var_s, valid_s) in zip(models, shrink_stats):
+                model.memory.load_shrinkage_stats(mean_s, var_s, valid_s)
 
         if SYNC_ENCODER_DECODER:
             avg = fedavg_state_dict([m.state_dict() for m in models], fit_counts,
@@ -437,7 +455,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         node_head = model.score_calib_node if calib_mode == "per_prototype" else None
         struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
         k_head = model.score_calib_k if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode == "ema" else None  # C/K have no online EMA hook -> global fallback
+        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C/K have no
+        # online/federated hook -> global fallback; ema_zscore() reused as-is for shrinkage.
 
         test_w = scale_client(data, scaler, c.test_normal_idx)
         _, d_node_normal, resid_struct_normal, resid_phys_normal, idx_normal, _, d_mahal_normal = per_sample_scores(model, test_w)
@@ -520,8 +539,15 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         print(f"{key:<24}{v:>36.3f}")
 
     report["config"]["calib_mode"] = calib_mode
+    if calib_mode == "shrinkage":
+        report["config"]["alpha"] = alpha
     report["summary_mean_auroc_overall"] = summary_overall
-    mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    if calib_mode == "shrinkage":
+        mode_suffix = f"_calibmode_shrinkage_alpha{int(alpha)}"
+    elif calib_mode != "global":
+        mode_suffix = f"_calibmode_{calib_mode}"
+    else:
+        mode_suffix = ""
     suffix = out_suffix if out_suffix is not None else (
         f"forecast_v2_federated_h{horizon_mult}{'_noprior' if not use_forecast_prior else ''}"
         + ("_encdec_synced" if SYNC_ENCODER_DECODER else "") + mode_suffix)
@@ -539,7 +565,8 @@ if __name__ == "__main__":
     parser.add_argument("--horizon-mult", type=int, default=10)
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
+    parser.add_argument("--alpha", type=float, default=20.0, help="shrinkage strength for --calib-mode shrinkage")
     args = parser.parse_args()
     main(horizon_mult=args.horizon_mult, use_forecast_prior=not args.no_forecast_prior,
-         out_suffix=args.out_suffix, calib_mode=args.calib_mode)
+         out_suffix=args.out_suffix, calib_mode=args.calib_mode, alpha=args.alpha)

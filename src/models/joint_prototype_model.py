@@ -222,6 +222,58 @@ class JointPrototypeMemory(nn.Module):
         self.ema_global_var.fill_(1.0)
         self.ema_global_initialized.zero_()
 
+    @torch.no_grad()
+    def load_shrinkage_stats(self, mean: np.ndarray, var: np.ndarray, valid: np.ndarray):
+        """"shrinkage" calib mode of `memory/calib-in-prototype-ab.md` --
+        empirical-Bayes per-client, per-prototype shrinkage of `d_node`
+        deviation statistics, the successor to both plain `ema` (pure local
+        stats, small clients never clear warm-up within a round) and the
+        reverted `federated_ema` (one fused stat shared identically by every
+        client in a cluster, which let large clients overwrite small ones').
+
+        Loads server-computed, ALREADY-BLENDED per-client `(mean, var)`
+        (`federated_memory.compute_shrinkage_stats`'s output -- each row is
+        this client's own local statistic pulled partway toward a fleet-wide
+        pooled prior, weighted by this client's own per-prototype sample
+        count this round) directly into the SAME `ema_mean`/`ema_var`/
+        `ema_initialized` buffers `ema_zscore()` already reads, exactly as
+        `update_ema()`/plain `ema` mode would populate them -- so
+        `ema_zscore()` is reused UNCHANGED for scoring, same pattern as the
+        (reverted) `federated_ema` mode's `load_fed_ema_stats`.
+
+        Call once per round, right after `load_memory()` (which already
+        reset these buffers to scratch) and after this round's one-shot
+        local dev-stats pass. `valid` (unlike plain `ema`'s `n > 0` gate) is
+        driven by `compute_shrinkage_stats`'s own validity rule: a shared
+        slot is valid whenever ANY client had data this round (this client's
+        own local `n` may be 0 and the slot is still valid, since the blend
+        already fell back fully to the fleet prior in that case); a
+        personalized slot is valid only when THIS client's own `n > 0` (no
+        fleet borrowing applies there -- see that function's docstring)."""
+        device = self.ema_mean.device
+        valid_t = torch.tensor(valid, dtype=torch.bool, device=device)
+        mean_t = torch.tensor(mean, dtype=torch.float32, device=device)
+        var_t = torch.tensor(var, dtype=torch.float32, device=device).clamp(min=1e-6)
+
+        self.ema_mean = torch.where(valid_t.unsqueeze(1), mean_t, self.ema_mean)
+        self.ema_var = torch.where(valid_t.unsqueeze(1), var_t, self.ema_var)
+        self.ema_initialized = valid_t
+
+        if bool(valid_t.any()):
+            # client-local (not federated) global fallback for any slot that's still
+            # invalid (e.g. a personalized slot this client never routed traffic to
+            # this round) -- same "rarely hit" role ema_zscore()'s global fallback
+            # already plays; unweighted mean/var pool over valid slots since a
+            # per-slot n weighting isn't meaningful here (some valid slots' n is 0,
+            # by design, once the fleet prior alone made them valid).
+            mean_v = mean_t[valid_t]
+            var_v = var_t[valid_t]
+            g_mean = mean_v.mean(dim=0)
+            g_var = (var_v.mean(dim=0) + ((mean_v - g_mean.unsqueeze(0)) ** 2).mean(dim=0)).clamp(min=1e-6)
+            self.ema_global_mean = g_mean
+            self.ema_global_var = g_var
+            self.ema_global_initialized[0] = True
+
 
 class DeviationCovarianceHead(nn.Module):
     """No-prior anomaly signal: per-prototype covariance of per-node deviation

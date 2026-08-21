@@ -20,16 +20,17 @@ Federated protocol: encoder/edge_head/cov_head stay local; ONLY the
 JointPrototypeMemory codebook is exchanged each round via align_and_split.
 
 Usage:
-    python3 run_sielaff_v2_1_federated.py [--calib-mode {global,per_prototype,ema}]
-                                           [--num-prototypes N]
+    python3 run_sielaff_v2_1_federated.py [--calib-mode {global,per_prototype,ema,shrinkage}]
+                                           [--num-prototypes N] [--alpha 20]
 
 `--calib-mode` (default `global`, unchanged behavior): see
 `run_robo3er_v3_1_federated.py`'s docstring and
-`memory/calib-in-prototype-ab.md` for the full Path A/B explanation.
-Only B (`d_node`)/C (`resid_struct`)'s per-node z-score (stage before the
-`.max(axis=1)`) is affected; the reliability mask (`RELIABILITY_RATIO`)
-stays computed from the GLOBAL calib IQR in every mode -- it is a coarse
-near-constant-node filter, not part of this A/B test's scope.
+`memory/calib-in-prototype-ab.md` for the full Path A/B/shrinkage
+explanation. Only B (`d_node`)/C (`resid_struct`)'s per-node z-score (stage
+before the `.max(axis=1)`) is affected; the reliability mask
+(`RELIABILITY_RATIO`) stays computed from the GLOBAL calib IQR in every
+mode -- it is a coarse near-constant-node filter, not part of this A/B
+test's scope.
 
 `--num-prototypes` (default `NUM_PROTOTYPES` below, unchanged behavior):
 overrides the codebook size. Added for the `NUM_PROTOTYPES` grid search in
@@ -54,7 +55,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from joint_prototype_model import JointPrototypeV21  # noqa: E402
-from federated_memory import align_and_split  # noqa: E402
+from federated_memory import (align_and_split,  # noqa: E402
+                               compute_prototype_dev_stats, compute_shrinkage_stats)
 
 DATA_DIR = REPO_ROOT / "data" / "sielaff"
 OUT_DIR = REPO_ROOT / "checkpoints" / "sielaff"
@@ -189,8 +191,8 @@ def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
     return z
 
 
-def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
-    assert calib_mode in ("global", "per_prototype", "ema")
+def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
+    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
@@ -230,6 +232,21 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
 
+        if calib_mode == "shrinkage":
+            # one-shot local pass over each client's OWN fit split, using this
+            # round's just-received aligned codebook -- see
+            # federated_memory.compute_shrinkage_stats' docstring for why
+            # this must happen AFTER load_memory().
+            client_dev_stats = []
+            for c, model, scaler in zip(clients, models, scalers):
+                fit_w = scale_client(data, scaler, c.fit_idx)
+                _, d_node_fit, _, idx_fit, _ = per_sample_scores(model, fit_w)
+                client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, num_prototypes))
+            num_shared = diag["num_shared_prototypes"]
+            shrink_stats = compute_shrinkage_stats(client_dev_stats, num_shared, alpha)
+            for model, (mean_s, var_s, valid_s) in zip(models, shrink_stats):
+                model.memory.load_shrinkage_stats(mean_s, var_s, valid_s)
+
     report = {"config": {"rounds": ROUNDS, "local_epochs": LOCAL_EPOCHS, "num_prototypes": num_prototypes,
                           "embed_dim": EMBED_DIM, "window_len": WINDOW_LEN, "gamma": GAMMA, "delta": DELTA,
                           "reliability_ratio": RELIABILITY_RATIO},
@@ -252,7 +269,8 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
             model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w, min_samples=MIN_PROTO_SAMPLES)
         node_head = model.score_calib_node if calib_mode == "per_prototype" else None
         struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode == "ema" else None  # C has no online EMA hook -> global fallback
+        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C has no
+        # online/federated hook -> global fallback; ema_zscore() reused as-is for shrinkage.
 
         _, node_iqr = zscore(d_node_normal, d_node_calib)  # reliability mask always global, see module docstring
         median_iqr = np.median(node_iqr)
@@ -323,13 +341,20 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
         print(f"{key:<24}{v:>36.3f}")
 
     report["config"]["calib_mode"] = calib_mode
+    if calib_mode == "shrinkage":
+        report["config"]["alpha"] = alpha
     report["summary_mean_auroc_overall"] = summary_overall
     if calib_mode == "per_prototype":
         report["summary_n_valid_score_node_prototypes"] = [
             report["clients"][k].get("n_valid_score_node_prototypes") for k in report["clients"]]
         report["summary_n_valid_score_struct_prototypes"] = [
             report["clients"][k].get("n_valid_score_struct_prototypes") for k in report["clients"]]
-    mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    if calib_mode == "shrinkage":
+        mode_suffix = f"_calibmode_shrinkage_alpha{int(alpha)}"
+    elif calib_mode != "global":
+        mode_suffix = f"_calibmode_{calib_mode}"
+    else:
+        mode_suffix = ""
     proto_suffix = f"_m{num_prototypes}" if num_prototypes != NUM_PROTOTYPES else ""
     out_name = f"sielaff_v2_1_federated{mode_suffix}{proto_suffix}_report.json"
     with open(OUT_DIR / out_name, "w") as f:
@@ -342,7 +367,8 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
     parser.add_argument("--num-prototypes", type=int, default=NUM_PROTOTYPES)
+    parser.add_argument("--alpha", type=float, default=20.0, help="shrinkage strength for --calib-mode shrinkage")
     args = parser.parse_args()
-    main(calib_mode=args.calib_mode, num_prototypes=args.num_prototypes)
+    main(calib_mode=args.calib_mode, num_prototypes=args.num_prototypes, alpha=args.alpha)

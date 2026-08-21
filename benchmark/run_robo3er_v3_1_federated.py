@@ -62,7 +62,7 @@ of the centralized script's flat mean-over-fault-types number.
   indirect signal via elevated wheel current only when actively driving.
 
 Usage:
-    python3 run_robo3er_v3_1_federated.py [--calib-mode {global,per_prototype,ema}]
+    python3 run_robo3er_v3_1_federated.py [--calib-mode {global,per_prototype,ema,shrinkage}] [--alpha 20]
 
 `--calib-mode` (default `global`, UNCHANGED behavior, regression-safe):
 per `memory/calib-in-prototype-ab.md`'s branch experiment closing the gap
@@ -80,6 +80,24 @@ median/IQR, script-level) are calibrated.
   offline calib pass. `resid_struct` (signal C) has no online EMA hook in
   this script (only `d_node`/B, per the task's stated priority) --
   `ema` mode falls back to `global` for C.
+- `shrinkage`: empirical-Bayes per-client, per-prototype shrinkage, the
+  successor to both plain `ema` (pure local stats -- robo3er's small clients
+  never clear warm-up within a round) and the reverted `federated_ema`
+  experiment (one fused stat shared identically by every client in a
+  cluster, which let big clients like robot04 overwrite small ones' real
+  statistics -- see `memory/calib-in-prototype-ab.md`'s "Why federated_ema
+  failed" section). Each round, AFTER `align_and_split`+`load_memory()`,
+  every client does a one-shot local pass over its own fit split under
+  that round's just-received aligned codebook
+  (`federated_memory.compute_prototype_dev_stats`); the server pools these
+  fleet-wide per shared prototype slot (`compute_shrinkage_stats`) and
+  blends each client's own local statistic with the fleet prior via
+  `lambda_{c,k} = n_{c,k} / (n_{c,k} + alpha)` -- large clients (`n` large)
+  keep almost all of their own statistic, small clients borrow heavily from
+  the fleet but are never fully overwritten. `--alpha` controls shrinkage
+  strength (larger = more pooling); swept across scripts/datasets, not
+  tuned per-script. `resid_struct`/C has no shrinkage hook either (same
+  scope limit as `ema`), falls back to `global`.
 """
 import argparse
 import json
@@ -99,7 +117,8 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from joint_prototype_model import JointPrototypeV31  # noqa: E402
 from dataset import load_robo3er  # noqa: E402
 import feature_groups  # noqa: E402
-from federated_memory import align_and_split, fedavg_state_dict  # noqa: E402
+from federated_memory import (align_and_split, fedavg_state_dict,  # noqa: E402
+                               compute_prototype_dev_stats, compute_shrinkage_stats)
 
 SYNC_ENCODER_DECODER = True  # opt-in departure from "only exchange memory" -- see
                               # federated_memory.fedavg_state_dict's docstring and
@@ -388,8 +407,8 @@ def ablation_scores(node_score, edge_score, typed_score, cov_score):
     }
 
 
-def main(calib_mode="global"):
-    assert calib_mode in ("global", "per_prototype", "ema")
+def main(calib_mode="global", alpha=20.0):
+    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
@@ -438,6 +457,22 @@ def main(calib_mode="global"):
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
 
+        if calib_mode == "shrinkage":
+            # one-shot local pass over each client's OWN fit split, using this
+            # round's just-received aligned codebook (compute_shrinkage_stats'
+            # docstring explains why placement AFTER load_memory() matters --
+            # index k means the same shared prototype for every client only
+            # once everyone has the same aligned codebook).
+            client_dev_stats = []
+            for c, model, scaler in zip(clients, models, scalers):
+                fit_w = scale_client(data, scaler, c.fit_idx)
+                _, d_node_fit, _, _, idx_fit, _, _ = per_sample_scores(model, fit_w)
+                client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, NUM_PROTOTYPES))
+            num_shared = diag["num_shared_prototypes"]
+            shrink_stats = compute_shrinkage_stats(client_dev_stats, num_shared, alpha)
+            for model, (mean_s, var_s, valid_s) in zip(models, shrink_stats):
+                model.memory.load_shrinkage_stats(mean_s, var_s, valid_s)
+
         if SYNC_ENCODER_DECODER:
             # sample-size-weighted FedAvg over encoder+decoder ONLY -- memory (just
             # personalized above), edge_head, typed_head stay untouched/fully local.
@@ -484,7 +519,9 @@ def main(calib_mode="global"):
 
         node_head = model.score_calib_node if calib_mode == "per_prototype" else None
         struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode == "ema" else None  # C has no online EMA hook -> falls back to global
+        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C has no
+        # online EMA hook (or shrinkage hook) -> falls back to global; ema_zscore() is
+        # reused as-is for shrinkage since load_shrinkage_stats() populates the SAME buffers.
 
         test_w = scale_client(data, scaler, c.test_normal_idx)
         _, d_node_normal, resid_struct_normal, resid_phys_normal, idx_normal, _, d_mahal_normal = per_sample_scores(model, test_w)
@@ -533,9 +570,16 @@ def main(calib_mode="global"):
         print(f"{key:<24}{v:>36.3f}")
 
     report["config"]["calib_mode"] = calib_mode
+    if calib_mode == "shrinkage":
+        report["config"]["alpha"] = alpha
     report["summary_mean_auroc_overall"] = summary_overall
     suffix = "_encdec_synced" if SYNC_ENCODER_DECODER else ""
-    mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    if calib_mode == "shrinkage":
+        mode_suffix = f"_calibmode_shrinkage_alpha{int(alpha)}"
+    elif calib_mode != "global":
+        mode_suffix = f"_calibmode_{calib_mode}"
+    else:
+        mode_suffix = ""
     out_json = OUT_DIR / f"robo3er_v3_1_federated{suffix}{mode_suffix}_report.json"
     with open(out_json, "w") as f:
         json.dump(report, f, indent=2)
@@ -547,6 +591,7 @@ def main(calib_mode="global"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
+    parser.add_argument("--alpha", type=float, default=20.0, help="shrinkage strength for --calib-mode shrinkage")
     args = parser.parse_args()
-    main(calib_mode=args.calib_mode)
+    main(calib_mode=args.calib_mode, alpha=args.alpha)
