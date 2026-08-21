@@ -181,7 +181,84 @@ more "EMA per-prototype statistics become internally inconsistent across
 training/federated rounds," a related but mechanically distinct problem that
 would need fixing even if the fit-split bias itself were somehow eliminated
 (e.g. by running the EMA update on a genuinely held-out stream, which this
-implementation does not do -- see "What's still open").
+implementation does not do -- see "What's still open"). **Update: this
+inconsistency was confirmed and fixed -- see "Bug fix (2026-08-21)" below.
+Sielaff's regression turned out to be almost entirely this bug (full
+recovery to `global` once fixed); robo3er's is a mix of this bug (partially
+fixed) and a smaller residual gap consistent with the fit-split bias
+originally hypothesized here.**
+
+## Bug fix (2026-08-21): `load_memory()` wasn't resetting EMA state
+
+The "most likely fixable culprit" flagged above was confirmed and fixed.
+`JointPrototypeMemory.load_memory()` (`joint_prototype_model.py`) only ever
+zeroed `usage_count` on each federated round's codebook swap -- `ema_mean`,
+`ema_var`, `ema_initialized`, `ema_step`, and the global EMA fallback buffers
+all silently carried over. Since `load_memory()` replaces the codebook with a
+completely different set of vectors every round, prototype slot `m`'s
+"meaning" changes each time, but the stale EMA stats (indexed only by `m`,
+blended at `ema_decay=0.99`, i.e. 99% weight on the old value) kept being
+mixed into statistics computed under the NEW codebook geometry. Worse,
+`ema_step` was never reset either, so `ema_warmup_steps`' "don't trust early
+noisy assignments" gate only ever fired once, at the very start of round 1 --
+every subsequent round's codebook swap got zero warm-up protection.
+
+**Fix**: `load_memory()` now also resets `ema_step`/`ema_mean`/`ema_var`/
+`ema_initialized`/`ema_global_*` to their initial values, so each round has
+to earn its own warm-up again. `ema_warmup_steps` was also lowered from 200
+to 20 (default), since robo3er's smallest federated clients (~103-247 fit
+windows, `batch_size=256`) only produce ~12 local-epoch steps per round --
+200 was never reachable within a single round even before this fix's reset
+made per-round warm-up mandatory.
+
+**Result: Sielaff fully recovers to match `global`; robo3er improves but
+still trails.**
+
+| Dataset / script | Signal | broken `ema` (pre-fix) | fixed `ema` | `global` (unaffected) |
+|---|---|---|---|---|
+| robo3er v3_1 | B | 0.769 | 0.836 | 0.945 |
+| robo3er v3_1 | B, cable_trapped | 0.791 | 0.904 | 0.994 |
+| robo3er v3_1 | B, stuck | 0.746 | 0.769 | 0.519 (central) / 0.933 (fed, see note) |
+| robo3er forecast_v2 | B | 0.782 | 0.846 | 0.948 |
+| Sielaff v2_1 | B | 0.935 | **0.974** | 0.974 |
+| Sielaff forecast_v2 | B | 0.966 | **0.974** | 0.974 |
+
+(robo3er's `global` `stuck` figure needs care -- 0.933/0.926 is what
+[[scoring-signals-B-C-E-H]] reports for federated B/C on `stuck`; this
+branch's own `global`-mode `robo3er_v3_1_federated` run reports overall mean
+0.945 with per-fault-type numbers consistent with that; treat the table's
+"0.945"/"0.948" row as the right global comparison point, not a literal
+per-fault cell mismatch.)
+
+**Sielaff's full recovery (0.974 vs 0.974, to 3 decimal places on the v2_1
+script) is strong evidence the reset bug, not the fit-split-bias risk the
+task originally asked about, was the dominant cause of Path A's regression
+on Sielaff** -- once the EMA statistics are no longer contaminated across
+round boundaries, they converge to essentially the same answer as the
+offline global median/IQR.
+
+**robo3er's partial recovery (0.836/0.846, still ~10pt below `global`) has a
+different, still-open explanation: most robo3er clients still don't clear
+even the lowered warm-up within a single round.** `robot00`/`robot01`/
+`robot02`/`robot03` have 103-247 fit windows -- at `batch_size=256` that's
+exactly 1 batch/epoch, so 12 local epochs = 12 steps/round, still below
+`ema_warmup_steps=20`. Only `robot04` (fit=3231, ~13 batches/epoch, ~156
+steps/round) ever clears warm-up and gets genuine per-prototype EMA stats;
+the four small clients spend the whole run on the (now correctly
+per-round-reset, but still not per-prototype) global EMA fallback. `stuck`
+(robot04's fault) improved only marginally (0.746→0.769) even though its
+client DOES reach genuine per-prototype EMA -- consistent with the
+originally-hypothesized fit-split bias being real but secondary, showing up
+specifically once the reset bug is no longer masking it. `cable_trapped`
+(robot01's fault, small client, global-fallback-only) improved much more
+(0.791→0.904) purely from no longer being cross-contaminated by stale
+cross-round statistics, without ever getting real per-prototype treatment.
+
+**Not attempted**: lowering `ema_warmup_steps` further (e.g. to 5) to let
+robo3er's small clients reach genuine per-prototype EMA too -- risks noisier
+variance estimates from even fewer samples, the same regime that plausibly
+hurt Path B on Sielaff's 16-prototype setup. Flagged as the next concrete
+experiment if this line continues, not run here.
 
 ## Recommendation
 
@@ -190,15 +267,18 @@ implementation does not do -- see "What's still open").
   no downside observed on `cable_trapped`. `global` remains fine as a
   simpler default if this gain isn't worth the added `set_score_calibration()`
   plumbing for a given use case.
-- **Sielaff: keep `global` (do NOT switch to `per_prototype` or `ema`).**
-  Both alternatives are clear regressions for B, and `per_prototype` also
-  regresses C -- Sielaff's smaller per-client calib splits against 16
-  prototypes appear to be the wrong regime for this technique as implemented.
-- **`ema` (Path A) is not recommended anywhere in its current form.** It
-  never beats `global`, let alone `per_prototype`, on any tested
-  dataset/script/signal. The EMA-vs-`load_memory()`-reset interaction
-  flagged above is the most likely fixable culprit and the clear next step
-  before writing Path A off entirely.
+- **Sielaff: keep `global` (do NOT switch to `per_prototype`).** Still a
+  clear regression for B/C even after the `ema` fix (per_prototype's
+  regression was never about the `load_memory()` bug -- it's Path B's own
+  offline calibration seeing too few calib windows per prototype at
+  Sielaff's 16-prototype scale, a separate, still-undiagnosed issue).
+- **`ema` (Path A), post-fix: viable on Sielaff (matches `global` exactly),
+  still not recommended on robo3er (10pt behind `global`/`per_prototype`).**
+  The fix confirmed the `load_memory()`-reset interaction was real and was
+  the dominant cause of the ORIGINAL blanket "don't use ema anywhere"
+  verdict -- that verdict no longer holds for Sielaff. robo3er's residual gap
+  is a different, still-open problem (most clients too small to clear
+  warm-up within a round), not the bug just fixed.
 
 ## What's still open
 
