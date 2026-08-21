@@ -17,13 +17,15 @@ Adds `K_forecast_max`/`BK_max`/`CK_max`/`HK_max`, reusing
 
 Usage:
     python3 run_sielaff_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior]
-        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema}] [--num-prototypes N]
+        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema,shrinkage}]
+        [--num-prototypes N] [--alpha 20]
 
 `--calib-mode` (default `global`, unchanged behavior): see
 `run_robo3er_v3_1_federated.py`'s docstring and
 `memory/calib-in-prototype-ab.md`. Applies to B/C/K's per-node z-score
 (the reliability mask stays global in every mode, same simplification as
-`run_sielaff_v2_1_federated.py`).
+`run_sielaff_v2_1_federated.py`). `ema`/`shrinkage` have no hook for C/K,
+falling back to `global` for those (same scope limit as elsewhere).
 
 `--num-prototypes` (default `NUM_PROTOTYPES` below, unchanged behavior):
 see `run_sielaff_v2_1_federated.py`'s docstring and
@@ -45,7 +47,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from joint_prototype_model import JointPrototypeV21Forecast  # noqa: E402
-from federated_memory import align_and_split  # noqa: E402
+from federated_memory import (align_and_split,  # noqa: E402
+                               compute_prototype_dev_stats, compute_shrinkage_stats)
 
 DATA_DIR = REPO_ROOT / "data" / "sielaff"
 OUT_DIR = REPO_ROOT / "checkpoints" / "sielaff"
@@ -225,8 +228,8 @@ def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
 
 
 def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global",
-         num_prototypes=NUM_PROTOTYPES):
-    assert calib_mode in ("global", "per_prototype", "ema")
+         num_prototypes=NUM_PROTOTYPES, alpha=20.0):
+    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     forecast_h = STRIDE * horizon_mult
@@ -277,6 +280,22 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
 
+        if calib_mode == "shrinkage":
+            # one-shot local pass over each client's OWN fit pairs, using this
+            # round's just-received aligned codebook -- see
+            # federated_memory.compute_shrinkage_stats' docstring for why
+            # this must happen AFTER load_memory().
+            client_dev_stats = []
+            for c, model, scaler, (vi, x_in_raw, x_future_raw) in zip(clients, models, scalers, fit_pairs):
+                n, t, f = x_in_raw.shape
+                x_in = scaler.transform(x_in_raw.reshape(-1, f)).reshape(n, t, f).astype(np.float32)
+                _, d_node_fit, _, idx_fit, _ = per_sample_scores(model, x_in)
+                client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, num_prototypes))
+            num_shared = diag["num_shared_prototypes"]
+            shrink_stats = compute_shrinkage_stats(client_dev_stats, num_shared, alpha)
+            for model, (mean_s, var_s, valid_s) in zip(models, shrink_stats):
+                model.memory.load_shrinkage_stats(mean_s, var_s, valid_s)
+
     report = {"config": {"rounds": ROUNDS, "local_epochs": LOCAL_EPOCHS, "num_prototypes": num_prototypes,
                           "embed_dim": EMBED_DIM, "window_len": WINDOW_LEN, "gamma": GAMMA, "delta": DELTA,
                           "reliability_ratio": RELIABILITY_RATIO, "horizon_mult": horizon_mult,
@@ -301,7 +320,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         node_head = model.score_calib_node if calib_mode == "per_prototype" else None
         struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
         k_head_ref = model.score_calib_k if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode == "ema" else None  # C/K fall back to global (no online EMA hook)
+        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C/K fall back
+        # to global (no online/federated hook); ema_zscore() reused as-is for shrinkage.
 
         vi_c, chains_c, _ = build_pairs(c.calib_idx, targets, window_machine, horizon_mult, True, True)
         calib_in = scale_client(data, scaler, vi_c)
@@ -455,6 +475,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         print(f"{key:<24}{v:>36.3f}")
 
     report["config"]["calib_mode"] = calib_mode
+    if calib_mode == "shrinkage":
+        report["config"]["alpha"] = alpha
     report["summary_mean_auroc_overall"] = summary_overall
     if calib_mode == "per_prototype":
         report["summary_n_valid_score_node_prototypes"] = [
@@ -463,7 +485,12 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             report["clients"][k].get("n_valid_score_struct_prototypes") for k in report["clients"]]
         report["summary_n_valid_score_k_prototypes"] = [
             report["clients"][k].get("n_valid_score_k_prototypes") for k in report["clients"]]
-    mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    if calib_mode == "shrinkage":
+        mode_suffix = f"_calibmode_shrinkage_alpha{int(alpha)}"
+    elif calib_mode != "global":
+        mode_suffix = f"_calibmode_{calib_mode}"
+    else:
+        mode_suffix = ""
     proto_suffix = f"_m{num_prototypes}" if num_prototypes != NUM_PROTOTYPES else ""
     suffix = out_suffix if out_suffix is not None else (
         f"forecast_v2_federated_h{horizon_mult}{'_noprior' if not use_forecast_prior else ''}{mode_suffix}{proto_suffix}")
@@ -481,8 +508,10 @@ if __name__ == "__main__":
     parser.add_argument("--horizon-mult", type=int, default=10)
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
     parser.add_argument("--num-prototypes", type=int, default=NUM_PROTOTYPES)
+    parser.add_argument("--alpha", type=float, default=20.0, help="shrinkage strength for --calib-mode shrinkage")
     args = parser.parse_args()
     main(horizon_mult=args.horizon_mult, use_forecast_prior=not args.no_forecast_prior,
-         out_suffix=args.out_suffix, calib_mode=args.calib_mode, num_prototypes=args.num_prototypes)
+         out_suffix=args.out_suffix, calib_mode=args.calib_mode, num_prototypes=args.num_prototypes,
+         alpha=args.alpha)

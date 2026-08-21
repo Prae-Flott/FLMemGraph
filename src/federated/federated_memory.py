@@ -109,6 +109,143 @@ def fedavg_state_dict(state_dicts, client_weights, prefixes):
     return avg
 
 
+def compute_prototype_dev_stats(d_node: np.ndarray, idx: np.ndarray, num_prototypes: int):
+    """Sufficient statistics (n, mean, var) of `d_node` per matched prototype,
+    computed in ONE one-shot local pass over a client's own data (using
+    whatever codebook that pass's `idx` was matched against) -- NOT a decayed
+    EMA. Used by both the `federated_ema` calib mode (recoverable via `git
+    show 916ade0`, reverted from the tree -- see `memory/calib-in-prototype-ab.md`)
+    and the `shrinkage` calib mode below: a plain per-prototype sample-count/
+    mean/variance triple is used specifically because it has a clean,
+    associative, order-independent cross-client merge rule (the
+    parallel-variance / Chan-et-al. formula, `_merge_dev_stats_pair` below);
+    an EMA has no equivalent closed-form merge.
+
+    `d_node`: [W, num_nodes] numpy. `idx`: [W] numpy matched-prototype
+    indices, same forward pass. Returns `(n [M] int64, mean [M, num_nodes]
+    float64, var [M, num_nodes] float64)` -- unpopulated prototypes (no
+    window routed there) get `n=0`/`mean=0`/`var=0`; callers must gate on
+    `n == 0` before trusting `mean`/`var` for that slot."""
+    num_nodes = d_node.shape[1]
+    n = np.zeros(num_prototypes, dtype=np.int64)
+    mean = np.zeros((num_prototypes, num_nodes), dtype=np.float64)
+    var = np.zeros((num_prototypes, num_nodes), dtype=np.float64)
+    for m in range(num_prototypes):
+        mask = idx == m
+        n_m = int(mask.sum())
+        n[m] = n_m
+        if n_m > 0:
+            d_m = d_node[mask].astype(np.float64)
+            mean[m] = d_m.mean(axis=0)
+            var[m] = d_m.var(axis=0) if n_m > 1 else np.zeros(num_nodes)
+    return n, mean, var
+
+
+def _merge_dev_stats_pair(n_a, mean_a, var_a, n_b, mean_b, var_b):
+    """Parallel-variance (Chan, Golub, LeVeque 1979) pairwise merge of two
+    (n, mean, var) sufficient-statistics triples into one, exact (not an
+    approximation) for combining two disjoint samples' mean/variance from
+    only their own summary statistics. Associative/commutative, so folding
+    more than two members into one pool can be done in any order."""
+    n = n_a + n_b
+    if n <= 0:
+        return 0.0, mean_a, var_a  # both empty; values are unused (n==0 downstream)
+    mean = (n_a * mean_a + n_b * mean_b) / n
+    m2 = n_a * var_a + n_b * var_b + (mean_a - mean_b) ** 2 * (n_a * n_b) / n
+    return n, mean, m2 / n
+
+
+def compute_shrinkage_stats(client_dev_stats, num_shared: int, alpha: float):
+    """Empirical-Bayes per-client, per-prototype shrinkage, "shrinkage" calib
+    mode of `memory/calib-in-prototype-ab.md` -- the design that replaces
+    both plain `ema` (pure local stats, small clients never clear warm-up)
+    and the reverted `federated_ema` (one fused stat shared IDENTICALLY by
+    every client in a cluster, which let large clients overwrite small ones'
+    real statistics -- see that doc's "Why federated_ema failed" section).
+
+    `client_dev_stats`: list of C `(n, mean, var)` triples from
+    `compute_prototype_dev_stats`, one per client, each computed via a
+    one-shot local pass over that client's OWN fit split, using THIS ROUND'S
+    FINAL (already server-aligned) codebook -- i.e. called AFTER
+    `align_and_split` + `load_memory()`, not before (unlike `federated_ema`'s
+    placement). This matters: because every client's `idx` this round is
+    drawn under the identical aligned codebook, prototype index `k` means
+    the SAME physical prototype for every client when `k < num_shared` (the
+    broadcast-shared slots, `align_and_split`'s `P_S` -- identical vector
+    content for every client by construction) but a DIFFERENT,
+    client-specific prototype when `k >= num_shared` (`P_p_n`, personalized
+    slots -- each client's own content there).
+
+    Fleet-wide pooling (across every client with `n_{c,k} > 0` this round --
+    deliberately NOT restricted to `align_and_split`'s original clustering
+    decision, a broadening explicitly called for by the design doc, since the
+    shrinkage target is a fleet-wide prior, not cluster-specific
+    reconciliation) is therefore applied ONLY to the shared slots
+    `k < num_shared`: those are the only indices where "the same prototype"
+    is a coherent cross-client concept this round. Personalized slots
+    (`k >= num_shared`) pass through with `lambda=1` (no cross-client
+    borrowing) -- pooling raw index `k` there would blend together unrelated
+    per-client prototype content, since each client's personalized-slot
+    content differs by construction (this is a deliberate, documented
+    DEVIATION from a literal "pool every client with data for that index"
+    rule, necessary because that rule is only semantically valid for the
+    shared slots).
+
+    For each shared slot `k`, blends client `c`'s own local `(mean, var)`
+    with the fleet-pooled `(mean, var)` via `lambda_{c,k} = n_{c,k} /
+    (n_{c,k} + alpha)` (client's own local `n` this round; `alpha` is the
+    shrinkage-strength hyperparameter, swept by callers, not tuned here) --
+    `lambda` never reaches exactly 0 unless `n=0` (full fallback to the
+    fleet-pooled prior, expected/fine) and never reaches exactly 1 unless
+    `alpha=0`.
+
+    Returns a list of C `(mean_star [M, num_nodes], var_star [M, num_nodes],
+    valid [M] bool)` triples ready for
+    `JointPrototypeMemory.load_shrinkage_stats()`. `valid[k]` is True for
+    shared slots whenever the FLEET pool has any data (`global_n[k] > 0`,
+    regardless of this client's own `n_{c,k}`) and for personalized slots
+    whenever this client's OWN `n_{c,k} > 0` (matching plain `ema`'s
+    validity convention there, since no fleet borrowing applies)."""
+    C = len(client_dev_stats)
+    M, num_nodes = client_dev_stats[0][1].shape
+    n_list = [ds[0].astype(np.float64) for ds in client_dev_stats]
+    mean_list = [ds[1].astype(np.float64) for ds in client_dev_stats]
+    var_list = [ds[2].astype(np.float64) for ds in client_dev_stats]
+
+    global_n = np.zeros(num_shared, dtype=np.float64)
+    global_mean = np.zeros((num_shared, num_nodes), dtype=np.float64)
+    global_var = np.zeros((num_shared, num_nodes), dtype=np.float64)
+    for k in range(num_shared):
+        n_acc, mean_acc, var_acc = 0.0, None, None
+        for c in range(C):
+            n_c = n_list[c][k]
+            if n_c <= 0:
+                continue
+            if mean_acc is None:
+                n_acc, mean_acc, var_acc = n_c, mean_list[c][k], var_list[c][k]
+            else:
+                n_acc, mean_acc, var_acc = _merge_dev_stats_pair(
+                    n_acc, mean_acc, var_acc, n_c, mean_list[c][k], var_list[c][k])
+        global_n[k] = n_acc
+        if mean_acc is not None:
+            global_mean[k] = mean_acc
+            global_var[k] = var_acc
+    shared_valid = global_n > 0  # [num_shared]
+
+    out = []
+    for c in range(C):
+        mean_star = mean_list[c].copy()
+        var_star = var_list[c].copy()
+        valid = n_list[c] > 0  # personalized-slot validity: this client's own coverage only
+        if num_shared > 0:
+            lam = (n_list[c][:num_shared] / (n_list[c][:num_shared] + alpha))[:, None]
+            mean_star[:num_shared] = lam * mean_list[c][:num_shared] + (1 - lam) * global_mean
+            var_star[:num_shared] = lam * var_list[c][:num_shared] + (1 - lam) * global_var
+            valid[:num_shared] = shared_valid  # even this client's own n=0 is valid (lambda->0)
+        out.append((mean_star, var_star, valid))
+    return out
+
+
 def _bfs_components(adj, n):
     visited = [False] * n
     components = []
