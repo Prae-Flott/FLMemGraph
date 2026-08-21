@@ -25,6 +25,8 @@ cross-dataset B/C/E/F/H/I/J matrix. Physics-explicit exploration memories
 kept in full per explicit request, even though the direction itself is
 closed.
 
+- [`calib-in-prototype-ab.md`](calib-in-prototype-ab.md) — per-prototype vs.
+  EMA calibration for B/C/K (`--calib-mode`): helps robo3er, hurts Sielaff.
 - [`three-dataset-bck-comparison.md`](three-dataset-bck-comparison.md) —
   **cross-dataset B/C/K/BK/CK comparison, detection AUROC vs. diagnosis
   accuracy, all 3 datasets.** Headline finding (robo3er + Paderborn, on
