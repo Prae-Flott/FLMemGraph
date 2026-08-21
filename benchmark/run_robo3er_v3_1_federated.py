@@ -62,8 +62,26 @@ of the centralized script's flat mean-over-fault-types number.
   indirect signal via elevated wheel current only when actively driving.
 
 Usage:
-    python3 run_robo3er_v3_1_federated.py
+    python3 run_robo3er_v3_1_federated.py [--calib-mode {global,per_prototype,ema}]
+
+`--calib-mode` (default `global`, UNCHANGED behavior, regression-safe):
+per `memory/calib-in-prototype-ab.md`'s branch experiment closing the gap
+between how H/E (per-prototype calib, model buffers) and B/C (global
+median/IQR, script-level) are calibrated.
+- `global`: exactly today's behavior -- one script-level median/IQR over
+  the whole calib split, not tied to prototypes.
+- `per_prototype`: Path B -- `JointPrototypeV31.score_calib_node`/
+  `score_calib_struct` (new `ScoreCalibrationHead`s in
+  `joint_prototype_model.py`), fit from the SAME calib split as
+  `cov_head`/`typed_head`, same min_samples-fallback-to-global pattern.
+- `ema`: Path A -- `JointPrototypeMemory.update_ema()` accumulates
+  per-prototype mean/var of `d_node` ONLINE during local training
+  (VQ-VAE-codebook-EMA style, with a warm-up gate), used instead of an
+  offline calib pass. `resid_struct` (signal C) has no online EMA hook in
+  this script (only `d_node`/B, per the task's stated priority) --
+  `ema` mode falls back to `global` for C.
 """
+import argparse
 import json
 import pickle
 import sys
@@ -277,7 +295,7 @@ def per_sample_scores(model, windows, batch_size=BATCH_SIZE):
             np.concatenate(d_mahal_all))
 
 
-def train_local(model, fit_arr, epochs):
+def train_local(model, fit_arr, epochs, calib_mode="global"):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(torch.from_numpy(fit_arr)),
@@ -296,6 +314,15 @@ def train_local(model, fit_arr, epochs):
             loss = l_pred + BETA * l_me + l_mc + LAMBDA_EDGE * l_edge + LAMBDA_TYPED * l_typed
             loss.backward()
             optimizer.step()
+            if calib_mode == "ema":
+                # Path A: online EMA update of d_node's per-prototype mean/var,
+                # AFTER the optimizer step (uses this step's post-update idx/d_node
+                # on the next forward would be ideal, but re-forwarding every step
+                # is wasteful; using this step's own out["d_node"]/out["idx"] -- from
+                # just before the update -- is the standard VQ-VAE-EMA convention:
+                # the codebook/encoder move slowly per step, so a one-step lag is
+                # negligible next to ema_decay's much longer effective averaging window.
+                model.memory.update_ema(out["d_node"].detach(), out["idx"].detach())
     return model
 
 
@@ -312,7 +339,8 @@ def topk_mean(x, k):
     return np.sort(x, axis=1)[:, -k:].mean(axis=1)
 
 
-def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG):
+def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG, score_head=None, idx_calib=None, idx_x=None,
+                          ema_memory=None):
     """Replaces a raw `.max(axis=1)` over a many-dimension group
     (d_node/resid_struct/resid_phys) with a top-k-mean, THEN a second
     calibration stage re-z-scoring that aggregate statistic against its
@@ -321,9 +349,25 @@ def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG):
     alone -> inflated false-positive tail on normal data), same fix
     already validated on voraus-AD (`run_voraus_ad_joint_prototype_v3.py`,
     `memory/joint-prototype-scheme-v3.md`). See that script's module
-    docstring for the full mechanism explanation."""
-    z_calib = zscore(raw_calib, raw_calib)
-    z_x = zscore(raw_x, raw_calib)
+    docstring for the full mechanism explanation.
+
+    `score_head` (a `ScoreCalibrationHead`, Path B) or `ema_memory` (a
+    `JointPrototypeMemory` with EMA stats populated, Path A) OPTIONALLY
+    replace stage 1's GLOBAL per-dimension z-score with a per-prototype
+    one -- default (`score_head=None`, `ema_memory=None`) is bit-identical
+    to the original global behavior. Stage 2 (the final aggregate-scalar
+    z-score) stays global in every mode, matching signal H's own
+    convention (`d_mahal` is already per-prototype-normalized internally,
+    then z-scored globally against calib at script level)."""
+    if score_head is not None:
+        z_calib = score_head.zscore(raw_calib, idx_calib)
+        z_x = score_head.zscore(raw_x, idx_x)
+    elif ema_memory is not None:
+        z_calib = ema_memory.ema_zscore(raw_calib, idx_calib)
+        z_x = ema_memory.ema_zscore(raw_x, idx_x)
+    else:
+        z_calib = zscore(raw_calib, raw_calib)
+        z_x = zscore(raw_x, raw_calib)
     stat_calib = topk_mean(z_calib, k)
     stat_x = topk_mean(z_x, k)
     median = np.median(stat_calib)
@@ -344,7 +388,8 @@ def ablation_scores(node_score, edge_score, typed_score, cov_score):
     }
 
 
-def main():
+def main(calib_mode="global"):
+    assert calib_mode in ("global", "per_prototype", "ema")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
@@ -379,7 +424,7 @@ def main():
         fit_counts = []
         for c, model, scaler in zip(clients, models, scalers):
             fit_w = scale_client(data, scaler, c.fit_idx)
-            train_local(model, fit_w, LOCAL_EPOCHS)
+            train_local(model, fit_w, LOCAL_EPOCHS, calib_mode=calib_mode)
             fit_counts.append(len(fit_w))
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
@@ -422,22 +467,31 @@ def main():
         model.cov_head.set_calibration(d_node_calib_b, calib_idx_w, min_samples=cov_min)
 
         _, d_node_calib, resid_struct_calib, resid_phys_calib, _, _, d_mahal_calib = per_sample_scores(model, calib_w)
-        calib_data[c.client_id] = (d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib)
+        if calib_mode == "per_prototype":
+            model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w,
+                                        min_samples=MIN_PROTO_SAMPLES)
+        calib_data[c.client_id] = (d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib, calib_idx_w)
 
     all_pairs = {k: [] for k in ["B_node_max", "C_struct_max", "E_phys_max", "F_v3_max",
                                    "H_cov_mahal", "I_node_cov_max", "J_v3_cov_max"]}
     for c, model, scaler in zip(clients, models, scalers):
-        d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib = calib_data[c.client_id]
+        d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib, calib_idx_w = calib_data[c.client_id]
         report["clients"].setdefault(c.robot_name, {})
 
         if not c.fault_idx_by_label:
             print(f"client {c.client_id} ({c.robot_name}): no fault windows, skipping evaluation")
             continue
 
+        node_head = model.score_calib_node if calib_mode == "per_prototype" else None
+        struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
+        ema_mem = model.memory if calib_mode == "ema" else None  # C has no online EMA hook -> falls back to global
+
         test_w = scale_client(data, scaler, c.test_normal_idx)
-        _, d_node_normal, resid_struct_normal, resid_phys_normal, _, _, d_mahal_normal = per_sample_scores(model, test_w)
-        node_score_normal = two_stage_group_score(d_node_calib, d_node_normal)
-        edge_score_normal = two_stage_group_score(resid_struct_calib, resid_struct_normal)
+        _, d_node_normal, resid_struct_normal, resid_phys_normal, idx_normal, _, d_mahal_normal = per_sample_scores(model, test_w)
+        node_score_normal = two_stage_group_score(d_node_calib, d_node_normal, score_head=node_head,
+                                                   idx_calib=calib_idx_w, idx_x=idx_normal, ema_memory=ema_mem)
+        edge_score_normal = two_stage_group_score(resid_struct_calib, resid_struct_normal, score_head=struct_head,
+                                                   idx_calib=calib_idx_w, idx_x=idx_normal)
         typed_score_normal = two_stage_group_score(resid_phys_calib, resid_phys_normal)
         cov_score_normal = zscore(d_mahal_normal, d_mahal_calib)
         scores_normal = ablation_scores(node_score_normal, edge_score_normal,
@@ -448,9 +502,11 @@ def main():
         for label_id, fault_idx in c.fault_idx_by_label.items():
             name = label_map[str(label_id)]
             fault_w = scale_client(data, scaler, fault_idx)
-            _, d_node_f, resid_struct_f, resid_phys_f, _, _, d_mahal_f = per_sample_scores(model, fault_w)
-            node_score_f = two_stage_group_score(d_node_calib, d_node_f)
-            edge_score_f = two_stage_group_score(resid_struct_calib, resid_struct_f)
+            _, d_node_f, resid_struct_f, resid_phys_f, idx_f, _, d_mahal_f = per_sample_scores(model, fault_w)
+            node_score_f = two_stage_group_score(d_node_calib, d_node_f, score_head=node_head,
+                                                  idx_calib=calib_idx_w, idx_x=idx_f, ema_memory=ema_mem)
+            edge_score_f = two_stage_group_score(resid_struct_calib, resid_struct_f, score_head=struct_head,
+                                                  idx_calib=calib_idx_w, idx_x=idx_f)
             typed_score_f = two_stage_group_score(resid_phys_calib, resid_phys_f)
             cov_score_f = zscore(d_mahal_f, d_mahal_calib)
             scores_fault = ablation_scores(node_score_f, edge_score_f,
@@ -476,15 +532,21 @@ def main():
     for key, v in summary_overall.items():
         print(f"{key:<24}{v:>36.3f}")
 
+    report["config"]["calib_mode"] = calib_mode
     report["summary_mean_auroc_overall"] = summary_overall
     suffix = "_encdec_synced" if SYNC_ENCODER_DECODER else ""
-    out_json = OUT_DIR / f"robo3er_v3_1_federated{suffix}_report.json"
+    mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    out_json = OUT_DIR / f"robo3er_v3_1_federated{suffix}{mode_suffix}_report.json"
     with open(out_json, "w") as f:
         json.dump(report, f, indent=2)
     torch.save({"model_state_dicts": [m.state_dict() for m in models], "report": report},
-                OUT_DIR / f"robo3er_v3_1_federated{suffix}.pth")
+                OUT_DIR / f"robo3er_v3_1_federated{suffix}{mode_suffix}.pth")
     print(f"\nsaved -> {out_json}")
+    return report
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    args = parser.parse_args()
+    main(calib_mode=args.calib_mode)
