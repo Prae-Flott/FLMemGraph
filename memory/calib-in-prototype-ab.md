@@ -327,3 +327,198 @@ calibration pattern this branch generalizes to B/C/K),
 [[forecast-head-signal-k]] (signal K background), and
 [[three-dataset-bck-comparison]] (the `global`-mode baseline table this
 branch's numbers are directly comparable to).
+
+## `shrinkage`: empirical-Bayes per-client, per-prototype blending (2026-08-21)
+
+`federated_ema` (implemented, tested, and reverted earlier the same day --
+recoverable via `git show 916ade0`/`git show 6093bee` -- see "Why
+federated_ema failed" above) fused every client in a shared-cluster into
+ONE identical statistic, weighted by sample count -- robo3er's huge
+client-size imbalance (robot01 fit=103 vs. robot04 fit=3231) meant robot04
+essentially overwrote robot01's own real `cable_trapped` statistics, and
+AUROC regressed (0.904->0.852 in one script). This section implements the
+agreed follow-up: a PER-CLIENT empirical-Bayes shrinkage blend instead of
+one shared fused value.
+
+### Design actually implemented
+
+For each prototype slot `k`, each client `c` gets its OWN blended
+statistic:
+
+```
+theta*_{c,k} = lambda_{c,k} * theta_local_{c,k} + (1 - lambda_{c,k}) * theta_global_k
+lambda_{c,k} = n_{c,k} / (n_{c,k} + alpha)
+```
+
+applied separately to mean and (diagonal-only, per the task's explicit
+scope limit -- no full node x node covariance version) variance of
+`d_node`. `n_{c,k}`, `mean_{c,k}`, `var_{c,k}` come from a ONE-SHOT local
+pass over each client's own fit split
+(`federated_memory.compute_prototype_dev_stats`) -- not a decayed EMA.
+
+**One deliberate placement choice, different from `federated_ema`'s: the
+one-shot local pass happens AFTER `align_and_split` + `load_memory()`, not
+before.** This matters because it makes prototype index `k` mean the SAME
+physical prototype for every client this round for the shared slots
+(`k < num_shared`, `align_and_split`'s `P_S` -- identical vector content
+broadcast to everyone), so a fleet-wide pool (across literally every
+client with `n_{c,k} > 0`, NOT restricted to `align_and_split`'s original
+clustering decision -- a deliberate broadening the task explicitly called
+for, since the shrinkage target is a fleet-wide prior, not cluster-specific
+reconciliation) is a coherent thing to compute. For the personalized slots
+(`k >= num_shared`), index `k`'s content is DIFFERENT per client by
+construction, so fleet pooling by raw index there would blend together
+unrelated prototypes -- `lambda=1` (pure local, no cross-client borrowing)
+is used instead, matching `federated_ema`'s own treatment of personalized
+slots. This is a documented deviation from a completely literal "pool
+every client with data for that index" rule, necessary because that rule
+is only semantically valid for the shared slots. New code:
+`federated_memory.compute_prototype_dev_stats`/`_merge_dev_stats_pair`
+(re-added, adapted from the reverted `federated_ema` commit) and the new
+`compute_shrinkage_stats`; `JointPrototypeMemory.load_shrinkage_stats()`
+loads the per-client blended result into the same `ema_mean`/`ema_var`/
+`ema_initialized` buffers `ema_zscore()` already reads, so scoring is
+unchanged. Wired into all 4 scripts as `--calib-mode shrinkage --alpha N`
+(alpha default 20, swept below). `resid_struct`/C and `k_resid`/K have no
+shrinkage hook (same scope limit as `ema`), fall back to `global`.
+Regression-verified `global`/`per_prototype`/`ema` stay bit-identical
+(`robo3er_v3_1_federated`'s `global` run reproduced its committed report
+to the full float, 0.0 diff on every column) before adding any new code
+path's numbers below.
+
+### Alpha sweep (robo3er, single seed, `alpha` in {5, 20, 50})
+
+`num_shared_prototypes` was 0 in early rounds and settled at 1 (of
+`NUM_PROTOTYPES=2`) by round 3-5 in every run here, matching the same
+alignment pattern already documented above for `per_prototype` mode.
+
+**robo3er v3_1 (`run_robo3er_v3_1_federated.py`), B only (C/E/H unaffected
+by construction):**
+
+| calib_mode | B (overall) | B, cable_trapped (robot01) | B, stuck (robot04) |
+|---|---|---|---|
+| global | 0.945 | 0.957 | 0.933 |
+| per_prototype | 0.951 | 0.957 | 0.944 |
+| ema (post-fix) | 0.836 | 0.904 | 0.769 |
+| federated_ema (reverted) | -- | 0.852 | -- |
+| shrinkage, alpha=5 | 0.839 | 0.848 | 0.830 |
+| shrinkage, alpha=20 | 0.828 | 0.827 | 0.830 |
+| shrinkage, alpha=50 | 0.825 | 0.820 | 0.830 |
+
+**robo3er forecast_v2 (`run_robo3er_forecast_v2_federated.py`), B only:**
+
+| calib_mode | B (overall) | B, cable_trapped (robot01) | B, stuck (robot04) |
+|---|---|---|---|
+| global | 0.948 | 0.959 | 0.936 |
+| per_prototype | 0.948 | 0.959 | 0.936 |
+| ema (post-fix) | 0.846 | 0.915 | 0.778 |
+| shrinkage, alpha=5 | 0.832 | 0.868 | 0.796 |
+| shrinkage, alpha=20 | 0.826 | 0.856 | 0.796 |
+| shrinkage, alpha=50 | 0.823 | 0.851 | 0.796 |
+
+**Sielaff (one alpha value, 20, both scripts -- B only, C/H unaffected):**
+
+| script | calib_mode | B |
+|---|---|---|
+| v2_1 | global | 0.974 |
+| v2_1 | per_prototype | 0.886 |
+| v2_1 | ema | 0.974 |
+| v2_1 | shrinkage, alpha=20 | 0.946 |
+| forecast_v2 | global | 0.974 |
+| forecast_v2 | per_prototype | 0.924 |
+| forecast_v2 | ema | 0.974 |
+| forecast_v2 | shrinkage, alpha=20 | 0.960 |
+
+### Verdict: shrinkage does NOT cleanly beat both of `ema`'s and `federated_ema`'s extremes on robo3er -- it lands BETWEEN them, but on the WRONG side of `ema` for the specific client/fault this design targeted
+
+This is the opposite of the hoped-for outcome, stated plainly. Point by
+point:
+
+- **robot01's `cable_trapped` gets WORSE than `ema` (0.904) at every alpha
+  tried, not better** -- 0.848 (alpha=5) down to 0.820 (alpha=50) in the
+  v3_1 script, 0.868->0.851 in the forecast script. It stays above
+  `federated_ema`'s fully-pooled 0.852 floor only at the weakest shrinkage
+  tested (alpha=5, v3_1 script: 0.848 vs 0.852 -- actually BELOW
+  federated_ema's own number here, single-seed noise aside) -- shrinkage
+  does not reliably improve on `federated_ema`'s known failure mode for
+  this specific client/fault, contrary to the design's purpose.
+- **robot04's `stuck` DOES improve over `ema`** (0.769->0.830 in v3_1,
+  0.778->0.796 in forecast) at every alpha, and is flat across the whole
+  alpha range -- consistent with robot04 being the large client whose OWN
+  local statistic already dominates any pool it's part of, so blending in
+  a small fleet contribution barely moves it either way.
+- **Alpha barely matters within the swept range (5/20/50) for either
+  client** -- B moves by at most ~0.03 across the whole 10x alpha range,
+  on both the overall mean and the two individual faults. Diagnosed (not
+  fully proven, see caveat below) via a direct dump of `n_{c,k}` at each
+  round: by the final round, the ONE shared slot's fleet-wide `n` pool is
+  `[97, 65, 52, 88, 3208]` for clients 0-4 (robot04 alone contributes
+  ~91% of the pooled sample count) -- robot01's own `n=65` at that slot
+  gives `lambda` ranging only 0.57-0.93 across alpha=50->5, a real swing
+  in principle, but the resulting AUROC barely moves. The most likely
+  explanation (not directly verified by inspecting per-fault-window `idx`
+  assignments, flagged as the clearest follow-up if this line continues):
+  robot01's `cable_trapped` FAULT windows themselves probably route
+  predominantly to this same fleet-dominated shared slot at test time
+  (not the personalized slot, which stays purely local/unaffected by
+  alpha), so ANY nonzero pull toward robot04's very different
+  normal-deviation scale already does most of the damage `federated_ema`
+  did, and adding a large-alpha-driven local weight back on top isn't
+  enough to fully cancel it out -- this would explain both the
+  flat-vs-alpha response and why even alpha=5 (mostly-local) doesn't
+  recover close to `ema`'s no-cross-client-contamination number.
+- **On Sielaff, shrinkage is a partial recovery over `per_prototype`**
+  (0.886->0.946 in v2_1, 0.924->0.960 in forecast) **but a small
+  regression vs. plain `ema`** (0.974->0.946 in v2_1, 0.974->0.960 in
+  forecast) -- `ema` was already a near-perfect match to `global` on this
+  dataset (see "Bug fix" section above), so shrinkage's fleet-wide
+  pooling step, even gated by `lambda`, reintroduces a small amount of the
+  same cross-client-contamination risk `ema`'s pure-local design avoided
+  by construction. Not a regression vs. `global`/`per_prototype`'s
+  original problem, but not an improvement over the already-working `ema`
+  fix either.
+
+**Net assessment: on this single seed, `shrinkage` is a real, working
+implementation of the agreed design, but it does not achieve the specific
+hoped-for outcome (robot01's `cable_trapped` not regressing the way it did
+under `federated_ema`, while robo3er's overall B improves over `ema`).**
+Overall B on robo3er is WORSE than `ema` at every alpha tested (0.825-0.839
+vs. `ema`'s 0.836/0.846), because the one large client (robot04/`stuck`)
+improves less than the small client (robot01/`cable_trapped`) regresses.
+The mechanism suspected (small client's own fault-time routing lands in
+the same fleet-dominated slot as its fit-time routing, so shrinkage cannot
+avoid inheriting the large client's very different scale once ANY
+fleet-pool weight enters) is a genuine, previously-undocumented risk of
+this design, distinct from both `ema`'s warm-up problem and
+`federated_ema`'s full-overwrite problem.
+
+### What's still open
+
+- **Not directly verified**: whether robot01's `cable_trapped` fault
+  windows really do route predominantly to the fleet-dominated shared
+  slot at test/fault time (only the FIT-time routing was inspected here,
+  via a temporary monkey-patched debug run of `compute_shrinkage_stats`).
+  If confirmed, the natural next fix would be gating shrinkage differently
+  -- e.g. only blending when the SHARED slot's fleet composition isn't as
+  lopsided as `[97, 65, 52, 88, 3208]`, or shrinking toward a
+  robot04-EXCLUDED pool for very small clients -- neither attempted here.
+- **Alpha sweep was narrow (5/20/50) and all three landed close together**
+  -- a wider or denser sweep (e.g. alpha=1 for near-zero shrinkage, alpha
+  in the hundreds for near-total pooling) was not run; given the observed
+  flat response, it's not obvious a different alpha in a wider range would
+  change the qualitative verdict, but this wasn't tested.
+- **Sielaff was only run at alpha=20**, per the task's own lower-priority
+  ordering for that dataset -- an alpha sweep there (mirroring the
+  robo3er one) was not attempted.
+- **Paderborn was not run** (same standing lower-priority note as the rest
+  of this document).
+- **Diagnosis/localization AUROC was not re-run** (same standing
+  lower-priority note as the rest of this document).
+- Single seed everywhere, per this project's standing convention -- read
+  every delta above with that in mind, especially the ~0.03 alpha-range
+  deltas, which are close to the kind of noise floor seen elsewhere in
+  this document's smaller deltas.
+
+See also the "Why federated_ema failed" section above (this section's
+starting point) and [[scoring-signals-B-C-E-H]]/[[three-dataset-bck-comparison]]
+(baseline tables this section's numbers are directly comparable to).

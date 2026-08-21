@@ -1,0 +1,182 @@
+{
+  "config": {
+    "rounds": 5,
+    "local_epochs": 12,
+    "num_prototypes": 2,
+    "embed_dim": 64,
+    "top_k": 8,
+    "gamma": 0.5,
+    "delta": 0.5,
+    "prior_edges": [
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "odom_odo_angtw_z",
+        "imu_imu_angvel_z"
+      ],
+      [
+        "wheel_status_current_ma_left",
+        "wheel_vels_velocity_left"
+      ],
+      [
+        "wheel_status_current_ma_right",
+        "wheel_vels_velocity_right"
+      ]
+    ],
+    "edge_types": [
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "nonlinear",
+      "nonlinear"
+    ],
+    "min_proto_samples": 5,
+    "top_k_agg": 3,
+    "sync_encoder_decoder": true,
+    "horizon_mult": 10,
+    "forecast_h": 320,
+    "use_forecast_prior": true,
+    "feature_groups": [
+      "kinematic_core",
+      "actuation"
+    ],
+    "num_nodes": 26,
+    "calib_mode": "shrinkage",
+    "alpha": 50.0
+  },
+  "alignment_log": [
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 1
+    },
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 2
+    },
+    {
+      "num_components": 4,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 3
+    },
+    {
+      "num_components": 1,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 4
+    },
+    {
+      "num_components": 1,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 5
+    }
+  ],
+  "clients": {
+    "robot00_merged_data": {},
+    "robot01_merged_data": {
+      "robot_name": "robot01_merged_data",
+      "fault_types": {
+        "cable trapped": {
+          "n": 206,
+          "B_node_max": 0.8507809202195018,
+          "C_struct_max": 0.9660194174757282,
+          "E_phys_max": 0.5891726466863656,
+          "F_v3_max": 0.9567327986492191,
+          "H_cov_mahal": 0.9499788940481215,
+          "I_node_cov_max": 0.9497678345293372,
+          "J_v3_cov_max": 0.9510341916420431,
+          "K_forecast_max": 1.0,
+          "BK_max": 1.0,
+          "CK_max": 1.0,
+          "HK_max": 1.0
+        }
+      },
+      "client_mean_auroc": {
+        "B_node_max": 0.8507809202195018,
+        "C_struct_max": 0.9660194174757282,
+        "E_phys_max": 0.5891726466863656,
+        "F_v3_max": 0.9567327986492191,
+        "H_cov_mahal": 0.9499788940481215,
+        "I_node_cov_max": 0.9497678345293372,
+        "J_v3_cov_max": 0.9510341916420431,
+        "K_forecast_max": 1.0,
+        "BK_max": 1.0,
+        "CK_max": 1.0,
+        "HK_max": 1.0
+      }
+    },
+    "robot02_merged_data": {},
+    "robot03_merged_data": {},
+    "robot04_merged_data": {
+      "robot_name": "robot04_merged_data",
+      "fault_types": {
+        "stuck": {
+          "n": 149,
+          "B_node_max": 0.796191710345628,
+          "C_struct_max": 0.9491132042628088,
+          "E_phys_max": 0.48296036980446017,
+          "F_v3_max": 0.947923718159488,
+          "H_cov_mahal": 0.9520627429742956,
+          "I_node_cov_max": 0.9522174728739145,
+          "J_v3_cov_max": 0.9508152331586175,
+          "K_forecast_max": 0.9991149036606677,
+          "BK_max": 0.999489367496539,
+          "CK_max": 0.9998524839434446,
+          "HK_max": 0.9898554342645757
+        }
+      },
+      "client_mean_auroc": {
+        "B_node_max": 0.796191710345628,
+        "C_struct_max": 0.9491132042628088,
+        "E_phys_max": 0.48296036980446017,
+        "F_v3_max": 0.947923718159488,
+        "H_cov_mahal": 0.9520627429742956,
+        "I_node_cov_max": 0.9522174728739145,
+        "J_v3_cov_max": 0.9508152331586175,
+        "K_forecast_max": 0.9991149036606677,
+        "BK_max": 0.999489367496539,
+        "CK_max": 0.9998524839434446,
+        "HK_max": 0.9898554342645757
+      }
+    }
+  },
+  "summary_mean_auroc_overall": {
+    "B_node_max": 0.8234863152825649,
+    "C_struct_max": 0.9575663108692685,
+    "E_phys_max": 0.5360665082454129,
+    "F_v3_max": 0.9523282584043535,
+    "H_cov_mahal": 0.9510208185112086,
+    "I_node_cov_max": 0.9509926537016258,
+    "J_v3_cov_max": 0.9509247124003303,
+    "K_forecast_max": 0.9995574518303338,
+    "BK_max": 0.9997446837482695,
+    "CK_max": 0.9999262419717223,
+    "HK_max": 0.9949277171322879
+  }
+}
