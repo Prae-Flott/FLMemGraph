@@ -16,7 +16,14 @@ Adds `K_forecast_max`/`BK_max`/`CK_max`/`HK_max`, reusing
 `run_sielaff_forecast_v2.py`.
 
 Usage:
-    python3 run_sielaff_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior] [--out-suffix NAME]
+    python3 run_sielaff_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior]
+        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema}]
+
+`--calib-mode` (default `global`, unchanged behavior): see
+`run_robo3er_v3_1_federated.py`'s docstring and
+`memory/calib-in-prototype-ab.md`. Applies to B/C/K's per-node z-score
+(the reliability mask stays global in every mode, same simplification as
+`run_sielaff_v2_1_federated.py`).
 """
 import argparse
 import json
@@ -57,6 +64,7 @@ LAMBDA_FORECAST = 0.5
 GAMMA = 0.5
 DELTA = 0.5
 RELIABILITY_RATIO = 0.05
+MIN_PROTO_SAMPLES = 5
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -171,7 +179,7 @@ def forecast_scores(model, x_in, x_future, batch_size=BATCH_SIZE):
     return np.concatenate(k_resid_all)
 
 
-def train_local(model, fit_in, fit_future, epochs):
+def train_local(model, fit_in, fit_future, epochs, calib_mode="global"):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(torch.from_numpy(fit_in), torch.from_numpy(fit_future)),
@@ -190,6 +198,8 @@ def train_local(model, fit_in, fit_future, epochs):
             loss = l_pred + BETA * l_me + l_mc + LAMBDA_EDGE * l_edge + LAMBDA_FORECAST * l_forecast
             loss.backward()
             optimizer.step()
+            if calib_mode == "ema":
+                model.memory.update_ema(out["d_node"].detach(), out["idx"].detach())
     return model
 
 
@@ -200,7 +210,17 @@ def zscore(x, calib_x):
     return (x - median) / iqr, iqr
 
 
-def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
+def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
+    if score_head is not None:
+        return score_head.zscore(x, idx_x)
+    if ema_memory is not None:
+        return ema_memory.ema_zscore(x, idx_x)
+    z, _ = zscore(x, calib_x)
+    return z
+
+
+def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global"):
+    assert calib_mode in ("global", "per_prototype", "ema")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     forecast_h = STRIDE * horizon_mult
@@ -238,7 +258,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
             n2, t2, f2 = x_future_raw.shape
             x_future = (scaler.transform(x_future_raw.reshape(-1, f2)).reshape(n2, t2, f2).astype(np.float32)
                         if n2 > 0 else x_future_raw)
-            train_local(model, x_in, x_future, LOCAL_EPOCHS)
+            train_local(model, x_in, x_future, LOCAL_EPOCHS, calib_mode=calib_mode)
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
         usage_counts = [m.memory.usage_count.detach().clone() for m in models]
@@ -267,8 +287,15 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
         _, d_node_b, _, calib_idx_b, _ = per_sample_scores(model, calib_arr)
         model.cov_head.set_calibration(d_node_b, calib_idx_b, min_samples=cov_min)
 
-        d_proto_calib, d_node_calib, resid_struct_calib, _, d_mahal_calib = per_sample_scores(model, calib_arr)
-        d_proto_normal, d_node_normal, resid_struct_normal, _, d_mahal_normal = per_sample_scores(model, test_normal_arr)
+        d_proto_calib, d_node_calib, resid_struct_calib, calib_idx_w, d_mahal_calib = per_sample_scores(model, calib_arr)
+        d_proto_normal, d_node_normal, resid_struct_normal, idx_normal, d_mahal_normal = per_sample_scores(model, test_normal_arr)
+
+        if calib_mode == "per_prototype":
+            model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w, min_samples=MIN_PROTO_SAMPLES)
+        node_head = model.score_calib_node if calib_mode == "per_prototype" else None
+        struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
+        k_head_ref = model.score_calib_k if calib_mode == "per_prototype" else None
+        ema_mem = model.memory if calib_mode == "ema" else None  # C/K fall back to global (no online EMA hook)
 
         vi_c, chains_c, _ = build_pairs(c.calib_idx, targets, window_machine, horizon_mult, True, True)
         calib_in = scale_client(data, scaler, vi_c)
@@ -279,6 +306,12 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
         else:
             calib_future = future_c_raw
         k_resid_calib = forecast_scores(model, calib_in, calib_future)
+        if len(vi_c):
+            _, _, _, k_idx_calib, _ = per_sample_scores(model, calib_in)
+        else:
+            k_idx_calib = np.zeros((0,), dtype=int)
+        if calib_mode == "per_prototype" and len(vi_c):
+            model.set_k_calibration(k_resid_calib, k_idx_calib, min_samples=MIN_PROTO_SAMPLES)
 
         vi_n, chains_n, mask_n = build_pairs(c.test_normal_idx, targets, window_machine, horizon_mult, True, True)
         test_normal_in = scale_client(data, scaler, vi_n)
@@ -289,6 +322,10 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
         else:
             test_normal_future = future_n_raw
         k_resid_normal = forecast_scores(model, test_normal_in, test_normal_future)
+        if len(vi_n):
+            _, _, _, k_idx_normal, _ = per_sample_scores(model, test_normal_in)
+        else:
+            k_idx_normal = np.zeros((0,), dtype=int)
 
         # Some tiny clients (e.g. Sielaff machine 0, calib=6) have too few
         # windows for even one valid horizon_mult=10 chain -- k_resid_calib
@@ -305,8 +342,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
         else:
             forecast_mask = np.ones(num_nodes, dtype=bool)
 
-        z_node_normal, _ = zscore(d_node_normal, d_node_calib)
-        z_struct_normal, _ = zscore(resid_struct_normal, resid_struct_calib)
+        z_node_normal = zscore_mode(d_node_normal, idx_normal, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
+        z_struct_normal = zscore_mode(resid_struct_normal, idx_normal, resid_struct_calib, calib_idx_w, score_head=struct_head)
         z_mahal_normal, _ = zscore(d_mahal_normal, d_mahal_calib)
         b_normal_full = z_node_normal[:, reliable_mask].max(axis=1)
         c_normal_full = z_struct_normal.max(axis=1)
@@ -321,7 +358,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
             # centralized `run_sielaff_forecast_v2.py`'s convention.
             b_masked, c_masked, h_masked = (base_normal["B_node_max"][mask_n], base_normal["C_struct_max"][mask_n],
                                              base_normal["H_cov_mahal"][mask_n])
-            z_forecast_normal, _ = zscore(k_resid_normal, k_resid_calib)
+            z_forecast_normal = zscore_mode(k_resid_normal, k_idx_normal, k_resid_calib, k_idx_calib, score_head=k_head_ref)
             k_normal = z_forecast_normal[:, forecast_mask].max(axis=1)
             scores_normal = dict(base_normal)
             scores_normal["K_forecast_max"] = k_normal
@@ -346,9 +383,9 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
             if len(fault_idx) == 0:
                 continue
             fault_arr = scale_client(data, scaler, fault_idx)
-            d_proto_f, d_node_f, resid_struct_f, _, d_mahal_f = per_sample_scores(model, fault_arr)
-            z_node_f, _ = zscore(d_node_f, d_node_calib)
-            z_struct_f, _ = zscore(resid_struct_f, resid_struct_calib)
+            d_proto_f, d_node_f, resid_struct_f, idx_f, d_mahal_f = per_sample_scores(model, fault_arr)
+            z_node_f = zscore_mode(d_node_f, idx_f, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
+            z_struct_f = zscore_mode(resid_struct_f, idx_f, resid_struct_calib, calib_idx_w, score_head=struct_head)
             z_mahal_f, _ = zscore(d_mahal_f, d_mahal_calib)
             b_f_full = z_node_f[:, reliable_mask].max(axis=1)
             c_f_full = z_struct_f.max(axis=1)
@@ -369,7 +406,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
                 b_f_masked, c_f_masked, h_f_masked = (base_f["B_node_max"][mask_f], base_f["C_struct_max"][mask_f],
                                                        base_f["H_cov_mahal"][mask_f])
                 if len(k_resid_f):
-                    z_forecast_f, _ = zscore(k_resid_f, k_resid_calib)
+                    _, _, _, k_idx_f, _ = per_sample_scores(model, fault_in)
+                    z_forecast_f = zscore_mode(k_resid_f, k_idx_f, k_resid_calib, k_idx_calib, score_head=k_head_ref)
                     k_f = z_forecast_f[:, forecast_mask].max(axis=1)
                 else:
                     k_f = np.zeros(0)
@@ -404,8 +442,11 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
     for key, v in summary_overall.items():
         print(f"{key:<24}{v:>36.3f}")
 
+    report["config"]["calib_mode"] = calib_mode
     report["summary_mean_auroc_overall"] = summary_overall
-    suffix = out_suffix if out_suffix is not None else f"forecast_v2_federated_h{horizon_mult}{'_noprior' if not use_forecast_prior else ''}"
+    mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    suffix = out_suffix if out_suffix is not None else (
+        f"forecast_v2_federated_h{horizon_mult}{'_noprior' if not use_forecast_prior else ''}{mode_suffix}")
     out_json = OUT_DIR / f"sielaff_{suffix}_report.json"
     with open(out_json, "w") as f:
         json.dump(report, f, indent=2)
@@ -420,6 +461,7 @@ if __name__ == "__main__":
     parser.add_argument("--horizon-mult", type=int, default=10)
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
     args = parser.parse_args()
     main(horizon_mult=args.horizon_mult, use_forecast_prior=not args.no_forecast_prior,
-         out_suffix=args.out_suffix)
+         out_suffix=args.out_suffix, calib_mode=args.calib_mode)

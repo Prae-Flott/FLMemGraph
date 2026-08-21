@@ -20,8 +20,17 @@ Federated protocol: encoder/edge_head/cov_head stay local; ONLY the
 JointPrototypeMemory codebook is exchanged each round via align_and_split.
 
 Usage:
-    python3 run_sielaff_joint_prototype_v2_federated.py
+    python3 run_sielaff_v2_1_federated.py [--calib-mode {global,per_prototype,ema}]
+
+`--calib-mode` (default `global`, unchanged behavior): see
+`run_robo3er_v3_1_federated.py`'s docstring and
+`memory/calib-in-prototype-ab.md` for the full Path A/B explanation.
+Only B (`d_node`)/C (`resid_struct`)'s per-node z-score (stage before the
+`.max(axis=1)`) is affected; the reliability mask (`RELIABILITY_RATIO`)
+stays computed from the GLOBAL calib IQR in every mode -- it is a coarse
+near-constant-node filter, not part of this A/B test's scope.
 """
+import argparse
 import json
 import pickle
 import sys
@@ -59,6 +68,7 @@ GAMMA = 0.5
 DELTA = 0.5  # same as robo3er's federated setting -- small per-client normal-fit
              # sets here too (each of 10 machines, not one pooled 5000+ set)
 RELIABILITY_RATIO = 0.05
+MIN_PROTO_SAMPLES = 5
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -128,7 +138,7 @@ def per_sample_scores(model, windows, batch_size=BATCH_SIZE):
             np.concatenate(d_mahal_all))
 
 
-def train_local(model, fit_arr, epochs):
+def train_local(model, fit_arr, epochs, calib_mode="global"):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(torch.from_numpy(fit_arr)),
@@ -146,6 +156,8 @@ def train_local(model, fit_arr, epochs):
             loss = l_pred + BETA * l_me + l_mc + LAMBDA_EDGE * l_edge
             loss.backward()
             optimizer.step()
+            if calib_mode == "ema":
+                model.memory.update_ema(out["d_node"].detach(), out["idx"].detach())
     return model
 
 
@@ -156,7 +168,20 @@ def zscore(x, calib_x):
     return (x - median) / iqr, iqr
 
 
-def main():
+def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
+    """Like `zscore()` but with an optional per-prototype (`score_head`,
+    Path B) or EMA (`ema_memory`, Path A) override -- default (both None)
+    is bit-identical to `zscore(x, calib_x)`'s first return value."""
+    if score_head is not None:
+        return score_head.zscore(x, idx_x)
+    if ema_memory is not None:
+        return ema_memory.ema_zscore(x, idx_x)
+    z, _ = zscore(x, calib_x)
+    return z
+
+
+def main(calib_mode="global"):
+    assert calib_mode in ("global", "per_prototype", "ema")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
@@ -183,7 +208,7 @@ def main():
     for rnd in range(1, ROUNDS + 1):
         for c, model, scaler in zip(clients, models, scalers):
             fit_w = scale_client(data, scaler, c.fit_idx)
-            train_local(model, fit_w, LOCAL_EPOCHS)
+            train_local(model, fit_w, LOCAL_EPOCHS, calib_mode=calib_mode)
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
         usage_counts = [m.memory.usage_count.detach().clone() for m in models]
@@ -211,15 +236,21 @@ def main():
         _, d_node_b, _, calib_idx_b, _ = per_sample_scores(model, calib_arr)
         model.cov_head.set_calibration(d_node_b, calib_idx_b, min_samples=cov_min)
 
-        d_proto_calib, d_node_calib, resid_struct_calib, _, d_mahal_calib = per_sample_scores(model, calib_arr)
-        d_proto_normal, d_node_normal, resid_struct_normal, _, d_mahal_normal = per_sample_scores(model, test_normal_arr)
+        d_proto_calib, d_node_calib, resid_struct_calib, calib_idx_w, d_mahal_calib = per_sample_scores(model, calib_arr)
+        d_proto_normal, d_node_normal, resid_struct_normal, idx_normal, d_mahal_normal = per_sample_scores(model, test_normal_arr)
 
-        _, node_iqr = zscore(d_node_normal, d_node_calib)
+        if calib_mode == "per_prototype":
+            model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w, min_samples=MIN_PROTO_SAMPLES)
+        node_head = model.score_calib_node if calib_mode == "per_prototype" else None
+        struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
+        ema_mem = model.memory if calib_mode == "ema" else None  # C has no online EMA hook -> global fallback
+
+        _, node_iqr = zscore(d_node_normal, d_node_calib)  # reliability mask always global, see module docstring
         median_iqr = np.median(node_iqr)
         reliable_mask = node_iqr >= RELIABILITY_RATIO * median_iqr
 
-        z_node_normal, _ = zscore(d_node_normal, d_node_calib)
-        z_struct_normal, _ = zscore(resid_struct_normal, resid_struct_calib)
+        z_node_normal = zscore_mode(d_node_normal, idx_normal, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
+        z_struct_normal = zscore_mode(resid_struct_normal, idx_normal, resid_struct_calib, calib_idx_w, score_head=struct_head)
         z_mahal_normal, _ = zscore(d_mahal_normal, d_mahal_calib)
         z_node_normal_masked = z_node_normal[:, reliable_mask]
         b_normal = z_node_normal_masked.max(axis=1)
@@ -244,9 +275,9 @@ def main():
             if len(fault_idx) == 0:
                 continue
             fault_arr = scale_client(data, scaler, fault_idx)
-            d_proto_f, d_node_f, resid_struct_f, _, d_mahal_f = per_sample_scores(model, fault_arr)
-            z_node_f, _ = zscore(d_node_f, d_node_calib)
-            z_struct_f, _ = zscore(resid_struct_f, resid_struct_calib)
+            d_proto_f, d_node_f, resid_struct_f, idx_f, d_mahal_f = per_sample_scores(model, fault_arr)
+            z_node_f = zscore_mode(d_node_f, idx_f, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
+            z_struct_f = zscore_mode(resid_struct_f, idx_f, resid_struct_calib, calib_idx_w, score_head=struct_head)
             z_mahal_f, _ = zscore(d_mahal_f, d_mahal_calib)
             z_node_f_masked = z_node_f[:, reliable_mask]
             b_f = z_node_f_masked.max(axis=1)
@@ -278,13 +309,20 @@ def main():
     for key, v in summary_overall.items():
         print(f"{key:<24}{v:>36.3f}")
 
+    report["config"]["calib_mode"] = calib_mode
     report["summary_mean_auroc_overall"] = summary_overall
-    with open(OUT_DIR / "sielaff_v2_1_federated_report.json", "w") as f:
+    mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    out_name = f"sielaff_v2_1_federated{mode_suffix}_report.json"
+    with open(OUT_DIR / out_name, "w") as f:
         json.dump(report, f, indent=2)
     torch.save({"model_state_dicts": [m.state_dict() for m in models], "report": report},
-                OUT_DIR / "sielaff_v2_1_federated.pth")
-    print(f"\nsaved -> {OUT_DIR / 'sielaff_v2_1_federated_report.json'}")
+                OUT_DIR / f"sielaff_v2_1_federated{mode_suffix}.pth")
+    print(f"\nsaved -> {OUT_DIR / out_name}")
+    return report
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    args = parser.parse_args()
+    main(calib_mode=args.calib_mode)
