@@ -17,14 +17,13 @@ Adds `K_forecast_max`/`BK_max`/`CK_max`/`HK_max`, reusing
 
 Usage:
     python3 run_sielaff_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior]
-        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema,federated_ema}] [--num-prototypes N]
+        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema}] [--num-prototypes N]
 
 `--calib-mode` (default `global`, unchanged behavior): see
 `run_robo3er_v3_1_federated.py`'s docstring and
-`memory/calib-in-prototype-ab.md` (including the `federated_ema` section).
-Applies to B/C/K's per-node z-score (the reliability mask stays global in
-every mode, same simplification as `run_sielaff_v2_1_federated.py`). `ema`/
-`federated_ema` have no hook for C/K, same fallback-to-global as elsewhere.
+`memory/calib-in-prototype-ab.md`. Applies to B/C/K's per-node z-score
+(the reliability mask stays global in every mode, same simplification as
+`run_sielaff_v2_1_federated.py`).
 
 `--num-prototypes` (default `NUM_PROTOTYPES` below, unchanged behavior):
 see `run_sielaff_v2_1_federated.py`'s docstring and
@@ -46,7 +45,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from joint_prototype_model import JointPrototypeV21Forecast  # noqa: E402
-from federated_memory import align_and_split, compute_prototype_dev_stats  # noqa: E402
+from federated_memory import align_and_split  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "sielaff"
 OUT_DIR = REPO_ROOT / "checkpoints" / "sielaff"
@@ -227,7 +226,7 @@ def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
 
 def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global",
          num_prototypes=NUM_PROTOTYPES):
-    assert calib_mode in ("global", "per_prototype", "ema", "federated_ema")
+    assert calib_mode in ("global", "per_prototype", "ema")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     forecast_h = STRIDE * horizon_mult
@@ -259,7 +258,6 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
           f"memory-only exchange (gamma={GAMMA}, delta={DELTA})")
     diagnostics_log = []
     for rnd in range(1, ROUNDS + 1):
-        client_dev_stats = [] if calib_mode == "federated_ema" else None
         for c, model, scaler, (vi, x_in_raw, x_future_raw) in zip(clients, models, scalers, fit_pairs):
             n, t, f = x_in_raw.shape
             x_in = scaler.transform(x_in_raw.reshape(-1, f)).reshape(n, t, f).astype(np.float32)
@@ -267,18 +265,10 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             x_future = (scaler.transform(x_future_raw.reshape(-1, f2)).reshape(n2, t2, f2).astype(np.float32)
                         if n2 > 0 else x_future_raw)
             train_local(model, x_in, x_future, LOCAL_EPOCHS, calib_mode=calib_mode)
-            if calib_mode == "federated_ema":
-                _, d_node_fit, _, idx_fit, _ = per_sample_scores(model, x_in)
-                client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, num_prototypes))
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
         usage_counts = [m.memory.usage_count.detach().clone() for m in models]
-        if calib_mode == "federated_ema":
-            P_G, diag, dev_stats_out = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA,
-                                                        client_dev_stats=client_dev_stats)
-        else:
-            P_G, diag = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA)
-            dev_stats_out = None
+        P_G, diag = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA)
         diag = {k: v for k, v in diag.items() if k != "per_cluster_per_node_agreement"}
         diag["round"] = rnd
         diagnostics_log.append(diag)
@@ -286,9 +276,6 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
 
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
-        if dev_stats_out is not None:
-            for model, ds in zip(models, dev_stats_out):
-                model.memory.load_fed_ema_stats(*ds)
 
     report = {"config": {"rounds": ROUNDS, "local_epochs": LOCAL_EPOCHS, "num_prototypes": num_prototypes,
                           "embed_dim": EMBED_DIM, "window_len": WINDOW_LEN, "gamma": GAMMA, "delta": DELTA,
@@ -314,8 +301,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         node_head = model.score_calib_node if calib_mode == "per_prototype" else None
         struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
         k_head_ref = model.score_calib_k if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode in ("ema", "federated_ema") else None  # C/K fall
-        # back to global (no EMA hook, online or federated)
+        ema_mem = model.memory if calib_mode == "ema" else None  # C/K fall back to global (no online EMA hook)
 
         vi_c, chains_c, _ = build_pairs(c.calib_idx, targets, window_machine, horizon_mult, True, True)
         calib_in = scale_client(data, scaler, vi_c)
@@ -495,7 +481,7 @@ if __name__ == "__main__":
     parser.add_argument("--horizon-mult", type=int, default=10)
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "federated_ema"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
     parser.add_argument("--num-prototypes", type=int, default=NUM_PROTOTYPES)
     args = parser.parse_args()
     main(horizon_mult=args.horizon_mult, use_forecast_prior=not args.no_forecast_prior,
