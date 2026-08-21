@@ -327,3 +327,218 @@ calibration pattern this branch generalizes to B/C/K),
 [[forecast-head-signal-k]] (signal K background), and
 [[three-dataset-bck-comparison]] (the `global`-mode baseline table this
 branch's numbers are directly comparable to).
+
+## `federated_ema` (2026-08-21): federating the deviation statistics THEMSELVES, not just the codebook
+
+Path A (plain `ema`), post the `load_memory()`-reset fix above, fully
+recovers to `global` on Sielaff but still trails `global`/`per_prototype`
+by ~10pt on robo3er -- because most of robo3er's federated clients
+(`robot00`-`robot03`, 103-247 fit windows) never clear even the lowered
+`ema_warmup_steps=20` within a single round's ~12 local-epoch steps, so
+they spend the whole run on the (correctly-reset, but not per-prototype)
+global EMA fallback. The natural next question: can those small clients
+borrow statistical strength from a federated-cluster partner the same way
+the codebook VECTORS already do (`align_and_split`'s shared-cluster
+mean-pooling)? `federated_ema` implements exactly that and tests it.
+
+**What it does differently from plain `ema`.** Plain `ema` accumulates a
+decayed per-prototype mean/var of `d_node` step-by-step DURING local
+training (`JointPrototypeMemory.update_ema()`), purely local, never
+exchanged. `federated_ema` instead: (1) after each round's local training
+finishes, does ONE one-shot forward pass over the client's own fit split
+with that round's just-trained codebook, computing per-prototype
+sufficient statistics `(n, mean, var)` of `d_node`
+(`federated_memory.compute_prototype_dev_stats`) -- not a decayed EMA, a
+plain count/mean/variance triple, chosen specifically because it has a
+clean, order-independent cross-client merge rule an EMA lacks; (2) the
+server (`align_and_split`, new `client_dev_stats` argument) merges these
+across clients for whichever prototype slots it ALREADY decided form a
+shared cluster (the exact same clustering decision used for the codebook
+vectors, not re-derived), via the sample-count-WEIGHTED parallel-variance
+formula (Chan/Golub/LeVeque 1979: `n = n_a+n_b`, `mean = (n_a*mean_a +
+n_b*mean_b)/n`, `M2 = n_a*var_a + n_b*var_b + (mean_a-mean_b)^2 *
+n_a*n_b/n`, `var = M2/n`); personalized (non-shared) slots pass through
+each client's own freshly-computed stats unchanged (only one client ever
+contributes to those, so nothing to merge); (3) the merged result is
+broadcast back and loaded directly into the SAME `ema_mean`/`ema_var`/
+`ema_initialized` buffers plain `ema` uses
+(`JointPrototypeMemory.load_fed_ema_stats()`, called right after
+`load_memory()`), so `ema_zscore()` is reused unchanged for scoring in
+both modes.
+
+**Deliberate design choice, called out per the task's own instructions:**
+the codebook vectors' own shared-cluster merge (`P_S = ...mean(dim=0)`) is
+UNWEIGHTED (plain mean over cluster members, matching FedPM's own
+convention) -- `federated_ema`'s deviation-statistics merge is
+WEIGHTED by sample count instead, a deliberate divergence, not a "fix" to
+the codebook convention: correctness for a mean/variance ESTIMATE
+requires weighting by how many samples each contributor actually had,
+while the codebook pooling's unweighted convention is a separate,
+already-established design choice. This is documented in
+`federated_memory.align_and_split`'s docstring at the point the two
+merges diverge.
+
+**Implementation is purely additive** -- `align_and_split` only returns
+the extra `dev_stats_out` 3rd tuple element when `client_dev_stats` is
+explicitly passed (`None` by default), so the 3 existing `calib_mode`s'
+call sites are untouched. Regression-verified: `global`/`per_prototype`/
+`ema` reproduce BIT-IDENTICAL `summary_mean_auroc_overall` values to the
+already-committed reports on all 4 scripts (`run_robo3er_v3_1_federated.py`,
+`run_robo3er_forecast_v2_federated.py`, `run_sielaff_v2_1_federated.py`,
+`run_sielaff_forecast_v2_federated.py`) after this branch's changes --
+confirmed by diffing the re-run JSON reports against pre-existing copies,
+not just eyeballing printed numbers.
+
+### Result: `federated_ema` does NOT close robo3er's gap, and mildly REGRESSES Sielaff (which had fully recovered under plain `ema`)
+
+4-way comparison, single seed, mean AUROC over all client-fault pairs
+(`global`/`per_prototype`/`ema` columns are the already-committed,
+bit-identical-reproduced numbers from earlier in this doc):
+
+**robo3er (`run_robo3er_v3_1_federated.py`, B/C/E/H)**
+
+| calib_mode | B | C | E | H | F | I | J |
+|---|---|---|---|---|---|---|---|
+| global | 0.945 | 0.945 | 0.686 | 0.948 | 0.943 | 0.947 | 0.946 |
+| per_prototype | 0.951 | 0.960 | 0.686 | 0.948 | 0.944 | 0.949 | 0.947 |
+| ema (fixed) | 0.836 | 0.945 | 0.686 | 0.948 | 0.944 | 0.948 | 0.947 |
+| **federated_ema** | **0.837** | 0.945 | 0.686 | 0.948 | 0.946 | 0.946 | 0.946 |
+
+**robo3er (`run_robo3er_forecast_v2_federated.py`, adds K, horizon_mult=10)**
+
+| calib_mode | B | C | K | BK | CK | HK |
+|---|---|---|---|---|---|---|
+| global | 0.948 | 0.958 | 1.000 | 0.995 | 1.000 | 0.995 |
+| per_prototype | 0.948 | 0.958 | 1.000 | 0.995 | 1.000 | 0.995 |
+| ema (fixed) | 0.846 | 0.958 | 1.000 | 1.000 | 1.000 | 0.995 |
+| **federated_ema** | **0.816** | 0.958 | 1.000 | 1.000 | 1.000 | 0.995 |
+
+**Sielaff (`run_sielaff_v2_1_federated.py`, B/C/H)**
+
+| calib_mode | B | C | H | I |
+|---|---|---|---|---|
+| global | 0.974 | 0.976 | 0.964 | 0.973 |
+| per_prototype | 0.886 | 0.942 | 0.964 | 0.889 |
+| ema (fixed) | 0.974 | 0.976 | 0.964 | 0.968 |
+| **federated_ema** | **0.946** | 0.976 | 0.964 | 0.961 |
+
+**Sielaff (`run_sielaff_forecast_v2_federated.py`, adds K, horizon_mult=10)**
+
+| calib_mode | B | C | K | BK | CK | HK |
+|---|---|---|---|---|---|---|
+| global | 0.974 | 0.975 | 0.910 | 0.976 | 0.974 | 0.953 |
+| per_prototype | 0.924 | 0.975 | 0.902 | 0.930 | 0.963 | 0.949 |
+| ema (fixed) | 0.974 | 0.975 | 0.910 | 0.923 | 0.974 | 0.953 |
+| **federated_ema** | **0.961** | 0.975 | 0.910 | 0.944 | 0.974 | 0.953 |
+
+(C/K are unaffected by `federated_ema` in every table, same as plain
+`ema` -- no federated deviation-statistics hook exists for `resid_struct`
+or `k_resid`, matching the task's stated `d_node`/B priority; `federated_ema`
+falls back to `global` for both, identically to plain `ema`.)
+
+### Robo3er: essentially a wash, not a win
+
+`federated_ema` B: 0.837 (v3_1) / 0.816 (forecast) vs. plain `ema`'s 0.836
+/ 0.846 -- both still ~10pt behind `global`/`per_prototype`. The
+per-fault-type breakdown shows WHY it's a wash rather than a clean
+improvement: it doesn't uniformly help, it TRADES one fault type's
+performance for another's.
+
+- v3_1 script: `stuck` (robot04, the one client that already clears
+  warm-up and gets genuine per-prototype EMA even without federation)
+  improves 0.769->0.822 -- some benefit from federation here, though
+  modest. `cable_trapped` (robot01, small client, global-fallback-only
+  under plain `ema`) gets WORSE, 0.904->0.852 -- borrowing a shared-cluster
+  partner's statistics apparently hurts more than it helps for this client.
+- forecast script: same direction, `stuck` roughly flat (0.778->0.776,
+  within noise) and `cable_trapped` worse (0.915->0.857), net overall
+  WORSE than plain `ema` (0.846->0.816).
+
+**Likely mechanism (not fully diagnosed, flagged as the next open
+question if this line continues):** both robo3er scripts' `alignment_log`
+shows only 1 of 2 prototypes ever becomes a shared cluster by round 3-5.
+robot04 (fit=3231 windows) vastly outweighs robot01 (fit=103) in the
+sample-count-weighted merge for whichever slot they share -- the merged
+`(mean, var)` is almost entirely robot04's own statistics, robot01's own
+~100-200 fit windows contribute a roughly 3% weight. If robot01's actual
+per-prototype deviation distribution for that shared regime differs at
+all from robot04's (plausible -- they're different physical robots), the
+"borrowed" statistics are barely a compromise, they're close to just
+using someone else's distribution wholesale -- worse than robot01's own
+noisy-but-genuinely-its-own global EMA fallback in at least this one
+fault type's case. This is the opposite failure mode from what the
+[[calib-in-prototype-ab]] section above found for Path B/per_prototype on
+Sielaff (too little data per prototype) -- here it's not too little
+DATA, it's a plausible REGIME MISMATCH between the clients being merged,
+which a pure sample-count weighting has no way to detect or guard
+against. Not confirmed by directly inspecting robot01 vs. robot04's raw
+per-node deviation distributions for the shared prototype (time-limited).
+
+### Sielaff: a real, if modest, regression -- the first time federating deviation stats has hurt something plain `ema` already fixed
+
+`federated_ema` B: 0.946 (v2_1) / 0.961 (forecast) vs. plain `ema`'s 0.974
+/ 0.974 (both exactly matching `global` post-fix) -- a genuine ~1.3-2.8pt
+regression, small in absolute terms but notable because it UNDOES part of
+what the `load_memory()` fix earlier in this doc had already achieved.
+Sielaff's `alignment_log` under `federated_ema` shows heavy early-round
+merging (round 1: 8 of 16 prototypes in shared clusters across 10
+clients) collapsing down to 1 shared prototype by round 3-5 -- similar
+end-state to robo3er, but with a much larger, more heterogeneous set of
+contributing clients (10 machines vs. robo3er's 5 robots) passing through
+that same weighted-merge mechanism. The same "sample-count weighting
+can't tell regime-similarity from mere prototype-vector cosine-similarity
+above `delta`" mechanism hypothesized for robo3er above is the most
+plausible read here too, at a larger scale (more clients contending for
+each shared slot) -- not independently confirmed for Sielaff specifically
+within this investigation's time budget.
+
+### Recommendation, updated
+
+**`federated_ema` is not recommended anywhere tested.** It does not close
+robo3er's residual `ema`-vs-`global` gap (net wash, slightly negative in
+the forecast script) and it mildly regresses Sielaff's otherwise-fully-
+recovered plain-`ema` result. The existing recommendations stand
+unchanged: `per_prototype` for robo3er B/C, `global` for Sielaff B/C
+(or plain `ema`, post-fix, as an equally-good alternative on Sielaff
+specifically). The federating-the-codebook-only convention `align_and_split`
+already had (unweighted mean-pool for shared clusters) is NOT obviously
+"fixed" by also federating the deviation statistics with a fully sample-
+count-weighted rule -- if anything, this experiment suggests sample-count
+weighting alone is too blunt an instrument for statistics (as opposed to
+representative vectors), since it has no way to guard against merging two
+clients whose codebook vectors are similar enough to cluster but whose
+actual deviation DISTRIBUTIONS for that regime differ.
+
+### What's still open (updated)
+
+Everything in the original "What's still open" section above still
+applies unchanged (Paderborn untested, diagnosis/localization untested,
+EMA decay/warmup unswept, Path A's C/K extension out of scope,
+per_prototype's Sielaff mechanism only partially diagnosed). Additionally:
+
+- **The regime-mismatch-vs-sample-weighting hypothesis above is not
+  confirmed by direct inspection** of any client pair's actual raw
+  deviation distributions for a shared prototype slot -- flagged as the
+  single most informative next diagnostic if `federated_ema` is revisited
+  (e.g. plot robot01 vs. robot04's own per-node `d_node` histograms
+  restricted to windows matching the shared prototype, before vs. after
+  the merge, to see directly whether the merged statistics actually
+  represent robot01's own windows well or not).
+- **An unweighted, or confidence-capped, merge variant was not tried** --
+  e.g. capping each contributor's effective weight (so no single client
+  can dominate a merge past some threshold, similar in spirit to how
+  `align_and_split`'s personalized-slot ranking already avoids one
+  client's raw frequency count dominating), or falling back to the
+  UNWEIGHTED convention the codebook vectors already use for consistency.
+  Not attempted -- the task's design explicitly called for sample-count
+  weighting as the statistically "correct" choice, and this experiment's
+  job was to test that specific design as given, not to immediately
+  redesign it after one negative result.
+- **Single seed everywhere**, per this project's standing convention --
+  the `federated_ema` deltas above (especially robo3er's ~0.02 wash and
+  Sielaff's ~0.013-0.028 regression) are smaller than some of this
+  branch's other findings and should be read with that in mind; the
+  clearly-directional ones (Sielaff's regression appearing in BOTH
+  scripts, robo3er's fault-type trade-off appearing in BOTH scripts) are
+  unlikely to be pure noise, but exact magnitudes are single-run
+  estimates.
