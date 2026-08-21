@@ -57,7 +57,7 @@
       "actuation"
     ],
     "num_nodes": 26,
-    "calib_mode": "global"
+    "calib_mode": "per_prototype"
   },
   "alignment_log": [
     {
