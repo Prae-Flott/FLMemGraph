@@ -20,16 +20,17 @@ Federated protocol: encoder/edge_head/cov_head stay local; ONLY the
 JointPrototypeMemory codebook is exchanged each round via align_and_split.
 
 Usage:
-    python3 run_sielaff_v2_1_federated.py [--calib-mode {global,per_prototype,ema}]
+    python3 run_sielaff_v2_1_federated.py [--calib-mode {global,per_prototype,ema,federated_ema}]
                                            [--num-prototypes N]
 
 `--calib-mode` (default `global`, unchanged behavior): see
 `run_robo3er_v3_1_federated.py`'s docstring and
-`memory/calib-in-prototype-ab.md` for the full Path A/B explanation.
-Only B (`d_node`)/C (`resid_struct`)'s per-node z-score (stage before the
-`.max(axis=1)`) is affected; the reliability mask (`RELIABILITY_RATIO`)
-stays computed from the GLOBAL calib IQR in every mode -- it is a coarse
-near-constant-node filter, not part of this A/B test's scope.
+`memory/calib-in-prototype-ab.md` for the full Path A/B/federated_ema
+explanation. Only B (`d_node`)/C (`resid_struct`)'s per-node z-score
+(stage before the `.max(axis=1)`) is affected; the reliability mask
+(`RELIABILITY_RATIO`) stays computed from the GLOBAL calib IQR in every
+mode -- it is a coarse near-constant-node filter, not part of this A/B
+test's scope.
 
 `--num-prototypes` (default `NUM_PROTOTYPES` below, unchanged behavior):
 overrides the codebook size. Added for the `NUM_PROTOTYPES` grid search in
@@ -54,7 +55,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
 sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from joint_prototype_model import JointPrototypeV21  # noqa: E402
-from federated_memory import align_and_split  # noqa: E402
+from federated_memory import align_and_split, compute_prototype_dev_stats  # noqa: E402
 
 DATA_DIR = REPO_ROOT / "data" / "sielaff"
 OUT_DIR = REPO_ROOT / "checkpoints" / "sielaff"
@@ -190,7 +191,7 @@ def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
 
 
 def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
-    assert calib_mode in ("global", "per_prototype", "ema")
+    assert calib_mode in ("global", "per_prototype", "ema", "federated_ema")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
@@ -215,13 +216,22 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
           f"memory-only exchange (gamma={GAMMA}, delta={DELTA})")
     diagnostics_log = []
     for rnd in range(1, ROUNDS + 1):
+        client_dev_stats = [] if calib_mode == "federated_ema" else None
         for c, model, scaler in zip(clients, models, scalers):
             fit_w = scale_client(data, scaler, c.fit_idx)
             train_local(model, fit_w, LOCAL_EPOCHS, calib_mode=calib_mode)
+            if calib_mode == "federated_ema":
+                _, d_node_fit, _, idx_fit, _ = per_sample_scores(model, fit_w)
+                client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, num_prototypes))
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
         usage_counts = [m.memory.usage_count.detach().clone() for m in models]
-        P_G, diag = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA)
+        if calib_mode == "federated_ema":
+            P_G, diag, dev_stats_out = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA,
+                                                        client_dev_stats=client_dev_stats)
+        else:
+            P_G, diag = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA)
+            dev_stats_out = None
         diag = {k: v for k, v in diag.items() if k != "per_cluster_per_node_agreement"}
         diag["round"] = rnd
         diagnostics_log.append(diag)
@@ -229,6 +239,9 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
 
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
+        if dev_stats_out is not None:
+            for model, ds in zip(models, dev_stats_out):
+                model.memory.load_fed_ema_stats(*ds)
 
     report = {"config": {"rounds": ROUNDS, "local_epochs": LOCAL_EPOCHS, "num_prototypes": num_prototypes,
                           "embed_dim": EMBED_DIM, "window_len": WINDOW_LEN, "gamma": GAMMA, "delta": DELTA,
@@ -252,7 +265,8 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
             model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w, min_samples=MIN_PROTO_SAMPLES)
         node_head = model.score_calib_node if calib_mode == "per_prototype" else None
         struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode == "ema" else None  # C has no online EMA hook -> global fallback
+        ema_mem = model.memory if calib_mode in ("ema", "federated_ema") else None  # C has no
+        # EMA hook (online or federated) -> global fallback
 
         _, node_iqr = zscore(d_node_normal, d_node_calib)  # reliability mask always global, see module docstring
         median_iqr = np.median(node_iqr)
@@ -342,7 +356,7 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "federated_ema"], default="global")
     parser.add_argument("--num-prototypes", type=int, default=NUM_PROTOTYPES)
     args = parser.parse_args()
     main(calib_mode=args.calib_mode, num_prototypes=args.num_prototypes)

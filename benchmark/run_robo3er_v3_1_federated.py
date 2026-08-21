@@ -62,7 +62,7 @@ of the centralized script's flat mean-over-fault-types number.
   indirect signal via elevated wheel current only when actively driving.
 
 Usage:
-    python3 run_robo3er_v3_1_federated.py [--calib-mode {global,per_prototype,ema}]
+    python3 run_robo3er_v3_1_federated.py [--calib-mode {global,per_prototype,ema,federated_ema}]
 
 `--calib-mode` (default `global`, UNCHANGED behavior, regression-safe):
 per `memory/calib-in-prototype-ab.md`'s branch experiment closing the gap
@@ -80,6 +80,22 @@ median/IQR, script-level) are calibrated.
   offline calib pass. `resid_struct` (signal C) has no online EMA hook in
   this script (only `d_node`/B, per the task's stated priority) --
   `ema` mode falls back to `global` for C.
+- `federated_ema`: makes the deviation statistics THEMSELVES federated,
+  not just the prototype vectors. After each round's local training, one
+  one-shot forward pass over this client's own fit split computes
+  per-prototype `(n, mean, var)` of `d_node` (`compute_prototype_dev_stats`);
+  `align_and_split` merges these across clients for shared-cluster slots
+  via the sample-count-weighted parallel-variance formula (reusing the
+  SAME clustering decision it already made for the codebook vectors, NOT
+  a separate/unweighted convention -- see that function's docstring),
+  passes personalized slots through unchanged, and the merged result is
+  loaded via `JointPrototypeMemory.load_fed_ema_stats()` right after
+  `load_memory()`. Meant to address plain `ema`'s failure mode on small
+  clients that never clear `ema_warmup_steps` within one round -- they can
+  now borrow statistical strength from a shared cluster with larger
+  clients, the same mechanism that already helps the codebook vectors
+  themselves. `resid_struct`/C has no federated_ema hook either (same
+  scope limit as `ema`), falls back to `global`.
 """
 import argparse
 import json
@@ -99,7 +115,7 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from joint_prototype_model import JointPrototypeV31  # noqa: E402
 from dataset import load_robo3er  # noqa: E402
 import feature_groups  # noqa: E402
-from federated_memory import align_and_split, fedavg_state_dict  # noqa: E402
+from federated_memory import align_and_split, fedavg_state_dict, compute_prototype_dev_stats  # noqa: E402
 
 SYNC_ENCODER_DECODER = True  # opt-in departure from "only exchange memory" -- see
                               # federated_memory.fedavg_state_dict's docstring and
@@ -389,7 +405,7 @@ def ablation_scores(node_score, edge_score, typed_score, cov_score):
 
 
 def main(calib_mode="global"):
-    assert calib_mode in ("global", "per_prototype", "ema")
+    assert calib_mode in ("global", "per_prototype", "ema", "federated_ema")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
@@ -422,14 +438,26 @@ def main(calib_mode="global"):
     diagnostics_log = []
     for rnd in range(1, ROUNDS + 1):
         fit_counts = []
+        client_dev_stats = [] if calib_mode == "federated_ema" else None
         for c, model, scaler in zip(clients, models, scalers):
             fit_w = scale_client(data, scaler, c.fit_idx)
             train_local(model, fit_w, LOCAL_EPOCHS, calib_mode=calib_mode)
             fit_counts.append(len(fit_w))
+            if calib_mode == "federated_ema":
+                # one-shot local pass over THIS round's finished-training fit split,
+                # using the just-trained (pre-exchange) codebook -- see module
+                # docstring's federated_ema section / compute_prototype_dev_stats.
+                _, d_node_fit, _, _, idx_fit, _, _ = per_sample_scores(model, fit_w)
+                client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, NUM_PROTOTYPES))
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
         usage_counts = [m.memory.usage_count.detach().clone() for m in models]
-        P_G, diag = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA)
+        if calib_mode == "federated_ema":
+            P_G, diag, dev_stats_out = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA,
+                                                        client_dev_stats=client_dev_stats)
+        else:
+            P_G, diag = align_and_split(codebooks, usage_counts, gamma=GAMMA, delta=DELTA)
+            dev_stats_out = None
         diag = {k: v for k, v in diag.items() if k != "per_cluster_per_node_agreement"}
         diag["round"] = rnd
         diagnostics_log.append(diag)
@@ -437,6 +465,9 @@ def main(calib_mode="global"):
 
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
+        if dev_stats_out is not None:
+            for model, ds in zip(models, dev_stats_out):
+                model.memory.load_fed_ema_stats(*ds)
 
         if SYNC_ENCODER_DECODER:
             # sample-size-weighted FedAvg over encoder+decoder ONLY -- memory (just
@@ -484,7 +515,9 @@ def main(calib_mode="global"):
 
         node_head = model.score_calib_node if calib_mode == "per_prototype" else None
         struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode == "ema" else None  # C has no online EMA hook -> falls back to global
+        ema_mem = model.memory if calib_mode in ("ema", "federated_ema") else None  # C has no
+        # EMA hook (online or federated) -> falls back to global; ema_zscore() is reused as-is
+        # for federated_ema since load_fed_ema_stats() populates the SAME buffers.
 
         test_w = scale_client(data, scaler, c.test_normal_idx)
         _, d_node_normal, resid_struct_normal, resid_phys_normal, idx_normal, _, d_mahal_normal = per_sample_scores(model, test_w)
@@ -547,6 +580,6 @@ def main(calib_mode="global"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "federated_ema"], default="global")
     args = parser.parse_args()
     main(calib_mode=args.calib_mode)

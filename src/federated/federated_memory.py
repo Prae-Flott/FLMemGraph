@@ -129,13 +129,84 @@ def _bfs_components(adj, n):
     return components
 
 
-def align_and_split(client_codebooks, client_usage_counts, gamma: float = 0.5, delta: float = 0.8):
+def compute_prototype_dev_stats(d_node: np.ndarray, idx: np.ndarray, num_prototypes: int):
+    """"federated_ema" of `memory/calib-in-prototype-ab.md`: sufficient
+    statistics (n, mean, var) of `d_node` per matched prototype, computed in
+    ONE one-shot local pass over a client's own fit-split data (using that
+    round's just-finished-training codebook) -- NOT a decayed EMA. A plain
+    per-prototype sample-count/mean/variance triple is used specifically
+    because it has a clean, associative, order-independent cross-client merge
+    rule (the parallel-variance / Chan-et-al. formula, applied server-side in
+    `align_and_split` below); an EMA has no equivalent closed-form merge.
+
+    `d_node`: [W, num_nodes] numpy (this client's own fit-split forward-pass
+    output for the round just finished). `idx`: [W] numpy matched-prototype
+    indices (same forward pass). Returns `(n [M] int64, mean [M, num_nodes]
+    float64, var [M, num_nodes] float64)` -- unpopulated prototypes (no fit
+    window routed there this round for this client) get `n=0`/`mean=0`/
+    `var=0`; callers must gate on `n == 0` before trusting `mean`/`var` for
+    that slot (same convention as `JointPrototypeMemory.ema_initialized`)."""
+    num_nodes = d_node.shape[1]
+    n = np.zeros(num_prototypes, dtype=np.int64)
+    mean = np.zeros((num_prototypes, num_nodes), dtype=np.float64)
+    var = np.zeros((num_prototypes, num_nodes), dtype=np.float64)
+    for m in range(num_prototypes):
+        mask = idx == m
+        n_m = int(mask.sum())
+        n[m] = n_m
+        if n_m > 0:
+            d_m = d_node[mask].astype(np.float64)
+            mean[m] = d_m.mean(axis=0)
+            var[m] = d_m.var(axis=0) if n_m > 1 else np.zeros(num_nodes)
+    return n, mean, var
+
+
+def _merge_dev_stats_pair(n_a, mean_a, var_a, n_b, mean_b, var_b):
+    """Parallel-variance (Chan, Golub, LeVeque 1979) pairwise merge of two
+    (n, mean, var) sufficient-statistics triples into one, exact (not an
+    approximation) for combining two disjoint samples' mean/variance from
+    only their own summary statistics. Associative/commutative, so folding
+    more than two members of a cluster can be done in any order."""
+    n = n_a + n_b
+    if n <= 0:
+        return 0.0, mean_a, var_a  # both empty; values are unused (n==0 downstream)
+    mean = (n_a * mean_a + n_b * mean_b) / n
+    m2 = n_a * var_a + n_b * var_b + (mean_a - mean_b) ** 2 * (n_a * n_b) / n
+    return n, mean, m2 / n
+
+
+def align_and_split(client_codebooks, client_usage_counts, gamma: float = 0.5, delta: float = 0.8,
+                     client_dev_stats=None):
     """client_codebooks: list of C tensors, each either [M, D] (FLGDNMemory's
     per-feature-independent codebook) or [M, N, D] (JointPrototypeMemory's
     joint multi-node snapshot -- see `joint_prototype_model.JointPrototypeMemory`).
     client_usage_counts: list of C tensors, each [M] (Freq, non-negative).
     Returns (list of C tensors, same per-client shape as the input -- P_G,n per
-    client, diagnostics dict).
+    client, diagnostics dict) by default.
+
+    `client_dev_stats` (optional, "federated_ema" of `memory/calib-in-prototype-ab.md`):
+    list of C `(n, mean, var)` numpy triples from `compute_prototype_dev_stats`
+    above, one per client, each shaped `([M], [M, num_nodes], [M, num_nodes])`.
+    When given, this function ALSO federates the per-prototype deviation
+    statistics using EXACTLY the same shared-cluster/personalized-slot
+    decision already computed for the codebook vectors (not re-derived) --
+    shared-cluster slots get merged via the sample-count-WEIGHTED
+    parallel-variance formula (`_merge_dev_stats_pair`), personalized slots
+    pass through unchanged (only one client ever contributes to those, so
+    there's nothing to merge). This is a DELIBERATE divergence from the
+    codebook vectors' own merge convention just above
+    (`P_S = ... .mean(dim=0)`, an UNWEIGHTED mean over cluster members, per
+    FEDPM's own convention) -- correctness for a mean/variance ESTIMATE
+    requires weighting by how many samples each contributor actually had,
+    whereas the codebook pooling's unweighted convention is a separate,
+    already-established design choice this branch does not "fix" to match.
+    When `client_dev_stats` is given, the return becomes a 3-tuple `(P_G,
+    diagnostics, dev_stats_out)` where `dev_stats_out` is a list of C `(n,
+    mean, var)` triples in the SAME `[M, ...]` per-client layout as `P_G`
+    (shared slots first, personalized slots after, exactly mirroring
+    `P_G[c] = cat([P_S, P_p_n])` below). When omitted (default), the return
+    stays the original 2-tuple `(P_G, diagnostics)` -- existing callers
+    (`calib_mode` in `{global, per_prototype, ema}`) are unaffected.
 
     For [M, N, D] input, similarity is computed PER NODE (not by flattening
     the [N, D] snapshot into one vector) and only then averaged across nodes
@@ -192,6 +263,9 @@ def align_and_split(client_codebooks, client_usage_counts, gamma: float = 0.5, d
     clustered_global = set(i for cl in shared_clusters for i in cl)
 
     P_G = []
+    chosen_per_client = []  # local personalized indices per client, in P_p_n's own order --
+                             # captured so an optional dev-stats merge below can mirror the
+                             # exact same personalized-slot layout without re-deriving it.
     n_personal_target = M - P_S.shape[0]
     for c in range(C):
         offset = c * M
@@ -226,6 +300,43 @@ def align_and_split(client_codebooks, client_usage_counts, gamma: float = 0.5, d
 
         P_p_n = all_protos[[offset + i for i in chosen]]
         P_G.append(torch.cat([P_S, P_p_n], dim=0))  # [M, N, D]
+        chosen_per_client.append(chosen)
+
+    dev_stats_out = None
+    if client_dev_stats is not None:
+        n_list = [ds[0].astype(np.float64) for ds in client_dev_stats]
+        mean_list = [ds[1].astype(np.float64) for ds in client_dev_stats]
+        var_list = [ds[2].astype(np.float64) for ds in client_dev_stats]
+        num_dev_nodes = mean_list[0].shape[1]
+
+        shared_stats = []
+        for cl_idx in shared_clusters:
+            n_acc, mean_acc, var_acc = 0.0, None, None
+            for g in cl_idx:
+                cc, ii = g // M, g % M
+                n_g, mean_g, var_g = n_list[cc][ii], mean_list[cc][ii], var_list[cc][ii]
+                if mean_acc is None:
+                    n_acc, mean_acc, var_acc = n_g, mean_g, var_g
+                else:
+                    n_acc, mean_acc, var_acc = _merge_dev_stats_pair(
+                        n_acc, mean_acc, var_acc, n_g, mean_g, var_g)
+            shared_stats.append((n_acc, mean_acc, var_acc))
+
+        dev_stats_out = []
+        for c in range(C):
+            n_rows = [s[0] for s in shared_stats]
+            mean_rows = [s[1] for s in shared_stats]
+            var_rows = [s[2] for s in shared_stats]
+            for i in chosen_per_client[c]:
+                n_rows.append(n_list[c][i])
+                mean_rows.append(mean_list[c][i])
+                var_rows.append(var_list[c][i])
+            n_arr = np.array(n_rows, dtype=np.float64)
+            mean_arr = (np.stack(mean_rows, axis=0) if mean_rows
+                        else np.zeros((0, num_dev_nodes), dtype=np.float64))
+            var_arr = (np.stack(var_rows, axis=0) if var_rows
+                       else np.zeros((0, num_dev_nodes), dtype=np.float64))
+            dev_stats_out.append((n_arr, mean_arr, var_arr))
 
     if was_2d:
         P_G = [p.squeeze(1) for p in P_G]
@@ -243,4 +354,6 @@ def align_and_split(client_codebooks, client_usage_counts, gamma: float = 0.5, d
         # match, instead of only a single flattened similarity number.
         "per_cluster_per_node_agreement": cluster_node_agreement,
     }
+    if client_dev_stats is not None:
+        return P_G, diagnostics, dev_stats_out
     return P_G, diagnostics
