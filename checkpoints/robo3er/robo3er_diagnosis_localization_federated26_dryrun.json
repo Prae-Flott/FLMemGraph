@@ -1,0 +1,430 @@
+{
+  "cable trapped": {
+    "B": {
+      "n": 206,
+      "direct_pct": 0.0,
+      "direct_or_indirect_pct": 69.4,
+      "top_nodes": [
+        [
+          "odom_odo_angtw_x",
+          82
+        ],
+        [
+          "imu_imu_angvel_x",
+          35
+        ],
+        [
+          "imu_imu_orient_y",
+          33
+        ],
+        [
+          "odom_odo_lintw_y",
+          22
+        ],
+        [
+          "odom_odo_orient_y",
+          14
+        ]
+      ]
+    },
+    "C": {
+      "n": 206,
+      "direct_pct": 0.0,
+      "direct_or_indirect_pct": 68.4,
+      "top_nodes": [
+        [
+          "odom_odo_angtw_x",
+          84
+        ],
+        [
+          "odom_odo_orient_y",
+          45
+        ],
+        [
+          "imu_imu_angvel_x",
+          32
+        ],
+        [
+          "odom_odo_lintw_y",
+          22
+        ],
+        [
+          "imu_imu_orient_x",
+          10
+        ]
+      ]
+    },
+    "H": {
+      "n": 206,
+      "direct_pct": 0.0,
+      "direct_or_indirect_pct": 55.3,
+      "top_nodes": [
+        [
+          "imu_imu_orient_x",
+          56
+        ],
+        [
+          "odom_odo_angtw_x",
+          45
+        ],
+        [
+          "imu_imu_angvel_x",
+          30
+        ],
+        [
+          "odom_odo_lintw_y",
+          27
+        ],
+        [
+          "wheel_status_pwm_left",
+          18
+        ]
+      ]
+    },
+    "K": {
+      "n": 197,
+      "direct_pct": 0.0,
+      "direct_or_indirect_pct": 74.1,
+      "top_nodes": [
+        [
+          "odom_odo_lintw_y",
+          65
+        ],
+        [
+          "imu_imu_angvel_x",
+          44
+        ],
+        [
+          "odom_odo_angtw_x",
+          37
+        ],
+        [
+          "imu_imu_orient_y",
+          26
+        ],
+        [
+          "wheel_status_current_ma_right",
+          18
+        ]
+      ]
+    },
+    "BK": {
+      "n": 197,
+      "direct_pct": 0.0,
+      "direct_or_indirect_pct": 79.2,
+      "top_nodes": [
+        [
+          "odom_odo_lintw_y",
+          66
+        ],
+        [
+          "odom_odo_angtw_x",
+          47
+        ],
+        [
+          "imu_imu_angvel_x",
+          43
+        ],
+        [
+          "imu_imu_orient_y",
+          23
+        ],
+        [
+          "wheel_status_current_ma_right",
+          13
+        ]
+      ]
+    },
+    "CK": {
+      "n": 197,
+      "direct_pct": 0.0,
+      "direct_or_indirect_pct": 79.2,
+      "top_nodes": [
+        [
+          "odom_odo_lintw_y",
+          66
+        ],
+        [
+          "odom_odo_angtw_x",
+          47
+        ],
+        [
+          "imu_imu_angvel_x",
+          43
+        ],
+        [
+          "imu_imu_orient_y",
+          23
+        ],
+        [
+          "wheel_status_current_ma_right",
+          13
+        ]
+      ]
+    },
+    "HK": {
+      "n": 197,
+      "direct_pct": 0.0,
+      "direct_or_indirect_pct": 55.3,
+      "top_nodes": [
+        [
+          "imu_imu_orient_x",
+          52
+        ],
+        [
+          "odom_odo_angtw_x",
+          41
+        ],
+        [
+          "imu_imu_angvel_x",
+          29
+        ],
+        [
+          "odom_odo_lintw_y",
+          27
+        ],
+        [
+          "wheel_status_pwm_left",
+          18
+        ]
+      ]
+    }
+  },
+  "stuck": {
+    "B": {
+      "n": 149,
+      "direct_pct": 53.0,
+      "direct_or_indirect_pct": 53.0,
+      "top_nodes": [
+        [
+          "wheel_status_current_ma_left",
+          54
+        ],
+        [
+          "odom_odo_angtw_x",
+          27
+        ],
+        [
+          "wheel_status_current_ma_right",
+          24
+        ],
+        [
+          "imu_imu_angvel_x",
+          20
+        ],
+        [
+          "odom_odo_orient_w",
+          6
+        ]
+      ]
+    },
+    "C": {
+      "n": 149,
+      "direct_pct": 53.0,
+      "direct_or_indirect_pct": 53.0,
+      "top_nodes": [
+        [
+          "wheel_status_current_ma_left",
+          55
+        ],
+        [
+          "odom_odo_angtw_x",
+          27
+        ],
+        [
+          "wheel_status_current_ma_right",
+          24
+        ],
+        [
+          "imu_imu_angvel_x",
+          23
+        ],
+        [
+          "odom_odo_lintw_y",
+          5
+        ]
+      ]
+    },
+    "H": {
+      "n": 149,
+      "direct_pct": 43.6,
+      "direct_or_indirect_pct": 43.6,
+      "top_nodes": [
+        [
+          "wheel_status_current_ma_left",
+          41
+        ],
+        [
+          "imu_imu_orient_w",
+          39
+        ],
+        [
+          "imu_imu_angvel_x",
+          22
+        ],
+        [
+          "wheel_status_current_ma_right",
+          21
+        ],
+        [
+          "odom_odo_orient_w",
+          9
+        ]
+      ]
+    },
+    "K": {
+      "n": 139,
+      "direct_pct": 92.8,
+      "direct_or_indirect_pct": 92.8,
+      "top_nodes": [
+        [
+          "wheel_status_current_ma_left",
+          105
+        ],
+        [
+          "wheel_status_current_ma_right",
+          19
+        ],
+        [
+          "odom_odo_orient_x",
+          5
+        ],
+        [
+          "wheel_status_pwm_right",
+          5
+        ],
+        [
+          "odom_odo_angtw_x",
+          3
+        ]
+      ]
+    },
+    "BK": {
+      "n": 139,
+      "direct_pct": 92.1,
+      "direct_or_indirect_pct": 92.1,
+      "top_nodes": [
+        [
+          "wheel_status_current_ma_left",
+          105
+        ],
+        [
+          "wheel_status_current_ma_right",
+          21
+        ],
+        [
+          "odom_odo_angtw_x",
+          10
+        ],
+        [
+          "wheel_status_pwm_right",
+          2
+        ],
+        [
+          "imu_imu_orient_x",
+          1
+        ]
+      ]
+    },
+    "CK": {
+      "n": 139,
+      "direct_pct": 92.1,
+      "direct_or_indirect_pct": 92.1,
+      "top_nodes": [
+        [
+          "wheel_status_current_ma_left",
+          105
+        ],
+        [
+          "wheel_status_current_ma_right",
+          21
+        ],
+        [
+          "odom_odo_angtw_x",
+          10
+        ],
+        [
+          "wheel_status_pwm_right",
+          2
+        ],
+        [
+          "imu_imu_orient_x",
+          1
+        ]
+      ]
+    },
+    "HK": {
+      "n": 139,
+      "direct_pct": 89.9,
+      "direct_or_indirect_pct": 89.9,
+      "top_nodes": [
+        [
+          "wheel_status_current_ma_left",
+          102
+        ],
+        [
+          "wheel_status_current_ma_right",
+          21
+        ],
+        [
+          "imu_imu_angvel_x",
+          7
+        ],
+        [
+          "odom_odo_angtw_x",
+          4
+        ],
+        [
+          "wheel_status_pwm_left",
+          2
+        ]
+      ]
+    }
+  },
+  "_config": {
+    "num_nodes": 26,
+    "cols": [
+      "wheel_vels_velocity_left",
+      "wheel_vels_velocity_right",
+      "odom_odo_orient_x",
+      "odom_odo_orient_y",
+      "odom_odo_orient_z",
+      "odom_odo_orient_w",
+      "odom_odo_lintw_x",
+      "odom_odo_lintw_y",
+      "odom_odo_lintw_z",
+      "odom_odo_angtw_x",
+      "odom_odo_angtw_y",
+      "odom_odo_angtw_z",
+      "imu_imu_orient_x",
+      "imu_imu_orient_y",
+      "imu_imu_orient_z",
+      "imu_imu_orient_w",
+      "imu_imu_angvel_x",
+      "imu_imu_angvel_y",
+      "imu_imu_angvel_z",
+      "imu_imu_acc_x",
+      "imu_imu_acc_y",
+      "imu_imu_acc_z",
+      "wheel_status_current_ma_left",
+      "wheel_status_current_ma_right",
+      "wheel_status_pwm_left",
+      "wheel_status_pwm_right"
+    ],
+    "feature_groups": [
+      "kinematic_core",
+      "actuation"
+    ],
+    "exclude_nodes_prefixes": [
+      "tf_link_base_link_",
+      "tf_footprint_base_footprint_",
+      "odom_odo_pos_",
+      "wheel_ticks_"
+    ],
+    "horizon_mult": 10,
+    "rounds": 1,
+    "local_epochs": 1,
+    "sync_encoder_decoder": true,
+    "reliability_ratio": 0.05
+  }
+}

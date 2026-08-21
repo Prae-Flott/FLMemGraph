@@ -9,11 +9,19 @@ trains on -- reused here rather than re-deriving it, so this federated
 system's client boundaries match the project's established convention).
 Verified client composition (2026-08, current on-disk data.npy):
 
-    client 0 (robot00): n=378,  normal=279, Broken Pipe=25, Low battery=74
+    client 0 (robot00): n=353,  normal=353
     client 1 (robot01): n=354,  normal=148, cable trapped=206
     client 2 (robot02): n=178,  normal=178 (no faults at all)
-    client 3 (robot03): n=367,  normal=333, Broken Pipe=34
+    client 3 (robot03): n=333,  normal=333
     client 4 (robot04): n=4766, normal=4617, stuck=149
+
+    Removed fault types (not detectable from available feature set):
+    - Broken Pipe (59 windows): ROS2 clock-sync freeze makes kinematic
+      relations look MORE stable than normal -- physics prior signal inverted.
+      B/C also cannot distinguish frozen topics from a stationary robot.
+    - Low battery (74 windows): directly-observable signals excluded for
+      stationarity; remaining signals are activity-dependent and
+      indistinguishable from normal at rest.
 
 This is a genuinely severe non-IID split (robot04 alone is 79% of all
 data and the ONLY source of `stuck`; robot02 contributes no fault
@@ -36,7 +44,7 @@ from dataset import load_robo3er  # noqa: E402
 from kinematics import fit_kinematic_params, apply_kinematic_residual, residual_feature_names  # noqa: E402
 import feature_groups  # noqa: E402
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data" / "robo3er"  # local copy, see dataset.py's comment
 
 FIT_FRACTION = 0.70

@@ -1,0 +1,163 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 8,
+    "window_len": 60,
+    "forecast_h": 12,
+    "epochs": 12,
+    "prior_edges": [
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "odom_odo_angtw_z",
+        "imu_imu_angvel_z"
+      ],
+      [
+        "wheel_status_current_ma_left",
+        "wheel_vels_velocity_left"
+      ],
+      [
+        "wheel_status_current_ma_right",
+        "wheel_vels_velocity_right"
+      ]
+    ],
+    "edge_types": [
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "nonlinear",
+      "nonlinear"
+    ],
+    "min_proto_samples": 5,
+    "lambda_forecast": 0.5
+  },
+  "nodes": [
+    "wheel_vels_velocity_left",
+    "wheel_vels_velocity_right",
+    "cliff_intensity_cliff_side_left",
+    "cliff_intensity_cliff_front_left",
+    "cliff_intensity_cliff_front_right",
+    "cliff_intensity_cliff_side_right",
+    "slip_status_is_slipping",
+    "odom_odo_pos_x",
+    "odom_odo_pos_y",
+    "odom_odo_pos_z",
+    "odom_odo_orient_x",
+    "odom_odo_orient_y",
+    "odom_odo_orient_z",
+    "odom_odo_orient_w",
+    "odom_odo_lintw_x",
+    "odom_odo_lintw_y",
+    "odom_odo_lintw_z",
+    "odom_odo_angtw_x",
+    "odom_odo_angtw_y",
+    "odom_odo_angtw_z",
+    "imu_imu_orient_x",
+    "imu_imu_orient_y",
+    "imu_imu_orient_z",
+    "imu_imu_orient_w",
+    "imu_imu_angvel_x",
+    "imu_imu_angvel_y",
+    "imu_imu_angvel_z",
+    "imu_imu_acc_x",
+    "imu_imu_acc_y",
+    "imu_imu_acc_z",
+    "wheel_ticks_ticks_left",
+    "wheel_ticks_ticks_right",
+    "tf_link_base_link_trans_x",
+    "tf_link_base_link_trans_y",
+    "tf_link_base_link_trans_z",
+    "tf_link_base_link_rot_x",
+    "tf_link_base_link_rot_y",
+    "tf_link_base_link_rot_z",
+    "tf_link_base_link_rot_w",
+    "tf_footprint_base_footprint_trans_x",
+    "tf_footprint_base_footprint_trans_y",
+    "tf_footprint_base_footprint_rot_z",
+    "tf_footprint_base_footprint_rot_w",
+    "wheel_status_current_ma_left",
+    "wheel_status_current_ma_right",
+    "wheel_status_pwm_left",
+    "wheel_status_pwm_right",
+    "ir_opcode_opcode",
+    "ir_opcode_sensor",
+    "battery_state_voltage",
+    "battery_state_current",
+    "battery_state_charge",
+    "battery_state_capacity",
+    "battery_state_temperature",
+    "battery_state_percentage",
+    "dock_status_is_docked",
+    "dock_status_dock_visible",
+    "stop_status_is_stopped",
+    "kidnap_status_is_kidnapped",
+    "ir_intensity_ir_intensity_side_left",
+    "ir_intensity_ir_intensity_left",
+    "ir_intensity_ir_intensity_front_left",
+    "ir_intensity_ir_intensity_front_center_left",
+    "ir_intensity_ir_intensity_front_center_right",
+    "ir_intensity_ir_intensity_front_right",
+    "ir_intensity_ir_intensity_right",
+    "mouse_mouse_x",
+    "mouse_mouse_y"
+  ],
+  "final_prior_bias_strength": 1.067164659500122,
+  "final_typed_temperature": 1.0,
+  "final_forecast_prior_bias_strength": 1.0290296077728271,
+  "n_valid_prototypes_for_typed_calib": 7,
+  "n_valid_prototypes_for_cov_calib": 6,
+  "fault_types": {
+    "cable trapped": {
+      "n": 206,
+      "B_node_max": 0.995415637387258,
+      "C_struct_max": 0.9892342161199517,
+      "E_phys_max": 0.9999942551846959,
+      "F_v3_max": 0.9999942551846959,
+      "H_cov_mahal": 0.9988510369391624,
+      "I_node_cov_max": 0.9979433561211006,
+      "J_v3_cov_max": 0.9999942551846959,
+      "K_forecast_max": 0.7212213477336704,
+      "L_full_plus_forecast": 0.9999942551846958
+    },
+    "stuck": {
+      "n": 149,
+      "B_node_max": 0.4989793892220325,
+      "C_struct_max": 0.5222509034589571,
+      "E_phys_max": 0.5193360073070966,
+      "F_v3_max": 0.4310472181406616,
+      "H_cov_mahal": 0.7390889956713396,
+      "I_node_cov_max": 0.5301735435447361,
+      "J_v3_cov_max": 0.4504427941702077,
+      "K_forecast_max": 0.6362654382272348,
+      "L_full_plus_forecast": 0.5135498987331718
+    }
+  },
+  "summary_mean_auroc": {
+    "B_node_max": 0.7471975133046452,
+    "C_struct_max": 0.7557425597894544,
+    "E_phys_max": 0.7596651312458962,
+    "F_v3_max": 0.7155207366626788,
+    "H_cov_mahal": 0.868970016305251,
+    "I_node_cov_max": 0.7640584498329184,
+    "J_v3_cov_max": 0.7252185246774518,
+    "K_forecast_max": 0.6787433929804526,
+    "L_full_plus_forecast": 0.7567720769589338
+  }
+}

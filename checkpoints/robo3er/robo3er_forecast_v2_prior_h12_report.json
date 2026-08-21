@@ -1,0 +1,199 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 8,
+    "window_len": 60,
+    "stride": 32,
+    "horizon_mult": 12,
+    "forecast_h": 384,
+    "epochs": 12,
+    "prior_edges": [
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "odom_odo_angtw_z",
+        "imu_imu_angvel_z"
+      ],
+      [
+        "wheel_status_current_ma_left",
+        "wheel_vels_velocity_left"
+      ],
+      [
+        "wheel_status_current_ma_right",
+        "wheel_vels_velocity_right"
+      ]
+    ],
+    "edge_types": [
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "nonlinear",
+      "nonlinear"
+    ],
+    "use_forecast_prior": true,
+    "min_proto_samples": 5,
+    "lambda_forecast": 0.5
+  },
+  "nodes": [
+    "wheel_vels_velocity_left",
+    "wheel_vels_velocity_right",
+    "cliff_intensity_cliff_side_left",
+    "cliff_intensity_cliff_front_left",
+    "cliff_intensity_cliff_front_right",
+    "cliff_intensity_cliff_side_right",
+    "slip_status_is_slipping",
+    "odom_odo_pos_x",
+    "odom_odo_pos_y",
+    "odom_odo_pos_z",
+    "odom_odo_orient_x",
+    "odom_odo_orient_y",
+    "odom_odo_orient_z",
+    "odom_odo_orient_w",
+    "odom_odo_lintw_x",
+    "odom_odo_lintw_y",
+    "odom_odo_lintw_z",
+    "odom_odo_angtw_x",
+    "odom_odo_angtw_y",
+    "odom_odo_angtw_z",
+    "imu_imu_orient_x",
+    "imu_imu_orient_y",
+    "imu_imu_orient_z",
+    "imu_imu_orient_w",
+    "imu_imu_angvel_x",
+    "imu_imu_angvel_y",
+    "imu_imu_angvel_z",
+    "imu_imu_acc_x",
+    "imu_imu_acc_y",
+    "imu_imu_acc_z",
+    "wheel_ticks_ticks_left",
+    "wheel_ticks_ticks_right",
+    "tf_link_base_link_trans_x",
+    "tf_link_base_link_trans_y",
+    "tf_link_base_link_trans_z",
+    "tf_link_base_link_rot_x",
+    "tf_link_base_link_rot_y",
+    "tf_link_base_link_rot_z",
+    "tf_link_base_link_rot_w",
+    "tf_footprint_base_footprint_trans_x",
+    "tf_footprint_base_footprint_trans_y",
+    "tf_footprint_base_footprint_rot_z",
+    "tf_footprint_base_footprint_rot_w",
+    "wheel_status_current_ma_left",
+    "wheel_status_current_ma_right",
+    "wheel_status_pwm_left",
+    "wheel_status_pwm_right",
+    "ir_opcode_opcode",
+    "ir_opcode_sensor",
+    "battery_state_voltage",
+    "battery_state_current",
+    "battery_state_charge",
+    "battery_state_capacity",
+    "battery_state_temperature",
+    "battery_state_percentage",
+    "dock_status_is_docked",
+    "dock_status_dock_visible",
+    "stop_status_is_stopped",
+    "kidnap_status_is_kidnapped",
+    "ir_intensity_ir_intensity_side_left",
+    "ir_intensity_ir_intensity_left",
+    "ir_intensity_ir_intensity_front_left",
+    "ir_intensity_ir_intensity_front_center_left",
+    "ir_intensity_ir_intensity_front_center_right",
+    "ir_intensity_ir_intensity_front_right",
+    "ir_intensity_ir_intensity_right",
+    "mouse_mouse_x",
+    "mouse_mouse_y"
+  ],
+  "final_prior_bias_strength": 1.0713744163513184,
+  "final_typed_temperature": 1.0,
+  "final_forecast_prior_bias_strength": 1.081959843635559,
+  "n_valid_prototypes_for_typed_calib": 7,
+  "n_valid_prototypes_for_cov_calib": 4,
+  "pair_counts": {
+    "fit": [
+      3940,
+      3819
+    ],
+    "calib": [
+      844,
+      832
+    ],
+    "test_normal": [
+      845,
+      773
+    ]
+  },
+  "declared_edge_target_node_calib_mse": {
+    "wheel_vels_velocity_left": 0.9032133221626282,
+    "wheel_vels_velocity_right": 0.6230747699737549,
+    "odom_odo_lintw_x": 0.7973100543022156,
+    "odom_odo_angtw_z": 0.8717811703681946,
+    "imu_imu_angvel_z": 0.8827393651008606
+  },
+  "all_node_calib_mse_mean": 0.4802546203136444,
+  "fault_types": {
+    "cable trapped": {
+      "n": 206,
+      "n_paired": 195,
+      "B_node_max": 0.9941805020968577,
+      "C_struct_max": 0.9782156603665193,
+      "E_phys_max": 0.9954443614637789,
+      "F_v3_max": 0.9778192681105302,
+      "H_cov_mahal": 0.9987189061871661,
+      "I_node_cov_max": 0.9970126960418222,
+      "J_v3_cov_max": 0.9902108347216637,
+      "K_forecast_max": 0.8375758781968354,
+      "BK_max": 0.8533718114571931,
+      "CK_max": 0.8564633296845457,
+      "HK_max": 0.882900454439911,
+      "L_full_plus_forecast": 0.8856868013401002
+    },
+    "stuck": {
+      "n": 149,
+      "n_paired": 137,
+      "B_node_max": 0.5089670783527263,
+      "C_struct_max": 0.5611214804813153,
+      "E_phys_max": 0.5257932568206187,
+      "F_v3_max": 0.5420674317938128,
+      "H_cov_mahal": 0.7500575830983678,
+      "I_node_cov_max": 0.5299511536475914,
+      "J_v3_cov_max": 0.5469044120567094,
+      "K_forecast_max": 0.8237882550684129,
+      "BK_max": 0.8097185106845073,
+      "CK_max": 0.8073672580995459,
+      "HK_max": 0.8240573743401857,
+      "L_full_plus_forecast": 0.8027355737906158
+    }
+  },
+  "summary_mean_auroc": {
+    "B_node_max": 0.751573790224792,
+    "C_struct_max": 0.7696685704239172,
+    "E_phys_max": 0.7606188091421988,
+    "F_v3_max": 0.7599433499521715,
+    "H_cov_mahal": 0.8743882446427669,
+    "I_node_cov_max": 0.7634819248447068,
+    "J_v3_cov_max": 0.7685576233891865,
+    "K_forecast_max": 0.8306820666326242,
+    "BK_max": 0.8315451610708502,
+    "CK_max": 0.8319152938920458,
+    "HK_max": 0.8534789143900483,
+    "L_full_plus_forecast": 0.844211187565358
+  }
+}

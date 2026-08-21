@@ -8,9 +8,10 @@ description: Final conclusions for Joint Prototype Memory "Scheme V3" (typed rel
 
 ## Naming note
 
-This document's "V3" is the current, final version. `memory/joint-prototype-scheme-v2.md`
-documents "V2" -- a DIFFERENT, later-named concept (renamed from "Scheme
-B", the no-edges-at-all baseline). Do not confuse V2 with the historical
+This document's "V3" is the current, final version. "V2" (formerly "Scheme
+B", now folded into `scoring-signals-B-C-E-H.md`'s signal B) is the
+no-edges-at-all baseline: `SharedEncoder` + `JointPrototypeMemory` only, no
+edge/relation head. Do not confuse V2 with the historical
 `JointPrototypeGDNv2` class discussed in the Lineage section below (which
 had generic edge attention but no typed relations, and was deleted in an
 earlier cleanup pass) -- that class predates and is unrelated to the
@@ -20,7 +21,7 @@ attention-only design" to avoid the collision.
 ## What it is
 
 `src/models/joint_prototype_model.JointPrototypeGDNv3` = V2's encoder +
-`JointPrototypeMemory` (`memory/joint-prototype-scheme-v2.md`), PLUS:
+`JointPrototypeMemory` (no edges, signal B), PLUS:
 - `TrendGraphAttentionHead`: GDN-style learned attention over each node's
   TopK-similar neighbors: declared physics edges bias attention logits
   (one learned scalar) but do NOT restrict which relationships can be
@@ -35,9 +36,9 @@ attention-only design" to avoid the collision.
 
 Needs domain knowledge: a verified physical relation between two signals
 (what kind -- proportional or nonlinear) must be declared as an edge
-before this adds anything V2 doesn't already provide. See
-`memory/joint-prototype-scheme-v2.md` for when to prefer the simpler,
-prior-free alternative instead.
+before this adds anything V2/signal-B doesn't already provide. See
+`scoring-signals-B-C-E-H.md`'s combination-rules table for when to prefer
+the simpler, prior-free alternative instead.
 
 ## Lineage (condensed -- intermediate code removed, conclusions kept)
 
@@ -73,31 +74,23 @@ repo (code + checkpoints), their lessons folded in here:
    the interim design's attention head, per
    `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
 
-## Cross-dataset results (final numbers, mean AUROC per dataset)
+## Cross-dataset results: superseded, see scoring-signals-B-C-E-H.md
 
-| dataset | A | B | C | D | E | F | winner |
-|---|---|---|---|---|---|---|---|
-| **Paderborn** (6 nodes, 26 bearings) | 0.750 | ~0.79 | **0.904** | 0.889 | 0.816 | 0.898 | C (edge attention) |
-| **robo3er** (7 nodes, 4 fault types) | 0.893 | **0.942** | 0.826 | 0.893 | 0.791 | 0.861 | B (no edges) |
-| **voraus-AD** (66 nodes, 12 fault categories) | 0.642 | **0.756** | 0.729 | 0.730 | 0.647 | 0.687 | B (no edges) |
-| fair baselines (GDN / AE, Paderborn) | 0.819 / 0.679 | | | | | | V3 beats both |
+The numbers originally here (a first, centralized, non-encdec-synced V3
+run, plus voraus-AD -- a dataset since deleted from the repo) are stale
+and partly conflict with the current federated+sync numbers on the same
+signal letters. **[[scoring-signals-B-C-E-H]] is the authoritative,
+up-to-date source for per-dataset signal performance and recommended
+combinations** -- read that file for current numbers, not this one.
 
-**Only Paderborn's fault mechanism is dominated by the declared edges.**
-Both other datasets' best path is B (V2, no edges at all) -- the
-typed-edge mechanism (E) never wins outright anywhere, and the "kitchen
-sink" combination (F) never beats the single best individual signal on
-any dataset. This is the central, repeatedly-confirmed finding: **which
-signal wins is a property of the dataset's fault mechanisms, not of
-model capability** -- Paderborn's bearing damage genuinely breaks
-cross-channel physical coupling (vibration/force/torque/current); most
-of robo3er's and voraus-AD's faults look like a single value drifting,
-which V2 already captures without needing any declared relation.
-
-The ONE consistent exception within otherwise B-dominated datasets:
-voraus-AD's `motor_commutation` fault (current stops predicting torque
-proportionally, a textbook relation break) -- C/D beat B specifically on
-this one category (0.841/0.840 vs. 0.818), nowhere else in that
-dataset's 12 categories.
+The one qualitative finding that still holds and is worth keeping here:
+**which signal wins is a property of the dataset's fault mechanisms, not
+of model capability.** Paderborn's bearing damage genuinely breaks
+cross-channel physical coupling (vibration/force/torque/current), so its
+edge-based signals (C/E/J) win; robo3er's and Sielaff's faults are
+better explained by node-amplitude or covariance-pattern signals (B/H)
+or generic structural attention (C) -- see scoring-signals-B-C-E-H.md's
+per-dataset recommendation table for the current picture.
 
 ## Key mechanism lesson: max-aggregation noise floor, and its fix
 
@@ -117,26 +110,52 @@ start, not raw max.
 
 ## Where results/code live
 
-- `src/models/joint_prototype_model.py`: `JointPrototypeGDNv3` and its
-  components (current, only version in the codebase).
-- Paderborn: `benchmark/run_paderborn_joint_prototype_v3.py`,
-  `checkpoints/paderborn/paderborn_joint_prototype_v3_report.json`.
-- robo3er: `benchmark/run_robo3er_joint_prototype_v3.py`,
-  `checkpoints/robo3er/robo3er_joint_prototype_v3_report.json`.
-- voraus-AD: `benchmark/run_voraus_ad_joint_prototype_v3.py`,
-  `benchmark/datasets/voraus_ad_adapter.py`,
-  `checkpoints/voraus_ad/voraus_ad_joint_prototype_v3_report.json`.
+- `src/models/joint_prototype_model.py`: `JointPrototypeV31` (current,
+  only model class in the codebase; renamed from `JointPrototypeGDNv3`).
+- Paderborn: `benchmark/run_paderborn_v3_1.py` (centralized),
+  `benchmark/run_paderborn_v3_1_federated.py` (federated+sync),
+  `checkpoints/paderborn/paderborn_v3_1*_report.json`.
+- robo3er: `benchmark/run_robo3er_v3_1.py` (centralized),
+  `benchmark/run_robo3er_v3_1_federated.py` (federated+sync),
+  `checkpoints/robo3er/robo3er_v3_1*_report.json`.
+- Sielaff: no declared edges (`prior_edges=[]`, equivalent to V2.1) --
+  `benchmark/run_sielaff_v2_1.py`, `benchmark/run_sielaff_v2_1_federated.py`.
+- voraus-AD: dataset and all related scripts/checkpoints deleted from the
+  repo (2026-08-16) -- no longer runnable, kept only as a historical
+  data point in the qualitative finding above.
 - Physics references per dataset: `benchmark/datasets/paderborn_physics.md`,
-  `benchmark/datasets/robo3er_physics.md`, `benchmark/datasets/voraus_ad_physics.md`
-  (Sielaff has no verified physics prior -- `benchmark/datasets/sielaff_physics.md`
-  documents that explicitly; only V2 was run there, see
-  `memory/joint-prototype-scheme-v2.md`).
+  `benchmark/datasets/robo3er_physics.md` (Sielaff has no verified physics
+  prior -- `benchmark/datasets/sielaff_physics.md` documents that explicitly).
+
+## TypedRelationAnomalyHead aggregation: softmax → max (2026-08-16)
+
+Changed `TypedRelationAnomalyHead.forward()` aggregation from
+`softmax(temperature · r_tilde) · r_tilde` to `max(r_tilde.clamp(min=0))`
+(one-line change, `src/models/joint_prototype_model.py:480-483`).
+
+Results after retraining V3.1 on both datasets:
+
+| dataset | E_phys_max (softmax) | E_phys_max (max) | Δ | J_v3_cov_max (both) |
+|---|---|---|---|---|
+| Paderborn | 0.816 | **0.821** | +0.005 | 0.894 |
+| robo3er | 0.759 | 0.760 | +0.001 | 0.725 |
+
+Paderborn: all 4 target nodes have exactly 2 incoming edges
+(vibration_1 ← force+speed; torque ← force+speed; current_1/2 ← speed+torque),
+so softmax vs max is structurally meaningful -- but the improvement is tiny (+0.005).
+Weak individual bearings KA07/KA08 gained +0.013/+0.012 on E_phys_max.
+
+Robo3er: `stuck`-critical edges (`current → wheel_vel`) have 1 incoming edge each
+so softmax=max identically. The `odom` target nodes do have 2 incoming edges, but
+those aren't the dominant signal for `stuck`. No change on any metric.
+
+**`C_struct_max` and `J_v3_cov_max` are unaffected on both datasets** -- the
+aggregation change only affects `resid_phys` (E signal).
 
 ## What's NOT done
 
 - No self-supervised relation-breaking augmentation training for the
-  anomaly attention (design doc Sec 17) -- still the unsupervised
-  softmax-over-magnitude version.
+  anomaly attention (design doc Sec 17).
 - No cross-joint/cross-node edges on voraus-AD (needs the arm's DH
   parameters or an empirical coupling check).
 - No adaptive per-sample weighting between B and edge-based signals

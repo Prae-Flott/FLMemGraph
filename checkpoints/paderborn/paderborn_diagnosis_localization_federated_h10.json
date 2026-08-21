@@ -1,0 +1,639 @@
+{
+  "outer_ring": {
+    "B": {
+      "n": 339486,
+      "direct_pct": 68.2,
+      "direct_or_indirect_pct": 88.4,
+      "top_nodes": [
+        [
+          "vibration_1",
+          231559
+        ],
+        [
+          "phase_current_1",
+          37090
+        ],
+        [
+          "phase_current_2",
+          31509
+        ],
+        [
+          "torque",
+          27659
+        ],
+        [
+          "speed",
+          6014
+        ],
+        [
+          "force",
+          5655
+        ]
+      ]
+    },
+    "C": {
+      "n": 339486,
+      "direct_pct": 36.2,
+      "direct_or_indirect_pct": 37.0,
+      "top_nodes": [
+        [
+          "vibration_1",
+          123058
+        ],
+        [
+          "force",
+          109313
+        ],
+        [
+          "speed",
+          60941
+        ],
+        [
+          "torque",
+          43531
+        ],
+        [
+          "phase_current_2",
+          1325
+        ],
+        [
+          "phase_current_1",
+          1318
+        ]
+      ]
+    },
+    "H": {
+      "n": 339486,
+      "direct_pct": 64.1,
+      "direct_or_indirect_pct": 73.5,
+      "top_nodes": [
+        [
+          "vibration_1",
+          217564
+        ],
+        [
+          "force",
+          53415
+        ],
+        [
+          "torque",
+          36474
+        ],
+        [
+          "phase_current_1",
+          17183
+        ],
+        [
+          "phase_current_2",
+          14812
+        ],
+        [
+          "speed",
+          38
+        ]
+      ]
+    },
+    "K": {
+      "n": 281946,
+      "direct_pct": 34.8,
+      "direct_or_indirect_pct": 43.5,
+      "top_nodes": [
+        [
+          "vibration_1",
+          98157
+        ],
+        [
+          "speed",
+          69193
+        ],
+        [
+          "force",
+          54471
+        ],
+        [
+          "torque",
+          35643
+        ],
+        [
+          "phase_current_1",
+          15358
+        ],
+        [
+          "phase_current_2",
+          9124
+        ]
+      ]
+    },
+    "BK": {
+      "n": 281946,
+      "direct_pct": 47.5,
+      "direct_or_indirect_pct": 55.2,
+      "top_nodes": [
+        [
+          "vibration_1",
+          133807
+        ],
+        [
+          "speed",
+          51679
+        ],
+        [
+          "force",
+          37610
+        ],
+        [
+          "torque",
+          37067
+        ],
+        [
+          "phase_current_1",
+          15201
+        ],
+        [
+          "phase_current_2",
+          6582
+        ]
+      ]
+    },
+    "CK": {
+      "n": 281946,
+      "direct_pct": 34.0,
+      "direct_or_indirect_pct": 35.0,
+      "top_nodes": [
+        [
+          "vibration_1",
+          95981
+        ],
+        [
+          "force",
+          78293
+        ],
+        [
+          "speed",
+          69996
+        ],
+        [
+          "torque",
+          34856
+        ],
+        [
+          "phase_current_1",
+          1836
+        ],
+        [
+          "phase_current_2",
+          984
+        ]
+      ]
+    },
+    "HK": {
+      "n": 281946,
+      "direct_pct": 59.2,
+      "direct_or_indirect_pct": 66.5,
+      "top_nodes": [
+        [
+          "vibration_1",
+          166889
+        ],
+        [
+          "force",
+          50796
+        ],
+        [
+          "torque",
+          30938
+        ],
+        [
+          "phase_current_1",
+          12996
+        ],
+        [
+          "speed",
+          12628
+        ],
+        [
+          "phase_current_2",
+          7699
+        ]
+      ]
+    }
+  },
+  "inner_ring": {
+    "B": {
+      "n": 311520,
+      "direct_pct": 81.5,
+      "direct_or_indirect_pct": 93.0,
+      "top_nodes": [
+        [
+          "vibration_1",
+          253769
+        ],
+        [
+          "phase_current_1",
+          19682
+        ],
+        [
+          "torque",
+          18830
+        ],
+        [
+          "phase_current_2",
+          16155
+        ],
+        [
+          "force",
+          2823
+        ],
+        [
+          "speed",
+          261
+        ]
+      ]
+    },
+    "C": {
+      "n": 311520,
+      "direct_pct": 50.0,
+      "direct_or_indirect_pct": 50.7,
+      "top_nodes": [
+        [
+          "vibration_1",
+          155749
+        ],
+        [
+          "force",
+          86821
+        ],
+        [
+          "speed",
+          41363
+        ],
+        [
+          "torque",
+          25513
+        ],
+        [
+          "phase_current_2",
+          1128
+        ],
+        [
+          "phase_current_1",
+          946
+        ]
+      ]
+    },
+    "H": {
+      "n": 311520,
+      "direct_pct": 74.8,
+      "direct_or_indirect_pct": 80.9,
+      "top_nodes": [
+        [
+          "vibration_1",
+          232938
+        ],
+        [
+          "force",
+          35929
+        ],
+        [
+          "torque",
+          23440
+        ],
+        [
+          "phase_current_2",
+          9862
+        ],
+        [
+          "phase_current_1",
+          9350
+        ],
+        [
+          "speed",
+          1
+        ]
+      ]
+    },
+    "K": {
+      "n": 258720,
+      "direct_pct": 38.5,
+      "direct_or_indirect_pct": 44.2,
+      "top_nodes": [
+        [
+          "vibration_1",
+          99700
+        ],
+        [
+          "speed",
+          58237
+        ],
+        [
+          "force",
+          54734
+        ],
+        [
+          "torque",
+          31479
+        ],
+        [
+          "phase_current_1",
+          9342
+        ],
+        [
+          "phase_current_2",
+          5228
+        ]
+      ]
+    },
+    "BK": {
+      "n": 258720,
+      "direct_pct": 56.0,
+      "direct_or_indirect_pct": 60.7,
+      "top_nodes": [
+        [
+          "vibration_1",
+          144784
+        ],
+        [
+          "speed",
+          40783
+        ],
+        [
+          "force",
+          33998
+        ],
+        [
+          "torque",
+          26779
+        ],
+        [
+          "phase_current_1",
+          8497
+        ],
+        [
+          "phase_current_2",
+          3879
+        ]
+      ]
+    },
+    "CK": {
+      "n": 258720,
+      "direct_pct": 44.1,
+      "direct_or_indirect_pct": 45.1,
+      "top_nodes": [
+        [
+          "vibration_1",
+          114174
+        ],
+        [
+          "force",
+          63650
+        ],
+        [
+          "speed",
+          55090
+        ],
+        [
+          "torque",
+          23353
+        ],
+        [
+          "phase_current_1",
+          1418
+        ],
+        [
+          "phase_current_2",
+          1035
+        ]
+      ]
+    },
+    "HK": {
+      "n": 258720,
+      "direct_pct": 71.9,
+      "direct_or_indirect_pct": 76.3,
+      "top_nodes": [
+        [
+          "vibration_1",
+          185972
+        ],
+        [
+          "force",
+          33233
+        ],
+        [
+          "torque",
+          19755
+        ],
+        [
+          "speed",
+          8237
+        ],
+        [
+          "phase_current_1",
+          6898
+        ],
+        [
+          "phase_current_2",
+          4625
+        ]
+      ]
+    }
+  },
+  "combined": {
+    "B": {
+      "n": 84960,
+      "direct_pct": 95.2,
+      "direct_or_indirect_pct": 99.9,
+      "top_nodes": [
+        [
+          "vibration_1",
+          80860
+        ],
+        [
+          "phase_current_1",
+          2709
+        ],
+        [
+          "phase_current_2",
+          1323
+        ],
+        [
+          "speed",
+          68
+        ]
+      ]
+    },
+    "C": {
+      "n": 84960,
+      "direct_pct": 65.0,
+      "direct_or_indirect_pct": 65.0,
+      "top_nodes": [
+        [
+          "vibration_1",
+          55221
+        ],
+        [
+          "speed",
+          14080
+        ],
+        [
+          "force",
+          12373
+        ],
+        [
+          "torque",
+          3285
+        ],
+        [
+          "phase_current_2",
+          1
+        ]
+      ]
+    },
+    "H": {
+      "n": 84960,
+      "direct_pct": 87.5,
+      "direct_or_indirect_pct": 91.8,
+      "top_nodes": [
+        [
+          "vibration_1",
+          74358
+        ],
+        [
+          "torque",
+          3819
+        ],
+        [
+          "force",
+          3170
+        ],
+        [
+          "phase_current_1",
+          2065
+        ],
+        [
+          "phase_current_2",
+          1548
+        ]
+      ]
+    },
+    "K": {
+      "n": 70560,
+      "direct_pct": 64.0,
+      "direct_or_indirect_pct": 64.0,
+      "top_nodes": [
+        [
+          "vibration_1",
+          45178
+        ],
+        [
+          "speed",
+          11504
+        ],
+        [
+          "force",
+          7274
+        ],
+        [
+          "torque",
+          6604
+        ]
+      ]
+    },
+    "BK": {
+      "n": 70560,
+      "direct_pct": 73.0,
+      "direct_or_indirect_pct": 73.0,
+      "top_nodes": [
+        [
+          "vibration_1",
+          51512
+        ],
+        [
+          "speed",
+          9577
+        ],
+        [
+          "torque",
+          4767
+        ],
+        [
+          "force",
+          4701
+        ],
+        [
+          "phase_current_1",
+          3
+        ]
+      ]
+    },
+    "CK": {
+      "n": 70560,
+      "direct_pct": 64.4,
+      "direct_or_indirect_pct": 64.4,
+      "top_nodes": [
+        [
+          "vibration_1",
+          45467
+        ],
+        [
+          "speed",
+          13667
+        ],
+        [
+          "force",
+          6243
+        ],
+        [
+          "torque",
+          5183
+        ]
+      ]
+    },
+    "HK": {
+      "n": 70560,
+      "direct_pct": 85.6,
+      "direct_or_indirect_pct": 88.6,
+      "top_nodes": [
+        [
+          "vibration_1",
+          60416
+        ],
+        [
+          "torque",
+          3426
+        ],
+        [
+          "force",
+          2829
+        ],
+        [
+          "speed",
+          1814
+        ],
+        [
+          "phase_current_1",
+          1242
+        ],
+        [
+          "phase_current_2",
+          833
+        ]
+      ]
+    }
+  },
+  "_config": {
+    "num_nodes": 6,
+    "node_names": [
+      "vibration_1",
+      "phase_current_1",
+      "phase_current_2",
+      "force",
+      "speed",
+      "torque"
+    ],
+    "horizon_mult": 10,
+    "rounds": 5,
+    "local_epochs": 12,
+    "reliability_ratio": 0.05,
+    "sync_encoder_decoder": true
+  }
+}

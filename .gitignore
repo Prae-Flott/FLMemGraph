@@ -11,6 +11,7 @@ __pycache__/
 .venv/
 venv/
 env/
+report/
 
 # Large data -- data/robo3er/data.npy alone is ~98MB, right at GitHub's
 # 100MB hard limit, and the rest of this directory (raw CSVs, .bak files)

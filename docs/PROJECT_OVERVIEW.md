@@ -13,9 +13,10 @@ Joint Prototype Memory design this project's main anomaly-detection line
 now implements as two consolidated final versions -- **V2**
 (prototype + per-node deviation, no edges, mechanism-agnostic) and
 **Scheme V3** (adds typed relation-specific edges, pays off only when a
-verified physical relation exists) -- see `memory/joint-prototype-scheme-v2.md`
-and `memory/joint-prototype-scheme-v3.md` for the cross-dataset results,
-and `memory/` generally for the rest of the development history.
+verified physical relation exists) -- see `memory/scoring-signals-B-C-E-H.md`
+for the current cross-dataset results, `memory/joint-prototype-scheme-v3.md`
+for architecture rationale, and `memory/` generally for the rest of the
+development history.
 
 ## Layout
 
@@ -69,14 +70,15 @@ FLMemGraph/
   Pipe (+0.15 AUROC) and stuck (+0.10) even without using the
   quantization-distance signal directly — an implicit regularization
   effect, not the originally-intended mechanism.
-- **Federated multi-robot system** (`fl_model.py`, `federated_memory.py`,
-  `decision_logic.py`, `train_fl_memory_gdn.py`): unified shared encoder
-  feeding a memory head (novelty) and a latent-space structure head
-  (relational consistency) — the two-signal design from
-  `docs/mem_phys_prompt_zh.md`. Federated over robo3er's real 5-robot
-  non-IID split. cable trapped (0.92) and stuck (0.72) AUROC are strong;
-  robot00 (smallest client, 195 fit windows) is a known weak point —
-  see `memory/fl-memory-physics-system.md` for the full bug history.
+- **Federated multi-robot system** (superseded, `fl_model.py`/
+  `train_fl_memory_gdn.py` since deleted 2026-08-16 in favor of
+  `JointPrototypeV31`): unified shared encoder feeding a memory head
+  (novelty) and a latent-space structure head (relational consistency) —
+  the two-signal design from `docs/mem_phys_prompt_zh.md`. Federated over
+  robo3er's real 5-robot non-IID split. cable trapped (0.92) and stuck
+  (0.72) AUROC were strong; robot00 (smallest client, 195 fit windows) was
+  a known weak point — the small-client instability it surfaced is
+  discussed in `memory/joint-prototype-federated-results.md`.
 
 ## Running things
 

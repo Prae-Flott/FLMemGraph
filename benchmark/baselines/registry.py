@@ -57,8 +57,10 @@ BASELINES = {
                                          "damage bearings), leading hypothesis: crude box-average "
                                          "decimation (125x) washes out the high-frequency impulsive "
                                          "signature artificial single-point defects rely on, while real "
-                                         "fatigue damage's broader signature survives -- untested. See "
-                                         "memory/paderborn-fl-model-run.md for the full per-bearing table."},
+                                         "fatigue damage's broader signature survives -- untested. This run "
+                                         "used the older, since-deleted FLGDNMemory architecture; current "
+                                         "Paderborn results use JointPrototypeV31, see "
+                                         "memory/scoring-signals-B-C-E-H.md."},
     "joint-prototype-scheme-v2": {"category": "③", "type": "physics_prior", "status": "implemented",
                                 "module": "src.models.joint_prototype_model.SharedEncoder + JointPrototypeMemory "
                                            "(no edge head). Sielaff: benchmark/run_sielaff_joint_prototype_v2.py. "
@@ -73,10 +75,10 @@ BASELINES = {
                                          "best), voraus-AD (0.756, wins/ties 11 of 12 fault categories). "
                                          "Loses clearly only on Paderborn, the one dataset with literature-"
                                          "verified physical relations a real fault mechanism actually breaks "
-                                         "-- see joint-prototype-scheme-v3. Recommended default: run V2 "
+                                         "-- see memory/joint-prototype-scheme-v3.md. Recommended default: run V2 "
                                          "first on any new dataset before investing in physics-relation "
-                                         "analysis. See memory/joint-prototype-scheme-v2.md for the full "
-                                         "cross-dataset table and per-category pattern."},
+                                         "analysis. See memory/scoring-signals-B-C-E-H.md (signal B) for the "
+                                         "current cross-dataset table and per-category pattern."},
     "joint-prototype-v2-1-sielaff": {"category": "③", "type": "physics_prior", "status": "implemented",
                                 "module": "src.models.joint_prototype_model.JointPrototypeGDNv21 "
                                            "(TrendGraphAttentionHead, no typed relation head). "
@@ -86,15 +88,10 @@ BASELINES = {
                                          "treating an abnormal change in cross-feature attention as one "
                                          "manifestation of a fault. Tested on Sielaff (no verified physics "
                                          "prior exists there, so this is the first edge/attention signal "
-                                         "ever tried on this dataset). Result: attention adds NOTHING -- "
-                                         "best V2.1 combination (0.965) is still below plain V2 (0.978), and "
-                                         "joint training with the attention loss slightly hurt the node/"
-                                         "prototype signals too (A 0.971->0.954, B 0.978->0.965), the same "
-                                         "joint-training confound documented for Paderborn's V3 run but "
-                                         "negative here instead of positive. Sharpens 'no verified physical "
-                                         "prior' into 'even domain-knowledge-free attention finds nothing "
-                                         "useful' for this dataset. See "
-                                         "memory/joint-prototype-v2-1-sielaff.md for the full breakdown."},
+                                         "ever tried on this dataset). This centralized-only result was later "
+                                         "superseded by the federated run, where the same attention signal "
+                                         "(C) became Sielaff's best or tied-best signal (0.976) -- see "
+                                         "memory/scoring-signals-B-C-E-H.md for the current numbers."},
     "joint-prototype-scheme-v3": {"category": "③", "type": "physics_prior", "status": "implemented",
                                 "module": "src.models.joint_prototype_model.JointPrototypeGDNv3 (TrendGraphAttentionHead "
                                            "+ TypedRelationAnomalyHead). Paderborn: "

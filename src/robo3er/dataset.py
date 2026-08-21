@@ -64,7 +64,7 @@ from pathlib import Path
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 # robo3er's data.npy/targets.npy/metadata.json/partition.pkl were copied
 # (not moved) into this standalone project from FL-bench, since FL-bench's
 # own other scripts (auto_encoder/, test_gdn/) still depend on the

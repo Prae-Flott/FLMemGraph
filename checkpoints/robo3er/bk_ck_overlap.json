@@ -1,0 +1,22 @@
+{
+ "cable trapped": {
+  "n": 197,
+  "both_hit": 152,
+  "both_miss": 43,
+  "bk_only": 1,
+  "ck_only": 1,
+  "same_argmax": 178,
+  "b_wins_over_k_frac": 0.1319796954314721,
+  "c_wins_over_k_frac": 0.09137055837563451
+ },
+ "stuck": {
+  "n": 139,
+  "both_hit": 139,
+  "both_miss": 0,
+  "bk_only": 0,
+  "ck_only": 0,
+  "same_argmax": 139,
+  "b_wins_over_k_frac": 0.3597122302158273,
+  "c_wins_over_k_frac": 0.3237410071942446
+ }
+}
