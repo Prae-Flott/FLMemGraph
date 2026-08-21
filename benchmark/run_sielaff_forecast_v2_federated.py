@@ -17,13 +17,18 @@ Adds `K_forecast_max`/`BK_max`/`CK_max`/`HK_max`, reusing
 
 Usage:
     python3 run_sielaff_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior]
-        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema}]
+        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema}] [--num-prototypes N]
 
 `--calib-mode` (default `global`, unchanged behavior): see
 `run_robo3er_v3_1_federated.py`'s docstring and
 `memory/calib-in-prototype-ab.md`. Applies to B/C/K's per-node z-score
 (the reliability mask stays global in every mode, same simplification as
 `run_sielaff_v2_1_federated.py`).
+
+`--num-prototypes` (default `NUM_PROTOTYPES` below, unchanged behavior):
+see `run_sielaff_v2_1_federated.py`'s docstring and
+`memory/sielaff-num-prototypes-sweep.md` for the grid-search this flag
+was added for.
 """
 import argparse
 import json
@@ -219,7 +224,8 @@ def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
     return z
 
 
-def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global"):
+def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global",
+         num_prototypes=NUM_PROTOTYPES):
     assert calib_mode in ("global", "per_prototype", "ema")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
@@ -235,7 +241,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
 
     scalers = [fit_client_scaler(data, c.fit_idx) for c in clients]
     models = [JointPrototypeV21Forecast(num_nodes=num_nodes, window_size=WINDOW_LEN,
-                                         embed_dim=EMBED_DIM, num_prototypes=NUM_PROTOTYPES,
+                                         embed_dim=EMBED_DIM, num_prototypes=num_prototypes,
                                          forecast_h=forecast_h, prior_edges=None, top_k=TOP_K).to(DEVICE)
               for _ in clients]
 
@@ -271,7 +277,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         for model, p_g in zip(models, P_G):
             model.memory.load_memory(p_g)
 
-    report = {"config": {"rounds": ROUNDS, "local_epochs": LOCAL_EPOCHS, "num_prototypes": NUM_PROTOTYPES,
+    report = {"config": {"rounds": ROUNDS, "local_epochs": LOCAL_EPOCHS, "num_prototypes": num_prototypes,
                           "embed_dim": EMBED_DIM, "window_len": WINDOW_LEN, "gamma": GAMMA, "delta": DELTA,
                           "reliability_ratio": RELIABILITY_RATIO, "horizon_mult": horizon_mult,
                           "forecast_h": forecast_h, "use_forecast_prior": use_forecast_prior},
@@ -371,8 +377,14 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         client_report = {"excluded_nodes_node": [cols[i] for i in range(num_nodes) if not reliable_mask[i]],
                           "excluded_nodes_forecast": [cols[i] for i in range(num_nodes) if not forecast_mask[i]],
                           "n_valid_cov_prototypes": int(model.cov_head.calib_valid.sum()),
+                          "num_prototypes": num_prototypes,
                           "has_forecast": has_forecast,
                           "fault_types": {}}
+        if calib_mode == "per_prototype":
+            client_report["n_valid_score_node_prototypes"] = int(model.score_calib_node.calib_valid.sum())
+            client_report["n_valid_score_struct_prototypes"] = int(model.score_calib_struct.calib_valid.sum())
+            if has_forecast:
+                client_report["n_valid_score_k_prototypes"] = int(model.score_calib_k.calib_valid.sum())
         rows = {k: [] for k in scores_normal}
         for label_id_str, name in label_map.items():
             label_id = int(label_id_str)
@@ -444,9 +456,17 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
 
     report["config"]["calib_mode"] = calib_mode
     report["summary_mean_auroc_overall"] = summary_overall
+    if calib_mode == "per_prototype":
+        report["summary_n_valid_score_node_prototypes"] = [
+            report["clients"][k].get("n_valid_score_node_prototypes") for k in report["clients"]]
+        report["summary_n_valid_score_struct_prototypes"] = [
+            report["clients"][k].get("n_valid_score_struct_prototypes") for k in report["clients"]]
+        report["summary_n_valid_score_k_prototypes"] = [
+            report["clients"][k].get("n_valid_score_k_prototypes") for k in report["clients"]]
     mode_suffix = f"_calibmode_{calib_mode}" if calib_mode != "global" else ""
+    proto_suffix = f"_m{num_prototypes}" if num_prototypes != NUM_PROTOTYPES else ""
     suffix = out_suffix if out_suffix is not None else (
-        f"forecast_v2_federated_h{horizon_mult}{'_noprior' if not use_forecast_prior else ''}{mode_suffix}")
+        f"forecast_v2_federated_h{horizon_mult}{'_noprior' if not use_forecast_prior else ''}{mode_suffix}{proto_suffix}")
     out_json = OUT_DIR / f"sielaff_{suffix}_report.json"
     with open(out_json, "w") as f:
         json.dump(report, f, indent=2)
@@ -462,6 +482,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
     parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema"], default="global")
+    parser.add_argument("--num-prototypes", type=int, default=NUM_PROTOTYPES)
     args = parser.parse_args()
     main(horizon_mult=args.horizon_mult, use_forecast_prior=not args.no_forecast_prior,
-         out_suffix=args.out_suffix, calib_mode=args.calib_mode)
+         out_suffix=args.out_suffix, calib_mode=args.calib_mode, num_prototypes=args.num_prototypes)
