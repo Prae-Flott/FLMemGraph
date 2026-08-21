@@ -1,0 +1,102 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 10,
+    "window_len": 8,
+    "epochs": 30,
+    "reliability_ratio": 0.05
+  },
+  "nodes": [
+    "Helligkeit_Flaschenerkennung",
+    "journal_count",
+    "total_quantity",
+    "total_deposit",
+    "total_weight",
+    "unique_categories",
+    "reject_count",
+    "has_reject",
+    "cleaning_count",
+    "cleaning_duration",
+    "cleaning_begin_pixels",
+    "cleaning_end_pixels",
+    "receipt_count",
+    "schlie\u00dfen_Weiche 1",
+    "schlie\u00dfen_Weiche 2",
+    "\u00f6ffnen_Weiche 1",
+    "\u00f6ffnen_Weiche 2",
+    "schlie\u00dfen_Weiche 3",
+    "schlie\u00dfen_Weiche 4",
+    "schlie\u00dfen_Weiche 5",
+    "schlie\u00dfen_Weiche 6",
+    "schlie\u00dfen_Weiche 7",
+    "\u00f6ffnen_Weiche 3",
+    "\u00f6ffnen_Weiche 4",
+    "\u00f6ffnen_Weiche 5",
+    "\u00f6ffnen_Weiche 6",
+    "\u00f6ffnen_Weiche 7",
+    "read SM_RingCamera 1",
+    "read SM_RingCamera 2",
+    "read SM_RingCamera 3",
+    "read SM_RingCamera 4",
+    "read SM_RingCamera 5",
+    "read SM_RingCamera 6",
+    "read barcode_RingCamera 1",
+    "read barcode_RingCamera 2",
+    "read barcode_RingCamera 3",
+    "read barcode_RingCamera 4",
+    "read barcode_RingCamera 5",
+    "read barcode_RingCamera 6"
+  ],
+  "excluded_nodes_node_signal": [
+    "total_quantity",
+    "unique_categories"
+  ],
+  "excluded_nodes_edge_signal": [
+    "cleaning_end_pixels"
+  ],
+  "final_prior_bias_strength": 1.0,
+  "fault_types": {
+    "bottle_recognition": {
+      "n": 3812,
+      "B_node_max": 0.9945058756831755,
+      "C_struct_max": 0.993839857173406,
+      "H_cov_mahal": 0.9935825007583933,
+      "I_node_cov_max": 0.9932134367400526
+    },
+    "mechanical_jam": {
+      "n": 116,
+      "B_node_max": 0.9917919594705017,
+      "C_struct_max": 0.9909258048700768,
+      "H_cov_mahal": 0.9914569374080732,
+      "I_node_cov_max": 0.9906295963392712
+    },
+    "compactor_status": {
+      "n": 414,
+      "B_node_max": 0.9832600682281292,
+      "C_struct_max": 0.985615999267349,
+      "H_cov_mahal": 0.9704180690065709,
+      "I_node_cov_max": 0.9823133456968198
+    },
+    "crate_recognition": {
+      "n": 138,
+      "B_node_max": 0.9111735009272615,
+      "C_struct_max": 0.8957706573253659,
+      "H_cov_mahal": 0.5068325434439178,
+      "I_node_cov_max": 0.9025688577512191
+    },
+    "other": {
+      "n": 274,
+      "B_node_max": 0.9423210641021206,
+      "C_struct_max": 0.9359584183761719,
+      "H_cov_mahal": 0.7143529248970838,
+      "I_node_cov_max": 0.9388824506174974
+    }
+  },
+  "summary_mean_auroc": {
+    "B_node_max": 0.9646104936822377,
+    "C_struct_max": 0.9604221474024739,
+    "H_cov_mahal": 0.8353285951028079,
+    "I_node_cov_max": 0.9615215374289721
+  }
+}

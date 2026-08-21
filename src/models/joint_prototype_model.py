@@ -3,38 +3,29 @@ Joint Prototype Memory + three-level (node/edge/device) anomaly
 detection, per `docs/joint_prototype_three_level_anomaly_prompt.md` and
 `docs/joint_prototype_physics_gdn_anomaly_attention_prompt.md`.
 
-This module holds three versions this project's Joint Prototype Memory
-line has produced (see `memory/joint-prototype-scheme-v2.md` and
-`memory/joint-prototype-scheme-v3.md` for the full cross-dataset results
-and rationale; earlier intermediate iterations -- a fixed-edge-list
-version and a physics-residual precursor -- were superseded and removed,
-their conclusions preserved in those memory files):
+Four model classes, organized into two families by physics-prior requirement
+(see `memory/scoring-signals-B-C-E-H.md` for current cross-dataset results,
+and `memory/joint-prototype-scheme-v3.md` for architecture rationale):
 
-- **V2** (`SharedEncoder` + `JointPrototypeMemory`, no edge head at
-  all): "has the WHOLE device been in roughly this joint state before"
-  (`d_G`, device-level) + "has this ONE signal's value drifted from what
-  it normally looks like in this operating regime" (`s_node`, per-node) --
-  mechanism-agnostic, needs no declared physics relations. `JointPrototypeMemory`
-  differs from `fl_model.FLGDNMemory`'s per-feature-independent codebook:
-  prototypes here are a full `[N, D]` snapshot of ALL nodes together, so
-  node anomaly is inherently conditioned on which joint operating regime
-  the memory thinks the device is in.
-- **V2.1** (`JointPrototypeGDNv21`): V2 + `TrendGraphAttentionHead` only
-  (GDN-style learned attention over neighbors, no typed relation head) --
-  treats an ABNORMAL CHANGE IN CROSS-FEATURE ATTENTION as one
-  manifestation of a fault, without needing any declared physics edges
-  (`prior_edges` is optional). Runs on any dataset, including ones with
-  no verified physical relation.
-- **Scheme V3** (`JointPrototypeGDNv3`): V2.1 + `TypedRelationAnomalyHead`
-  (relation-specific message functions + prototype-conditioned residual
-  standardization + anomaly attention over ONLY the declared edges).
-  Needs domain knowledge of which signal pairs relate and how
-  (proportional/nonlinear) -- pays off specifically when a fault's
-  failure mechanism matches a declared relation breaking (e.g.
-  Paderborn's vibration/torque/current coupling, voraus-AD's
-  current-vs-torque miscommutation fault); V2 otherwise wins on
-  faults that manifest as a single value drifting rather than a relation
-  breaking (robo3er, most of voraus-AD, all of Sielaff).
+No-prior family (runs on any dataset, no domain knowledge needed):
+- **`JointPrototypeV2`**: SharedEncoder + JointPrototypeMemory +
+  TrendGraphAttentionHead. Signals: d_proto (global prototype distance),
+  d_node [N] (per-node deviation), resid_struct [N] (attention residual).
+- **`JointPrototypeV21`**: JointPrototypeV2 + DeviationCovarianceHead.
+  Adds d_mahal [B] (Mahalanobis distance of joint d_node pattern from
+  prototype-conditioned normal). Stage-B calibration required.
+
+Physics-prior family (requires declared edges + relation types):
+- **`JointPrototypeV3`**: JointPrototypeV2 + TypedRelationAnomalyHead
+  (typed message functions per edge + prototype-conditioned standardization
+  + anomaly attention). Adds r_edge [E], r_tilde [E], resid_phys [N].
+- **`JointPrototypeV31`**: JointPrototypeV3 + DeviationCovarianceHead.
+  Adds d_mahal [B]. Stage-B calibration required.
+
+Pays off specifically when a fault's failure mechanism matches a declared
+relation breaking (Paderborn bearing, voraus-AD motor miscommutation);
+V2/V21 wins on faults that manifest as single-node value drift (robo3er,
+most of voraus-AD, all of Sielaff).
 
 Both operate on DEVIATIONS from the locally-matched joint prototype
 (`d_i = z_i - p_i*`), not raw magnitudes -- "does feature j's deviation
@@ -82,28 +73,29 @@ class JointPrototypeMemory(nn.Module):
     def forward(self, z, node_weights=None):
         """z: [B, N, D]. Returns dict with:
         idx [B] (matched prototype index), p_star [B, N, D] (matched
-        prototype, straight-through for gradient), d_G [B] (global joint
-        distance to the matched prototype), s_node [B, N] (per-node
-        squared distance to the matched prototype's component)."""
+        prototype, straight-through for gradient), d_proto [B] (global joint
+        distance to the matched prototype = weighted mean of d_node),
+        d_node [B, N] (per-node squared distance to the matched prototype's
+        component; no attention, purely per-node amplitude deviation)."""
         B, N, D = z.shape
         if node_weights is None:
             node_weights = torch.ones(N, device=z.device) / N
 
         diff = z.unsqueeze(1) - self.codebook.unsqueeze(0)  # [B, M, N, D]
-        node_dist = diff.pow(2).sum(-1)  # [B, M, N]
-        joint_dist = (node_dist * node_weights).sum(-1)  # [B, M]
+        sq_dist = diff.pow(2).sum(-1)  # [B, M, N]
+        joint_dist = (sq_dist * node_weights).sum(-1)  # [B, M]
 
         idx = joint_dist.argmin(dim=1)  # [B]
         p_star = self.codebook[idx]  # [B, N, D]
-        d_G = joint_dist.gather(1, idx.unsqueeze(1)).squeeze(1)  # [B]
-        s_node = node_dist.gather(1, idx.view(B, 1, 1).expand(-1, 1, N)).squeeze(1)  # [B, N]
+        d_proto = joint_dist.gather(1, idx.unsqueeze(1)).squeeze(1)  # [B]
+        d_node = sq_dist.gather(1, idx.view(B, 1, 1).expand(-1, 1, N)).squeeze(1)  # [B, N]
 
         if self.training:
             with torch.no_grad():
                 self.usage_count += torch.bincount(idx, minlength=self.num_prototypes).float()
 
         p_star_st = z + (p_star - z).detach()  # straight-through, matches DiscretePrototypicalMemory
-        return {"idx": idx, "p_star": p_star, "p_star_st": p_star_st, "d_G": d_G, "s_node": s_node}
+        return {"idx": idx, "p_star": p_star, "p_star_st": p_star_st, "d_proto": d_proto, "d_node": d_node}
 
     def commitment_losses(self, z, p_star):
         l_me = F.mse_loss(z, p_star.detach())
@@ -112,6 +104,93 @@ class JointPrototypeMemory(nn.Module):
 
     def codebook_utilization(self):
         return float((self.usage_count > 0).float().mean())
+
+    def load_memory(self, prototypes: torch.Tensor):
+        """Overwrite this client's codebook with a server-broadcast [M, N, D]
+        tensor (`federated_memory.align_and_split`'s P_G,n) and reset usage
+        counts for the new round -- same convention as `fl_model.FLGDNMemory.load_memory`."""
+        with torch.no_grad():
+            self.codebook.copy_(prototypes.to(self.codebook.device))
+        self.usage_count.zero_()
+
+
+class DeviationCovarianceHead(nn.Module):
+    """No-prior anomaly signal: per-prototype covariance of per-node deviation
+    norms (s_node [N]) estimated at calibration time, scored at inference via
+    Mahalanobis distance from the matched prototype's normal joint-deviation
+    structure.
+
+    Captures regime-conditioned co-deviation patterns that s_node misses:
+    s_node asks "is node i's value abnormal?"; this asks "is the JOINT pattern
+    of which nodes deviate together abnormal for this operating regime?" -- the
+    two questions are orthogonal (a fault can shift one node alone, or it can
+    change which nodes co-deviate without changing their individual magnitudes).
+
+    No training parameters -- pure post-training calibration statistics, same
+    Stage B convention as TypedRelationAnomalyHead. Ridge regularization
+    (reg * I) ensures invertibility even when calib_windows < num_nodes.
+    Falls back to global (across-prototype) covariance for prototypes with
+    fewer than min_samples calib windows."""
+
+    def __init__(self, num_prototypes: int, num_nodes: int, reg: float = 1e-2):
+        super().__init__()
+        self.num_prototypes = num_prototypes
+        self.num_nodes = num_nodes
+        self.reg = reg
+        self.register_buffer("calib_mu", torch.zeros(num_prototypes, num_nodes))
+        self.register_buffer("calib_cov_inv",
+                             torch.eye(num_nodes).unsqueeze(0).repeat(num_prototypes, 1, 1))
+        self.register_buffer("calib_valid", torch.zeros(num_prototypes, dtype=torch.bool))
+        self.register_buffer("global_mu", torch.zeros(num_nodes))
+        self.register_buffer("global_cov_inv", torch.eye(num_nodes))
+
+    def set_calibration(self, d_node_calib: np.ndarray, idx_calib: np.ndarray,
+                        min_samples: int = 10):
+        """d_node_calib: [Ncalib, N] numpy (per-node squared deviation norms from
+        JointPrototypeMemory.forward's d_node output); idx_calib: [Ncalib] numpy
+        (matched prototype indices). Computes global and per-prototype mean and
+        inverse covariance of the joint deviation pattern."""
+        N, reg = self.num_nodes, self.reg
+        g_mu = d_node_calib.mean(axis=0)
+        g_cov = np.cov(d_node_calib.T) + reg * np.eye(N) if len(d_node_calib) >= 2 else reg * np.eye(N)
+        g_cov_inv = np.linalg.inv(g_cov)
+        self.global_mu = torch.tensor(g_mu, dtype=torch.float32)
+        self.global_cov_inv = torch.tensor(g_cov_inv, dtype=torch.float32)
+
+        mu_all = np.tile(g_mu, (self.num_prototypes, 1))
+        cov_inv_all = np.tile(g_cov_inv, (self.num_prototypes, 1, 1))
+        valid = np.zeros(self.num_prototypes, dtype=bool)
+        for m in range(self.num_prototypes):
+            mask = idx_calib == m
+            n_m = int(mask.sum())
+            if n_m >= min_samples and n_m >= 2:
+                d_m = d_node_calib[mask]
+                mu_all[m] = d_m.mean(axis=0)
+                cov_inv_all[m] = np.linalg.inv(np.cov(d_m.T) + reg * np.eye(N))
+                valid[m] = True
+        self.calib_mu = torch.tensor(mu_all, dtype=torch.float32)
+        self.calib_cov_inv = torch.tensor(cov_inv_all, dtype=torch.float32)
+        self.calib_valid = torch.tensor(valid)
+
+    @torch.no_grad()
+    def forward(self, d_node: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
+        """d_node: [B, N], idx: [B]. Returns d_mahal [B] (Mahalanobis distance
+        of the current window's per-node deviation pattern from the matched
+        prototype's normal joint-deviation distribution)."""
+        device = d_node.device
+        valid = self.calib_valid.to(device)[idx]  # [B]
+        mu = torch.where(
+            valid.unsqueeze(1),
+            self.calib_mu.to(device)[idx],
+            self.global_mu.to(device).unsqueeze(0).expand(len(idx), -1),
+        )
+        cov_inv = torch.where(
+            valid.unsqueeze(1).unsqueeze(2),
+            self.calib_cov_inv.to(device)[idx],
+            self.global_cov_inv.to(device).unsqueeze(0).expand(len(idx), -1, -1),
+        )
+        diff = d_node - mu  # [B, N]
+        return torch.einsum("bi,bij,bj->b", diff, cov_inv, diff)  # [B]
 
 
 class TrendGraphAttentionHead(nn.Module):
@@ -178,10 +257,10 @@ class TrendGraphAttentionHead(nn.Module):
 
     def forward(self, z, p_star):
         """z, p_star: [B, N, D]. Returns d_hat [B, N, D] (predicted
-        deviation per node, from its attended neighbors) and s_node_edge
-        [B, N] (per-node structural/edge anomaly -- generalizes v1's
-        per-fixed-edge scores into a per-node score covering ALL learned
-        relationships, declared or not)."""
+        deviation per node, from its attended neighbors) and resid_struct
+        [B, N] (per-node structural residual -- squared error between each
+        node's actual deviation and what the learned cross-node attention
+        predicted; covers ALL node pairs, declared or not)."""
         B, N, D = z.shape
         d = z - p_star  # [B, N, D]
         wd = self.attn_w(d)
@@ -201,39 +280,30 @@ class TrendGraphAttentionHead(nn.Module):
         gated = agg * self.embeddings.weight.unsqueeze(0)
         d_hat = self.g(gated)  # [B, N, D]
 
-        s_node_edge = (d - d_hat).pow(2).sum(dim=-1)  # [B, N]
-        return d_hat, s_node_edge
+        resid_struct = (d - d_hat).pow(2).sum(dim=-1)  # [B, N]
+        return d_hat, resid_struct
 
 
-class JointPrototypeGDNv21(nn.Module):
-    """V2.1: V2 (`SharedEncoder` + `JointPrototypeMemory`, see module
-    docstring) + `TrendGraphAttentionHead` -- GDN-style learned attention
-    over neighbors, treating an ABNORMAL CHANGE IN CROSS-FEATURE
-    ATTENTION as one manifestation of a fault, on top of V2's node-level
-    "did this one value drift" signal. Unlike V3, there is no typed
-    relation head (`TypedRelationAnomalyHead`) -- `prior_edges` is
-    optional and, when omitted, the attention is FULLY GENERIC (no
-    physics bias at all), so this runs on any dataset with zero domain
-    knowledge, including ones with no verified physical relation (e.g.
-    Sielaff, `benchmark/datasets/sielaff_physics.md`).
+class JointPrototypeV2(nn.Module):
+    """No-prior model: SharedEncoder + JointPrototypeMemory +
+    TrendGraphAttentionHead. Runs on any dataset with no domain
+    knowledge -- attention is fully generic (no physics-edge bias) when
+    `prior_edges=None`. Detection signals: d_proto (global prototype
+    distance), d_node [B,N] (per-node amplitude deviation), resid_struct
+    [B,N] (cross-node attention prediction error).
 
-    Named "V2.1" rather than reviving the deleted historical
-    `JointPrototypeGDNv2` class under its old name, to avoid the naming
-    collision documented in `memory/joint-prototype-scheme-v3.md` -- this
-    project's current "V2" means something else (no edge signal at all).
-    Structurally this class IS what that old class used to be, just
-    trained independently rather than jointly with a typed-relation
-    auxiliary loss -- see `memory/joint-prototype-scheme-v3.md`'s lineage
-    section and its Paderborn caveat about joint-training confounds
-    before comparing V2.1's numbers to V3's own C/D ablation columns."""
+    `JointPrototypeV21` extends this with `DeviationCovarianceHead`
+    (covariance-based joint-deviation signal, Stage-B calibration)."""
 
     def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
-                 num_prototypes: int, prior_edges=None, top_k: int = None, node_weights=None):
+                 num_prototypes: int, prior_edges=None, top_k: int = None,
+                 node_weights=None):
         super().__init__()
         self.num_nodes = num_nodes
         self.encoder = SharedEncoder(window_size, embed_dim)
         self.memory = JointPrototypeMemory(num_prototypes, num_nodes, embed_dim)
-        self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k, prior_edges=prior_edges)
+        self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k,
+                                                 prior_edges=prior_edges)
         self.decoder = nn.Linear(embed_dim, window_size)  # training-only
         self.register_buffer(
             "node_weights",
@@ -241,23 +311,76 @@ class JointPrototypeGDNv21(nn.Module):
         )
 
     def forward(self, x, training_mode=False):
-        """x: [B, T, N]. Returns dict with z, memory outputs (idx, p_star,
-        d_G, s_node), s_edge [B, N] (per-node structural/attention
-        anomaly). `training_mode=True` also runs the decoder."""
+        """x: [B, T, N]. Returns dict: z, idx, p_star, p_star_st,
+        d_proto [B], d_node [B,N], d_hat [B,N,D], resid_struct [B,N].
+        `training_mode=True` also computes x_hat via decoder."""
         B, T, N = x.shape
         assert N == self.num_nodes
-
         z = self.encoder(x)
         mem_out = self.memory(z, self.node_weights)
-        d_hat, s_edge = self.edge_head(z, mem_out["p_star"])
-
-        out = {"z": z, "d_hat": d_hat, "s_edge": s_edge, **mem_out}
+        d_hat, resid_struct = self.edge_head(z, mem_out["p_star"])
+        out = {"z": z, "d_hat": d_hat, "resid_struct": resid_struct, **mem_out}
         if training_mode:
             out["x_hat"] = self.decoder(z).transpose(1, 2)
         return out
 
-    def device_score(self, s_node, s_edge, lambda_n: float = 1.0, lambda_e: float = 1.0):
-        return lambda_n * s_node.mean(axis=-1) + lambda_e * s_edge.mean(axis=-1)
+    def device_score(self, d_node, resid_struct, lambda_n: float = 1.0,
+                     lambda_e: float = 1.0):
+        return lambda_n * d_node.mean(axis=-1) + lambda_e * resid_struct.mean(axis=-1)
+
+
+class JointPrototypeV21(JointPrototypeV2):
+    """V2 + DeviationCovarianceHead: adds a per-prototype covariance model
+    over d_node, scored at inference via Mahalanobis distance (d_mahal [B]).
+    Stage-B calibration (`cov_head.set_calibration`) must be called after
+    training before d_mahal carries signal. All other outputs identical to
+    JointPrototypeV2."""
+
+    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
+                 num_prototypes: int, prior_edges=None, top_k: int = None,
+                 node_weights=None):
+        super().__init__(num_nodes, window_size, embed_dim, num_prototypes,
+                         prior_edges=prior_edges, top_k=top_k,
+                         node_weights=node_weights)
+        self.cov_head = DeviationCovarianceHead(num_prototypes, num_nodes)
+
+    def forward(self, x, training_mode=False):
+        out = super().forward(x, training_mode=training_mode)
+        out["d_mahal"] = self.cov_head(out["d_node"], out["idx"])
+        return out
+
+
+class JointPrototypeV21Forecast(JointPrototypeV21):
+    """V21 + `ForecastHead`, for datasets with no declared physics edges
+    (e.g. Sielaff -- see `run_sielaff_v2_1.py`'s `prior_edges=None`).
+    Same signal K (`k_resid`) and cross-window pairing convention as
+    `JointPrototypeV31Forecast` (see that class's and `ForecastHead`'s
+    docstrings) -- just layered on V21 instead of V31, since V21 has no
+    `typed_head`/declared-edge machinery to begin with. `prior_edges`
+    (and therefore `forecast_prior_edges`, absent an explicit override)
+    is `None` by construction on these datasets, so the forecast head's
+    attention is fully unbiased top-k learned attention, same as
+    `edge_head`."""
+
+    _NO_OVERRIDE = object()
+
+    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
+                 num_prototypes: int, forecast_h: int, prior_edges=None,
+                 top_k: int = None, node_weights=None, forecast_prior_edges=_NO_OVERRIDE):
+        super().__init__(num_nodes, window_size, embed_dim, num_prototypes,
+                         prior_edges=prior_edges, top_k=top_k, node_weights=node_weights)
+        self.forecast_h = forecast_h
+        fe = prior_edges if forecast_prior_edges is self._NO_OVERRIDE else forecast_prior_edges
+        self.forecast_head = ForecastHead(num_nodes, window_size, forecast_h, embed_dim,
+                                          top_k=top_k, prior_edges=fe)
+
+    def forward(self, x, training_mode=False, x_future=None):
+        out = super().forward(x, training_mode=training_mode)
+        x_hat_future = self.forecast_head(x)
+        out["x_hat_future"] = x_hat_future
+        if x_future is not None:
+            out["k_resid"] = (x_future - x_hat_future).pow(2).sum(dim=1)
+        return out
 
 
 class TypedRelationAnomalyHead(nn.Module):
@@ -375,41 +498,47 @@ class TypedRelationAnomalyHead(nn.Module):
         return (r - mu) / sigma
 
     def forward(self, z, p_star, idx):
-        """Returns dict with r [B, num_edges] (raw), r_tilde [B, num_edges]
-        (prototype-conditioned standardized, falls back to global stats before
-        `set_calibration()` is called -- fine during Stage A training), and
-        s_node_typed [B, N] (anomaly-attention-weighted standardized residual per
-        node; 0 for nodes with no declared incoming edge, e.g. force/speed here)."""
-        r = self.raw_residuals(z, p_star)
-        r_tilde = self.standardize(r, idx)
+        """Returns dict with r_edge [B, num_edges] (raw per-declared-edge
+        residuals), r_tilde [B, num_edges] (prototype-conditioned standardized,
+        falls back to global stats before `set_calibration()` is called -- fine
+        during Stage A training), and resid_phys [B, N] (anomaly-attention-weighted
+        standardized physics residual per node; 0 for nodes with no declared
+        incoming edge)."""
+        r_edge = self.raw_residuals(z, p_star)
+        r_tilde = self.standardize(r_edge, idx)
 
-        B = r.shape[0]
-        s_node_typed = torch.zeros(B, self.num_nodes, device=r.device)
-        temperature = self.log_temperature.exp()
+        B = r_edge.shape[0]
+        resid_phys = torch.zeros(B, self.num_nodes, device=r_edge.device)
         for target, e_idxs in self.by_target.items():
             r_t_group = r_tilde[:, e_idxs]
-            beta = F.softmax(temperature * r_t_group, dim=-1)
-            s_node_typed[:, target] = (beta * r_t_group.clamp(min=0)).sum(dim=-1)
-        return {"r": r, "r_tilde": r_tilde, "s_node_typed": s_node_typed}
+            resid_phys[:, target] = r_t_group.clamp(min=0).max(dim=-1).values
+        return {"r_edge": r_edge, "r_tilde": r_tilde, "resid_phys": resid_phys}
 
 
-class JointPrototypeGDNv3(nn.Module):
-    """v3: adds `TypedRelationAnomalyHead` (relation-specific message
-    functions + prototype-conditioned standardization + anomaly attention
-    over declared physics edges) alongside v2's `TrendGraphAttentionHead`
-    (kept unchanged -- generic learned attention over ALL node pairs,
-    still the primary structural signal for nodes with no declared
-    incoming edge). See `TypedRelationAnomalyHead` docstring for the
-    design-doc section mapping and explicit scoping-down notes."""
+class JointPrototypeV3(nn.Module):
+    """Physics-prior model: V2 + TypedRelationAnomalyHead (declared physics
+    edges with typed message functions + prototype-conditioned standardization
+    + anomaly attention over declared edges). Requires `prior_edges` and
+    `edge_types` -- one per declared (src, dst) pair.
+
+    Detection signals on top of V2's d_proto/d_node/resid_struct:
+    r_edge [B, E] (raw typed-edge residuals), r_tilde (standardized),
+    resid_phys [B, N] (anomaly-attention-weighted physics residual per node;
+    0 for nodes with no declared incoming edge).
+
+    `JointPrototypeV31` extends this with `DeviationCovarianceHead`."""
 
     def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
-                 num_prototypes: int, prior_edges, edge_types, top_k: int = None, node_weights=None):
+                 num_prototypes: int, prior_edges, edge_types,
+                 top_k: int = None, node_weights=None):
         super().__init__()
         self.num_nodes = num_nodes
         self.encoder = SharedEncoder(window_size, embed_dim)
         self.memory = JointPrototypeMemory(num_prototypes, num_nodes, embed_dim)
-        self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k, prior_edges=prior_edges)
-        self.typed_head = TypedRelationAnomalyHead(num_nodes, prior_edges, edge_types, embed_dim)
+        self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k,
+                                                 prior_edges=prior_edges)
+        self.typed_head = TypedRelationAnomalyHead(num_nodes, prior_edges, edge_types,
+                                                   embed_dim)
         self.decoder = nn.Linear(embed_dim, window_size)  # training-only
         self.register_buffer(
             "node_weights",
@@ -417,24 +546,184 @@ class JointPrototypeGDNv3(nn.Module):
         )
 
     def forward(self, x, training_mode=False):
-        """x: [B, T, N]. Returns dict with z, memory outputs (idx, p_star,
-        d_G, s_node), s_edge [B, N] (v2 generic attention), r/r_tilde/
-        s_node_typed (v3 typed-edge signals). `training_mode=True` also
-        runs the decoder."""
+        """x: [B, T, N]. Returns dict: z, idx, p_star, p_star_st, d_proto,
+        d_node, d_hat, resid_struct, r_edge, r_tilde, resid_phys.
+        `training_mode=True` also computes x_hat."""
         B, T, N = x.shape
         assert N == self.num_nodes
-
         z = self.encoder(x)
         mem_out = self.memory(z, self.node_weights)
-        d_hat, s_edge = self.edge_head(z, mem_out["p_star"])
+        d_hat, resid_struct = self.edge_head(z, mem_out["p_star"])
         typed_out = self.typed_head(z, mem_out["p_star"], mem_out["idx"])
-
-        out = {"z": z, "d_hat": d_hat, "s_edge": s_edge, **mem_out, **typed_out}
+        out = {"z": z, "d_hat": d_hat, "resid_struct": resid_struct, **mem_out, **typed_out}
         if training_mode:
             out["x_hat"] = self.decoder(z).transpose(1, 2)
         return out
 
-    def device_score(self, s_node, s_edge, s_node_typed, lambda_n: float = 1.0,
-                      lambda_e: float = 1.0, lambda_t: float = 1.0):
-        return (lambda_n * s_node.mean(axis=-1) + lambda_e * s_edge.mean(axis=-1)
-                + lambda_t * s_node_typed.mean(axis=-1))
+    def device_score(self, d_node, resid_struct, resid_phys, lambda_n: float = 1.0,
+                     lambda_e: float = 1.0, lambda_t: float = 1.0):
+        return (lambda_n * d_node.mean(axis=-1) + lambda_e * resid_struct.mean(axis=-1)
+                + lambda_t * resid_phys.mean(axis=-1))
+
+
+class JointPrototypeV31(JointPrototypeV3):
+    """V3 + DeviationCovarianceHead: adds d_mahal [B] (Mahalanobis distance
+    of the joint d_node pattern from prototype-conditioned normal).
+    Stage-B calibration (`cov_head.set_calibration`) required after training.
+    All other outputs identical to JointPrototypeV3."""
+
+    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
+                 num_prototypes: int, prior_edges, edge_types,
+                 top_k: int = None, node_weights=None):
+        super().__init__(num_nodes, window_size, embed_dim, num_prototypes,
+                         prior_edges, edge_types, top_k=top_k,
+                         node_weights=node_weights)
+        self.cov_head = DeviationCovarianceHead(num_prototypes, num_nodes)
+
+    def forward(self, x, training_mode=False):
+        out = super().forward(x, training_mode=training_mode)
+        out["d_mahal"] = self.cov_head(out["d_node"], out["idx"])
+        return out
+
+
+class ForecastHead(nn.Module):
+    """New signal K (`shared_forecast_head_proposal.md`): predicts each
+    node's OWN future raw values from a GDN-style learned cross-node
+    attention over the OTHER nodes' current raw-window encodings -- same
+    attention mechanism as `TrendGraphAttentionHead` (top-k by learned
+    embedding similarity, declared physics edges add an ADDITIVE learned-
+    strength bias to the attention logits, no hard edge restriction), but
+    operating in RAW feature space on a fresh small encoder, not on `z`/
+    `d = z - p*`. This is deliberate: the anomaly signal here is "how
+    wrong was the forecast vs. what actually happened," a temporal
+    prediction error, not a same-instant consistency check against a
+    prototype -- conflating it with the deviation space the other heads
+    use would confound two different axes (see
+    `shared_forecast_head_proposal.md`'s "two independent risk axes").
+
+    Forecast target is a genuinely separate FUTURE window's
+    non-overlapping tail segment, not an in-window prefix/suffix split:
+    the caller is responsible for pairing each input window `x_in`
+    (a full window, same as every other head's input) with the raw
+    `stride`-length segment of raw time that immediately follows it in
+    the SAME source sequence (robo3er: same robot, adjacent window index,
+    per `run_robo3er_forecast_v2.py`'s pairing logic) -- see that script's
+    docstring for why a hand-picked prefix/suffix split of one window
+    (the v1 approach, since replaced) would leak most of the target
+    through the window's own overlap with its stride-shifted successor
+    and is not a genuine forecast.
+
+    No self-loop (matches `TrendGraphAttentionHead`/`gdn_model.GDN`): a
+    node forecasting itself by attending to its own current value would
+    be a near-trivial persistence predictor and wouldn't exercise the
+    cross-node relationship this signal is meant to test."""
+
+    def __init__(self, num_nodes: int, in_window: int, out_window: int, embed_dim: int,
+                 top_k: int = None, prior_edges=None, prior_bias_init: float = 1.0):
+        super().__init__()
+        self.num_nodes = num_nodes
+        self.out_window = out_window
+        self.top_k = min(top_k, num_nodes - 1) if top_k is not None else num_nodes - 1
+        self.encoder = nn.Linear(in_window, embed_dim)  # raw-space, separate from SharedEncoder
+        self.embeddings = nn.Embedding(num_nodes, embed_dim)
+        nn.init.uniform_(self.embeddings.weight, -1.0, 1.0)
+        self.attn_w = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.attn_a = nn.Linear(2 * embed_dim, 1, bias=False)
+        self.out_proj = nn.Sequential(
+            nn.Linear(embed_dim, embed_dim), nn.ReLU(), nn.Linear(embed_dim, out_window),
+        )
+
+        # Same declared-physics-edge additive-bias mechanism as
+        # TrendGraphAttentionHead.prior_mask -- see that class's docstring.
+        prior_mask = torch.zeros(num_nodes, num_nodes)
+        if prior_edges:
+            for src, dst in prior_edges:
+                prior_mask[dst, src] = 1.0
+        self.register_buffer("prior_mask", prior_mask)
+        self.prior_bias_strength = nn.Parameter(torch.tensor(float(prior_bias_init)))
+
+    def _topk_neighbors(self):
+        v = F.normalize(self.embeddings.weight, dim=1)
+        sim = v @ v.T
+        sim.fill_diagonal_(-float("inf"))  # no self-loop, see class docstring
+        _, topk_idx = sim.topk(self.top_k, dim=1)
+        return topk_idx  # [N, top_k]
+
+    def forward(self, x_in):
+        """x_in: [B, in_window, N] raw feature window (prefix). Returns
+        x_hat_future [B, out_window, N] (per-node forecast of the
+        out_window raw values immediately following x_in)."""
+        B, T_in, N = x_in.shape
+        w = self.encoder(x_in.transpose(1, 2))  # [B, N, D]
+        wf = self.attn_w(w)
+
+        neighbor_idx = self._topk_neighbors()  # [N, top_k], never self
+        wf_neighbors = wf[:, neighbor_idx, :]  # [B, N, top_k, D]
+        wf_self = wf.unsqueeze(2).expand(-1, -1, neighbor_idx.shape[1], -1)
+
+        logits = self.attn_a(torch.cat([wf_self, wf_neighbors], dim=-1)).squeeze(-1)  # [B, N, top_k]
+        prior_bias = self.prior_mask[torch.arange(N, device=x_in.device).unsqueeze(1), neighbor_idx]
+        logits = logits + self.prior_bias_strength * prior_bias.unsqueeze(0)
+
+        alpha = F.softmax(F.leaky_relu(logits), dim=-1)
+        agg = torch.einsum("bnk,bnkd->bnd", alpha, wf_neighbors)
+        agg = F.relu(agg)
+
+        gated = agg * self.embeddings.weight.unsqueeze(0)
+        x_hat_future = self.out_proj(gated)  # [B, N, out_window]
+        return x_hat_future.transpose(1, 2)  # [B, out_window, N]
+
+
+class JointPrototypeV31Forecast(JointPrototypeV31):
+    """V31 + `ForecastHead`: adds signal K (`k_resid` [B,N], the per-node
+    squared error between the forecast head's prediction and the actual
+    future). Purely additive on top of V31 -- B/C/E/H are computed
+    exactly as in V31, from the unmodified full-window SharedEncoder
+    path; the forecast head reads the FULL input window `x` (same input
+    every other head sees), never touching `z`/`d`/the memory/edge/typed
+    heads. See `ForecastHead`'s docstring and
+    `shared_forecast_head_proposal.md` for why this is scoped as an
+    independent additive signal rather than a backbone replacement.
+
+    Unlike v1 of this class (in-window prefix/suffix split, since
+    replaced), `x_future` is NOT derived from `x` itself -- the caller
+    must supply it (the paired next-window's non-overlapping tail
+    segment, per `run_robo3er_forecast_v2.py`'s pairing logic). Passing
+    `x_future=None` (e.g. for orphan windows with no valid pair, or when
+    only `x_hat_future` is needed) skips `k_resid`.
+
+    `forecast_prior_edges` defaults to the SAME edges as `prior_edges`
+    (what `edge_head`/`typed_head` use), but can be overridden
+    independently -- e.g. `forecast_prior_edges=None` to ablate the
+    forecast head's prior bias specifically while leaving B/C/E
+    untouched, per `memory/forecast-head-signal-k.md`'s improvement-1
+    experiment (does the declared-edge bias actually help the forecast
+    head, or is `K`'s 0.803 mean AUROC coming entirely from unbiased
+    learned top-k attention?)."""
+
+    _NO_OVERRIDE = object()
+
+    def __init__(self, num_nodes: int, window_size: int, embed_dim: int,
+                 num_prototypes: int, prior_edges, edge_types,
+                 forecast_h: int, top_k: int = None, node_weights=None,
+                 forecast_prior_edges=_NO_OVERRIDE):
+        super().__init__(num_nodes, window_size, embed_dim, num_prototypes,
+                         prior_edges, edge_types, top_k=top_k, node_weights=node_weights)
+        self.forecast_h = forecast_h
+        fe = prior_edges if forecast_prior_edges is self._NO_OVERRIDE else forecast_prior_edges
+        self.forecast_head = ForecastHead(num_nodes, window_size, forecast_h, embed_dim,
+                                          top_k=top_k, prior_edges=fe)
+
+    def forward(self, x, training_mode=False, x_future=None):
+        """x: [B, T, N] (full input window). x_future: [B, forecast_h, N]
+        or None -- the paired next-window's tail segment (raw feature
+        space), supplied by the caller (see class docstring). Returns
+        everything JointPrototypeV31 returns, plus x_hat_future
+        [B, forecast_h, N] and (if x_future is not None) k_resid [B, N]
+        (per-node squared forecast error, raw feature space)."""
+        out = super().forward(x, training_mode=training_mode)
+        x_hat_future = self.forecast_head(x)
+        out["x_hat_future"] = x_hat_future
+        if x_future is not None:
+            out["k_resid"] = (x_future - x_hat_future).pow(2).sum(dim=1)  # [B, N]
+        return out

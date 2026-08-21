@@ -1,0 +1,239 @@
+{
+  "config": {
+    "rounds": 5,
+    "local_epochs": 12,
+    "num_prototypes": 2,
+    "embed_dim": 64,
+    "top_k": 8,
+    "gamma": 0.5,
+    "delta": 0.5,
+    "prior_edges": [
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "odom_odo_angtw_z",
+        "imu_imu_angvel_z"
+      ],
+      [
+        "wheel_status_current_ma_left",
+        "wheel_vels_velocity_left"
+      ],
+      [
+        "wheel_status_current_ma_right",
+        "wheel_vels_velocity_right"
+      ]
+    ],
+    "edge_types": [
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "nonlinear",
+      "nonlinear"
+    ],
+    "min_proto_samples": 5,
+    "top_k_agg": 3,
+    "sync_encoder_decoder": false,
+    "feature_groups": [
+      "kinematic_core",
+      "actuation"
+    ],
+    "num_nodes": 26
+  },
+  "alignment_log": [
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 1
+    },
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 2
+    },
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 3
+    },
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 4
+    },
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 5
+    }
+  ],
+  "clients": {
+    "robot00_merged_data": {
+      "robot_name": "robot00_merged_data",
+      "confidence_weights": {
+        "proto": 0.3378105961836837,
+        "edge": 0.33434760402102515,
+        "typed": 0.32784179979529104
+      },
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 25,
+          "A_prototype_only": 0.0,
+          "B_prototype_plus_node": 0.0,
+          "C_edge_only": 0.0,
+          "D_full_v2": 0.0,
+          "E_typed_edge_only": 0.09302325581395349,
+          "F_full_v3": 0.09302325581395349,
+          "G_weighted_v3": 0.0
+        },
+        "Low battery": {
+          "n": 74,
+          "A_prototype_only": 0.390634820867379,
+          "B_prototype_plus_node": 0.5744814582023885,
+          "C_edge_only": 0.5760527969830296,
+          "D_full_v2": 0.5741671904462602,
+          "E_typed_edge_only": 0.40980515399120054,
+          "F_full_v3": 0.5571967316153362,
+          "G_weighted_v3": 0.5584538026398491
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.1953174104336895,
+        "B_prototype_plus_node": 0.28724072910119425,
+        "C_edge_only": 0.2880263984915148,
+        "D_full_v2": 0.2870835952231301,
+        "E_typed_edge_only": 0.25141420490257704,
+        "F_full_v3": 0.3251099937146449,
+        "G_weighted_v3": 0.27922690131992456
+      }
+    },
+    "robot01_merged_data": {
+      "robot_name": "robot01_merged_data",
+      "confidence_weights": {
+        "proto": 0.35352430908221044,
+        "edge": 0.3541029040087849,
+        "typed": 0.29237278690900464
+      },
+      "fault_types": {
+        "cable trapped": {
+          "n": 206,
+          "A_prototype_only": 0.7509497678345292,
+          "B_prototype_plus_node": 0.9050232165470663,
+          "C_edge_only": 0.9143098353735754,
+          "D_full_v2": 0.9094554664415365,
+          "E_typed_edge_only": 0.540417897847193,
+          "F_full_v3": 0.9077669902912622,
+          "G_weighted_v3": 0.9020683832840863
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.7509497678345292,
+        "B_prototype_plus_node": 0.9050232165470663,
+        "C_edge_only": 0.9143098353735754,
+        "D_full_v2": 0.9094554664415365,
+        "E_typed_edge_only": 0.540417897847193,
+        "F_full_v3": 0.9077669902912622,
+        "G_weighted_v3": 0.9020683832840863
+      }
+    },
+    "robot02_merged_data": {
+      "confidence_weights": {
+        "proto": 0.30456251807537305,
+        "edge": 0.3061168477407627,
+        "typed": 0.38932063418386414
+      }
+    },
+    "robot03_merged_data": {
+      "robot_name": "robot03_merged_data",
+      "confidence_weights": {
+        "proto": 0.3448842321578244,
+        "edge": 0.33209748309782383,
+        "typed": 0.3230182847443518
+      },
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 34,
+          "A_prototype_only": 0.2687427912341407,
+          "B_prototype_plus_node": 0.2808535178777393,
+          "C_edge_only": 0.2745098039215686,
+          "D_full_v2": 0.2808535178777393,
+          "E_typed_edge_only": 0.303921568627451,
+          "F_full_v3": 0.28835063437139563,
+          "G_weighted_v3": 0.28431372549019607
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.2687427912341407,
+        "B_prototype_plus_node": 0.2808535178777393,
+        "C_edge_only": 0.2745098039215686,
+        "D_full_v2": 0.2808535178777393,
+        "E_typed_edge_only": 0.303921568627451,
+        "F_full_v3": 0.28835063437139563,
+        "G_weighted_v3": 0.28431372549019607
+      }
+    },
+    "robot04_merged_data": {
+      "robot_name": "robot04_merged_data",
+      "confidence_weights": {
+        "proto": 0.3243719893668175,
+        "edge": 0.3380688589928141,
+        "typed": 0.3375591516403684
+      },
+      "fault_types": {
+        "stuck": {
+          "n": 149,
+          "A_prototype_only": 0.6460360133841363,
+          "B_prototype_plus_node": 0.7568226215113244,
+          "C_edge_only": 0.7230915033943872,
+          "D_full_v2": 0.7452372202773534,
+          "E_typed_edge_only": 0.8726379513761291,
+          "F_full_v3": 0.8620582944896816,
+          "G_weighted_v3": 0.8480455679554378
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.6460360133841363,
+        "B_prototype_plus_node": 0.7568226215113244,
+        "C_edge_only": 0.7230915033943872,
+        "D_full_v2": 0.7452372202773534,
+        "E_typed_edge_only": 0.8726379513761291,
+        "F_full_v3": 0.8620582944896816,
+        "G_weighted_v3": 0.8480455679554378
+      }
+    }
+  },
+  "summary_mean_auroc_overall": {
+    "A_prototype_only": 0.411272678664037,
+    "B_prototype_plus_node": 0.5034361628277038,
+    "C_edge_only": 0.49759278793451217,
+    "D_full_v2": 0.5019426790085779,
+    "E_typed_edge_only": 0.44396116553118536,
+    "F_full_v3": 0.5416791813163259,
+    "G_weighted_v3": 0.5185762958739139
+  }
+}

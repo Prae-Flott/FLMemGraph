@@ -126,14 +126,12 @@ DATASETS = {
                         "15/26 damaged bearings near-perfect, 10/26 BELOW 0.5 AUROC (score direction "
                         "inverted, mostly artificial-damage bearings), leading hypothesis is that "
                         "crude 125x box-average decimation washes out the high-frequency impulsive "
-                        "signature artificial single-point defects rely on -- see "
-                        "memory/paderborn-fl-model-run.md for the full per-bearing table and "
-                        "untested follow-ups. Separately, this is also the dataset Joint Prototype "
-                        "Memory's typed-relation Scheme V3 was originally developed on and wins most "
-                        "clearly on (0.904 vs. a 0.819 fair GDN baseline) -- see "
-                        "memory/joint-prototype-scheme-v3.md and the "
-                        "joint-prototype-scheme-v2/joint-prototype-scheme-v3 entries in "
-                        "benchmark/baselines/registry.py.",
+                        "signature artificial single-point defects rely on -- this run used the older, "
+                        "since-deleted FLGDNMemory architecture, its checkpoint/report were removed "
+                        "2026-08-16. Separately, this is also the dataset Joint Prototype Memory's "
+                        "typed-relation V3 was originally developed on and wins most clearly on "
+                        "(federated J=0.991 vs. a 0.819 fair GDN baseline) -- see "
+                        "memory/scoring-signals-B-C-E-H.md and memory/joint-prototype-scheme-v3.md.",
     },
     "voraus-AD": {
         "category": "A",
@@ -187,10 +185,11 @@ DATASETS = {
                         "result: V2 (prototype+node, no edges) is the top path at 0.756 mean "
                         "AUROC, winning/tying on 11/12 fault categories -- the sole exception, "
                         "motor_commutation, is the one category whose fault is a textbook edge-relation "
-                        "break. UNVALIDATED -- no fair GDN/AE baseline exists on this dataset yet. See "
-                        "memory/joint-prototype-scheme-v3.md and memory/joint-prototype-scheme-v2.md for "
-                        "the full cross-dataset conclusions (this dataset's iteration history is "
-                        "condensed there, not kept separately).",
+                        "break. UNVALIDATED -- no fair GDN/AE baseline exists on this dataset yet. NOTE: "
+                        "this dataset (data, adapter, run script, physics doc) was deleted from the repo "
+                        "2026-08-16 -- entry kept for historical reference only, not currently runnable. "
+                        "See memory/joint-prototype-scheme-v3.md's qualitative-finding note for the "
+                        "surviving conclusion.",
     },
     # ---------------------------------------------------------- category B --
     "MVTec-AD": {

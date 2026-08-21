@@ -1,0 +1,269 @@
+{
+  "config": {
+    "rounds": 5,
+    "local_epochs": 12,
+    "num_prototypes": 2,
+    "embed_dim": 64,
+    "top_k": 8,
+    "gamma": 0.5,
+    "delta": 0.5,
+    "prior_edges": [
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_lintw_x"
+      ],
+      [
+        "wheel_vels_velocity_left",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "wheel_vels_velocity_right",
+        "odom_odo_angtw_z"
+      ],
+      [
+        "odom_odo_angtw_z",
+        "imu_imu_angvel_z"
+      ],
+      [
+        "wheel_status_current_ma_left",
+        "wheel_vels_velocity_left"
+      ],
+      [
+        "wheel_status_current_ma_right",
+        "wheel_vels_velocity_right"
+      ]
+    ],
+    "edge_types": [
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional",
+      "nonlinear",
+      "nonlinear"
+    ],
+    "min_proto_samples": 5,
+    "top_k_agg": 3,
+    "sync_encoder_decoder": true,
+    "feature_groups": [
+      "kinematic_core",
+      "actuation"
+    ],
+    "num_nodes": 26
+  },
+  "alignment_log": [
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 1
+    },
+    {
+      "num_components": 10,
+      "num_multi_client_clusters": 0,
+      "num_shared_prototypes": 0,
+      "num_personalized_prototypes_per_client": 2,
+      "round": 2
+    },
+    {
+      "num_components": 3,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 3
+    },
+    {
+      "num_components": 1,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 4
+    },
+    {
+      "num_components": 1,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 1,
+      "round": 5
+    }
+  ],
+  "clients": {
+    "robot00_merged_data": {
+      "robot_name": "robot00_merged_data",
+      "confidence_weights": {
+        "proto": 0.45464121526874746,
+        "edge": 0.3922722056741982,
+        "typed": 0.15308657905705428
+      },
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 25,
+          "A_prototype_only": 0.2093023255813954,
+          "B_prototype_plus_node": 0.9534883720930233,
+          "C_edge_only": 0.9767441860465116,
+          "D_full_v2": 0.9767441860465116,
+          "E_typed_edge_only": 0.13953488372093026,
+          "F_full_v3": 0.6046511627906977,
+          "H_covariance": 0.8837209302325582,
+          "I_v2_plus_cov": 0.8837209302325582,
+          "J_v3_plus_cov": 0.8837209302325582,
+          "G_weighted_v3": 0.8372093023255813
+        },
+        "Low battery": {
+          "n": 74,
+          "A_prototype_only": 0.34380892520427403,
+          "B_prototype_plus_node": 0.4151477058453803,
+          "C_edge_only": 0.4274041483343809,
+          "D_full_v2": 0.42426147077309867,
+          "E_typed_edge_only": 0.38026398491514773,
+          "F_full_v3": 0.42614707730986806,
+          "H_covariance": 0.3978629792583281,
+          "I_v2_plus_cov": 0.396291640477687,
+          "J_v3_plus_cov": 0.3953488372093023,
+          "G_weighted_v3": 0.41609050911376494
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.27655562539283474,
+        "B_prototype_plus_node": 0.6843180389692018,
+        "C_edge_only": 0.7020741671904462,
+        "D_full_v2": 0.7005028284098052,
+        "E_typed_edge_only": 0.25989943431803897,
+        "F_full_v3": 0.5153991200502829,
+        "H_covariance": 0.6407919547454431,
+        "I_v2_plus_cov": 0.6400062853551226,
+        "J_v3_plus_cov": 0.6395348837209303,
+        "G_weighted_v3": 0.6266499057196732
+      }
+    },
+    "robot01_merged_data": {
+      "robot_name": "robot01_merged_data",
+      "confidence_weights": {
+        "proto": 0.4167766307043291,
+        "edge": 0.399501289740401,
+        "typed": 0.18372207955526992
+      },
+      "fault_types": {
+        "cable trapped": {
+          "n": 206,
+          "A_prototype_only": 0.8571127057830308,
+          "B_prototype_plus_node": 0.9569438581680034,
+          "C_edge_only": 0.9630645842127481,
+          "D_full_v2": 0.9605318699873364,
+          "E_typed_edge_only": 0.6010975094976783,
+          "F_full_v3": 0.9573659772055719,
+          "H_covariance": 0.9506120726044744,
+          "I_v2_plus_cov": 0.9506120726044746,
+          "J_v3_plus_cov": 0.9529337273111018,
+          "G_weighted_v3": 0.959476572393415
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.8571127057830308,
+        "B_prototype_plus_node": 0.9569438581680034,
+        "C_edge_only": 0.9630645842127481,
+        "D_full_v2": 0.9605318699873364,
+        "E_typed_edge_only": 0.6010975094976783,
+        "F_full_v3": 0.9573659772055719,
+        "H_covariance": 0.9506120726044744,
+        "I_v2_plus_cov": 0.9506120726044746,
+        "J_v3_plus_cov": 0.9529337273111018,
+        "G_weighted_v3": 0.959476572393415
+      }
+    },
+    "robot02_merged_data": {
+      "confidence_weights": {
+        "proto": 0.4180961233384492,
+        "edge": 0.39446403203488006,
+        "typed": 0.18743984462667063
+      }
+    },
+    "robot03_merged_data": {
+      "robot_name": "robot03_merged_data",
+      "confidence_weights": {
+        "proto": 0.07862363412705448,
+        "edge": 0.12238811958948928,
+        "typed": 0.7989882462834562
+      },
+      "fault_types": {
+        "Broken Pipe": {
+          "n": 34,
+          "A_prototype_only": 0.44867358708189164,
+          "B_prototype_plus_node": 0.455594002306805,
+          "C_edge_only": 0.42964244521337946,
+          "D_full_v2": 0.455594002306805,
+          "E_typed_edge_only": 0.4720299884659746,
+          "F_full_v3": 0.455594002306805,
+          "H_covariance": 0.5259515570934257,
+          "I_v2_plus_cov": 0.4717416378316032,
+          "J_v3_plus_cov": 0.4717416378316032,
+          "G_weighted_v3": 0.4423298731257209
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.44867358708189164,
+        "B_prototype_plus_node": 0.455594002306805,
+        "C_edge_only": 0.42964244521337946,
+        "D_full_v2": 0.455594002306805,
+        "E_typed_edge_only": 0.4720299884659746,
+        "F_full_v3": 0.455594002306805,
+        "H_covariance": 0.5259515570934257,
+        "I_v2_plus_cov": 0.4717416378316032,
+        "J_v3_plus_cov": 0.4717416378316032,
+        "G_weighted_v3": 0.4423298731257209
+      }
+    },
+    "robot04_merged_data": {
+      "robot_name": "robot04_merged_data",
+      "confidence_weights": {
+        "proto": 0.3028419173700294,
+        "edge": 0.24932453063519983,
+        "typed": 0.4478335519947707
+      },
+      "fault_types": {
+        "stuck": {
+          "n": 149,
+          "A_prototype_only": 0.6966713730344467,
+          "B_prototype_plus_node": 0.9271802409918186,
+          "C_edge_only": 0.938465853045278,
+          "D_full_v2": 0.9314159719938881,
+          "E_typed_edge_only": 0.7051621762760382,
+          "F_full_v3": 0.9230122043208325,
+          "H_covariance": 0.9460282768891554,
+          "I_v2_plus_cov": 0.9426629015724426,
+          "J_v3_plus_cov": 0.9386205829448968,
+          "G_weighted_v3": 0.9176063284528944
+        }
+      },
+      "client_mean_auroc": {
+        "A_prototype_only": 0.6966713730344467,
+        "B_prototype_plus_node": 0.9271802409918186,
+        "C_edge_only": 0.938465853045278,
+        "D_full_v2": 0.9314159719938881,
+        "E_typed_edge_only": 0.7051621762760382,
+        "F_full_v3": 0.9230122043208325,
+        "H_covariance": 0.9460282768891554,
+        "I_v2_plus_cov": 0.9426629015724426,
+        "J_v3_plus_cov": 0.9386205829448968,
+        "G_weighted_v3": 0.9176063284528944
+      }
+    }
+  },
+  "summary_mean_auroc_overall": {
+    "A_prototype_only": 0.5111137833370077,
+    "B_prototype_plus_node": 0.741670835881006,
+    "C_edge_only": 0.7470642433704595,
+    "D_full_v2": 0.749709500221528,
+    "E_typed_edge_only": 0.4596177085751538,
+    "F_full_v3": 0.6733540847867551,
+    "H_covariance": 0.7408351632155883,
+    "I_v2_plus_cov": 0.7290058365437531,
+    "J_v3_plus_cov": 0.7284731431058924,
+    "G_weighted_v3": 0.7145425170822753
+  }
+}

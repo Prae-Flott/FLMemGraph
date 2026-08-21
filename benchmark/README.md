@@ -62,8 +62,8 @@ Baseline + public-dataset scaffold for evaluating `src/`'s
   encoder/structure head fully personalized and only shares the
   discrete-regime vocabulary. robot00 (smallest client, 195 fit windows)
   moves in both directions depending on fault type -- not enough signal
-  yet to call a consistent winner there, matches the already-documented
-  small-client instability (`memory/fl-memory-physics-system.md`).
+  yet to call a consistent winner there, matches the small-client
+  instability documented in `memory/joint-prototype-federated-results.md`.
 
 - **IFCAAE baseline** (`python3 run_ifcaae_baseline.py`): standalone
   reimplementation of FL-bench's `src/server|client/ifcaae.py` -- an
@@ -168,8 +168,10 @@ on, while real fatigue damage's broader signature survives -- a real,
 physically-grounded hypothesis but untested this session. Two data bugs
 found+fixed while building `paderborn_adapter.py` (non-constant per-file
 sample counts across the 2560 `.mat` files; one file that fails to parse
-with scipy). Full per-bearing table and follow-ups:
-`memory/paderborn-fl-model-run.md`.
+with scipy). This run used the older, since-deleted `FLGDNMemory`
+architecture and its checkpoint/report were removed 2026-08-16 -- current
+Paderborn results use `JointPrototypeV31` instead, see
+`memory/scoring-signals-B-C-E-H.md`.
 
 **Joint Prototype Memory: V2 and Scheme V3** -- this project's main
 physics-informed anomaly detection line, now consolidated into two final
@@ -185,8 +187,8 @@ checkpoints deleted, conclusions preserved in memory):
   with ZERO physics prior, since none exists for this dataset), robo3er
   (0.942), voraus-AD (0.756, wins/ties 11 of 12 fault categories).
   Recommended default for any new dataset before investing in physics-
-  relation analysis. Full cross-dataset table:
-  `memory/joint-prototype-scheme-v2.md`.
+  relation analysis. Full cross-dataset table (current numbers, signal B):
+  `memory/scoring-signals-B-C-E-H.md`.
 - **Scheme V3** (`JointPrototypeGDNv3`: V2 + GDN-style learned
   attention over declared-edge-biased neighbors + typed relation-
   specific message functions + prototype-conditioned edge-residual

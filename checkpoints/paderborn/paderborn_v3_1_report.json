@@ -1,0 +1,425 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 5,
+    "window_len": 64,
+    "epochs": 12,
+    "prior_edges": [
+      [
+        "force",
+        "vibration_1"
+      ],
+      [
+        "force",
+        "torque"
+      ],
+      [
+        "speed",
+        "vibration_1"
+      ],
+      [
+        "speed",
+        "torque"
+      ],
+      [
+        "speed",
+        "phase_current_1"
+      ],
+      [
+        "speed",
+        "phase_current_2"
+      ],
+      [
+        "torque",
+        "phase_current_1"
+      ],
+      [
+        "torque",
+        "phase_current_2"
+      ]
+    ],
+    "edge_types": [
+      "nonlinear",
+      "nonlinear",
+      "nonlinear",
+      "nonlinear",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional"
+    ],
+    "min_proto_samples": 5
+  },
+  "nodes": [
+    "vibration_1",
+    "phase_current_1",
+    "phase_current_2",
+    "force",
+    "speed",
+    "torque"
+  ],
+  "final_prior_bias_strength": 1.2497187852859497,
+  "final_typed_temperature": 1.0,
+  "n_valid_prototypes_for_typed_calib": 5,
+  "bearings": {
+    "KA01": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.26927083333333335,
+      "C_struct_max": 0.9477430555555555,
+      "E_phys_max": 0.9168402777777778,
+      "F_v3_max": 0.9291666666666667,
+      "H_cov_mahal": 0.39774305555555556,
+      "I_node_cov_max": 0.3043402777777777,
+      "J_v3_cov_max": 0.920138888888889
+    },
+    "KA03": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KA05": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.6258680555555556,
+      "C_struct_max": 0.8564236111111111,
+      "E_phys_max": 0.7065972222222221,
+      "F_v3_max": 0.8138888888888889,
+      "H_cov_mahal": 0.6116319444444444,
+      "I_node_cov_max": 0.6796875,
+      "J_v3_cov_max": 0.7932291666666667
+    },
+    "KA06": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.41145833333333337,
+      "C_struct_max": 0.6098958333333333,
+      "E_phys_max": 0.6197048611111112,
+      "F_v3_max": 0.6696180555555555,
+      "H_cov_mahal": 0.34045138888888893,
+      "I_node_cov_max": 0.4486111111111112,
+      "J_v3_cov_max": 0.6517361111111111
+    },
+    "KA07": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.5435763888888889,
+      "C_struct_max": 0.9479166666666666,
+      "E_phys_max": 0.4267361111111111,
+      "F_v3_max": 0.9446180555555556,
+      "H_cov_mahal": 0.34201388888888884,
+      "I_node_cov_max": 0.5824652777777778,
+      "J_v3_cov_max": 0.9362847222222223
+    },
+    "KA08": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 79,
+      "B_node_max": 0.47116736990154706,
+      "C_struct_max": 0.9324894514767933,
+      "E_phys_max": 0.3786040787623066,
+      "F_v3_max": 0.8204992967651196,
+      "H_cov_mahal": 0.3414205344585091,
+      "I_node_cov_max": 0.5167018284106891,
+      "J_v3_cov_max": 0.7967651195499296
+    },
+    "KA09": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.4119791666666667,
+      "C_struct_max": 0.7993055555555554,
+      "E_phys_max": 0.6150173611111112,
+      "F_v3_max": 0.6366319444444443,
+      "H_cov_mahal": 0.7828125,
+      "I_node_cov_max": 0.6041666666666666,
+      "J_v3_cov_max": 0.6854166666666666
+    },
+    "KA04": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KA15": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KA16": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KA22": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KA30": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 0.49861111111111106,
+      "C_struct_max": 0.5338541666666667,
+      "E_phys_max": 0.4862847222222222,
+      "F_v3_max": 0.6072916666666668,
+      "H_cov_mahal": 0.4697916666666666,
+      "I_node_cov_max": 0.5585069444444445,
+      "J_v3_cov_max": 0.5888888888888888
+    },
+    "KI01": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.8230902777777779,
+      "C_struct_max": 0.9697916666666666,
+      "E_phys_max": 0.9918402777777777,
+      "F_v3_max": 0.9930555555555556,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KI03": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KI05": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.5352430555555556,
+      "C_struct_max": 0.5590277777777778,
+      "E_phys_max": 0.5363715277777779,
+      "F_v3_max": 0.6166666666666667,
+      "H_cov_mahal": 0.5454861111111111,
+      "I_node_cov_max": 0.5935763888888889,
+      "J_v3_cov_max": 0.593576388888889
+    },
+    "KI07": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.6861111111111111,
+      "C_struct_max": 0.8423611111111111,
+      "E_phys_max": 0.6308159722222222,
+      "F_v3_max": 0.7817708333333333,
+      "H_cov_mahal": 0.6940972222222223,
+      "I_node_cov_max": 0.7559027777777778,
+      "J_v3_cov_max": 0.7822916666666667
+    },
+    "KI08": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "B_node_max": 0.5489583333333333,
+      "C_struct_max": 0.8515625,
+      "E_phys_max": 0.5085937500000001,
+      "F_v3_max": 0.8611111111111112,
+      "H_cov_mahal": 0.5182291666666666,
+      "I_node_cov_max": 0.6074652777777778,
+      "J_v3_cov_max": 0.8529513888888889
+    },
+    "KI04": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 0.4449652777777777,
+      "C_struct_max": 0.6659722222222222,
+      "E_phys_max": 0.5193576388888889,
+      "F_v3_max": 0.6612847222222221,
+      "H_cov_mahal": 0.4399305555555556,
+      "I_node_cov_max": 0.4967013888888889,
+      "J_v3_cov_max": 0.6380208333333334
+    },
+    "KI14": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KI16": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KI17": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KI18": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KI21": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KB23": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 0.9085069444444445,
+      "C_struct_max": 0.9953125,
+      "E_phys_max": 0.999826388888889,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KB24": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    },
+    "KB27": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "B_node_max": 1.0,
+      "C_struct_max": 1.0,
+      "E_phys_max": 1.0,
+      "F_v3_max": 1.0,
+      "H_cov_mahal": 1.0,
+      "I_node_cov_max": 1.0,
+      "J_v3_cov_max": 1.0
+    }
+  },
+  "summary_mean_auroc": {
+    "B_node_max": 0.7761079330304015,
+    "C_struct_max": 0.9042944660824406,
+    "E_phys_max": 0.8206380842259008,
+    "F_v3_max": 0.8975232101319919,
+    "H_cov_mahal": 0.7878310782484041,
+    "I_node_cov_max": 0.8133894399816076,
+    "J_v3_cov_max": 0.8938192246835442
+  },
+  "category_summary": {
+    "B_node_max": {
+      "outer_ring": 0.6859942715658697,
+      "inner_ring": 0.8216698232323232,
+      "combined": 0.9695023148148149
+    },
+    "C_struct_max": {
+      "outer_ring": 0.8856356950304733,
+      "inner_ring": 0.8989741161616162,
+      "combined": 0.9984375
+    },
+    "E_phys_max": {
+      "outer_ring": 0.7624820528598218,
+      "inner_ring": 0.8351799242424243,
+      "combined": 0.9999421296296296
+    },
+    "F_v3_max": {
+      "outer_ring": 0.8684762145452415,
+      "inner_ring": 0.9012626262626262,
+      "combined": 1.0
+    },
+    "H_cov_mahal": {
+      "outer_ring": 0.6904887482419128,
+      "inner_ring": 0.8361584595959596,
+      "combined": 1.0
+    },
+    "I_node_cov_max": {
+      "outer_ring": 0.7245399671823721,
+      "inner_ring": 0.8594223484848484,
+      "combined": 1.0
+    },
+    "J_v3_cov_max": {
+      "outer_ring": 0.8643716303328645,
+      "inner_ring": 0.8969854797979798,
+      "combined": 1.0
+    }
+  }
+}

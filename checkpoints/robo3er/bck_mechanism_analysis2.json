@@ -1,0 +1,38 @@
+{
+ "per_fault": {
+  "cable trapped": {
+   "pearson_bc_all": 0.9998703216644238,
+   "pearson_bk_all": 0.0996523330799527,
+   "pearson_bc_wheel_left": 0.9974604015059343,
+   "n": 206
+  },
+  "stuck": {
+   "pearson_bc_all": 0.9889436862806523,
+   "pearson_bk_all": 0.2862864449630905,
+   "pearson_bc_wheel_left": 0.9915444456736183,
+   "n": 149
+  }
+ },
+ "stuck_neighbors_of_wheel_left": [
+  "wheel_status_current_ma_right",
+  "imu_imu_orient_x",
+  "imu_imu_orient_w",
+  "odom_odo_orient_y",
+  "wheel_vels_velocity_left",
+  "imu_imu_acc_z",
+  "imu_imu_orient_y",
+  "wheel_status_pwm_right"
+ ],
+ "stuck_neighbors_of_wheel_right": [
+  "wheel_status_current_ma_left",
+  "odom_odo_angtw_y",
+  "imu_imu_orient_x",
+  "wheel_vels_velocity_right",
+  "imu_imu_angvel_z",
+  "imu_imu_acc_x",
+  "imu_imu_orient_w",
+  "wheel_vels_velocity_left"
+ ],
+ "wheel_pair_mutual_neighbor": true,
+ "prior_bias_strength": 1.3184725046157837
+}

@@ -1,0 +1,2583 @@
+{
+  "config": {
+    "embed_dim": 64,
+    "num_prototypes": 16,
+    "top_k": 5,
+    "window_len": 64,
+    "rounds": 5,
+    "local_epochs": 12,
+    "gamma": 0.5,
+    "delta": 0.5,
+    "prior_edges": [
+      [
+        "force",
+        "vibration_1"
+      ],
+      [
+        "force",
+        "torque"
+      ],
+      [
+        "speed",
+        "vibration_1"
+      ],
+      [
+        "speed",
+        "torque"
+      ],
+      [
+        "speed",
+        "phase_current_1"
+      ],
+      [
+        "speed",
+        "phase_current_2"
+      ],
+      [
+        "torque",
+        "phase_current_1"
+      ],
+      [
+        "torque",
+        "phase_current_2"
+      ]
+    ],
+    "edge_types": [
+      "nonlinear",
+      "nonlinear",
+      "nonlinear",
+      "nonlinear",
+      "proportional",
+      "proportional",
+      "proportional",
+      "proportional"
+    ],
+    "min_proto_samples": 5,
+    "clients": [
+      "K001",
+      "K002",
+      "K003",
+      "K004",
+      "K005",
+      "K006"
+    ],
+    "sync_encoder_decoder": true
+  },
+  "nodes": [
+    "vibration_1",
+    "phase_current_1",
+    "phase_current_2",
+    "force",
+    "speed",
+    "torque"
+  ],
+  "alignment_log": [
+    {
+      "num_components": 4,
+      "num_multi_client_clusters": 1,
+      "num_shared_prototypes": 1,
+      "num_personalized_prototypes_per_client": 15,
+      "round": 1
+    },
+    {
+      "num_components": 2,
+      "num_multi_client_clusters": 2,
+      "num_shared_prototypes": 2,
+      "num_personalized_prototypes_per_client": 14,
+      "round": 2
+    },
+    {
+      "num_components": 3,
+      "num_multi_client_clusters": 2,
+      "num_shared_prototypes": 2,
+      "num_personalized_prototypes_per_client": 14,
+      "round": 3
+    },
+    {
+      "num_components": 3,
+      "num_multi_client_clusters": 2,
+      "num_shared_prototypes": 2,
+      "num_personalized_prototypes_per_client": 14,
+      "round": 4
+    },
+    {
+      "num_components": 2,
+      "num_multi_client_clusters": 2,
+      "num_shared_prototypes": 2,
+      "num_personalized_prototypes_per_client": 14,
+      "round": 5
+    }
+  ],
+  "client_confidence_weights": {
+    "K001": {
+      "proto": 0.27547092832489917,
+      "edge": 0.4816266838401011,
+      "typed": 0.24290238783499982
+    },
+    "K002": {
+      "proto": 0.787233808063513,
+      "edge": 0.0377839893028985,
+      "typed": 0.17498220263358844
+    },
+    "K003": {
+      "proto": 0.05535568824716743,
+      "edge": 0.1867317441519723,
+      "typed": 0.7579125676008602
+    },
+    "K004": {
+      "proto": 0.23928441479954263,
+      "edge": 0.538915282787323,
+      "typed": 0.22180030241313428
+    },
+    "K005": {
+      "proto": 0.16702340261356674,
+      "edge": 0.6319995005650516,
+      "typed": 0.20097709682138168
+    },
+    "K006": {
+      "proto": 0.5718741887431766,
+      "edge": 0.2370610811564822,
+      "typed": 0.19106473010034125
+    }
+  },
+  "bearings": {
+    "KA01": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.3458333333333333,
+          "B_prototype_plus_node": 0.25520833333333337,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.8666666666666667,
+          "I_v2_plus_cov": 0.7552083333333334,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 0.5125000000000001,
+          "B_prototype_plus_node": 0.8697916666666667,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 0.46145833333333336,
+          "B_prototype_plus_node": 0.43125,
+          "C_edge_only": 0.9833333333333334,
+          "D_full_v2": 0.9635416666666667,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9541666666666666,
+          "I_v2_plus_cov": 0.734375,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 0.7979166666666667,
+          "B_prototype_plus_node": 0.9937499999999999,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 0.9166666666666667,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 0.9958333333333333,
+          "F_full_v3": 0.9958333333333333,
+          "H_covariance": 0.9864583333333333,
+          "I_v2_plus_cov": 0.9864583333333333,
+          "J_v3_plus_cov": 0.9874999999999999,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.4927083333333333,
+          "B_prototype_plus_node": 0.5416666666666667,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9937499999999999,
+          "I_v2_plus_cov": 0.9739583333333333,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.5878472222222222,
+        "B_prototype_plus_node": 0.6819444444444445,
+        "C_edge_only": 0.9972222222222222,
+        "D_full_v2": 0.9939236111111112,
+        "E_typed_edge_only": 0.9993055555555556,
+        "F_full_v3": 0.9993055555555556,
+        "H_covariance": 0.9668402777777777,
+        "I_v2_plus_cov": 0.9083333333333333,
+        "J_v3_plus_cov": 0.9979166666666667,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KA03": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KA05": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.41666666666666663,
+          "B_prototype_plus_node": 0.375,
+          "C_edge_only": 0.765625,
+          "D_full_v2": 0.7583333333333333,
+          "E_typed_edge_only": 0.79375,
+          "F_full_v3": 0.88125,
+          "H_covariance": 0.853125,
+          "I_v2_plus_cov": 0.64375,
+          "J_v3_plus_cov": 0.9083333333333333,
+          "G_weighted_v3": 0.8343749999999999
+        },
+        "K002": {
+          "A_prototype_only": 0.5,
+          "B_prototype_plus_node": 0.7947916666666667,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 0.47187500000000004,
+          "B_prototype_plus_node": 0.475,
+          "C_edge_only": 0.8416666666666666,
+          "D_full_v2": 0.8166666666666667,
+          "E_typed_edge_only": 0.9291666666666667,
+          "F_full_v3": 0.9156250000000001,
+          "H_covariance": 0.7614583333333333,
+          "I_v2_plus_cov": 0.4625,
+          "J_v3_plus_cov": 0.9166666666666667,
+          "G_weighted_v3": 0.9197916666666667
+        },
+        "K004": {
+          "A_prototype_only": 0.6208333333333333,
+          "B_prototype_plus_node": 0.9625,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 0.7583333333333333,
+          "B_prototype_plus_node": 0.9781249999999999,
+          "C_edge_only": 0.965625,
+          "D_full_v2": 0.9739583333333333,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9718749999999999,
+          "I_v2_plus_cov": 0.9718749999999999,
+          "J_v3_plus_cov": 0.9979166666666666,
+          "G_weighted_v3": 0.9979166666666666
+        },
+        "K006": {
+          "A_prototype_only": 0.528125,
+          "B_prototype_plus_node": 0.5302083333333334,
+          "C_edge_only": 0.7697916666666667,
+          "D_full_v2": 0.8302083333333334,
+          "E_typed_edge_only": 0.7010416666666666,
+          "F_full_v3": 0.884375,
+          "H_covariance": 0.7916666666666666,
+          "I_v2_plus_cov": 0.7791666666666667,
+          "J_v3_plus_cov": 0.8864583333333333,
+          "G_weighted_v3": 0.7593749999999999
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.5493055555555556,
+        "B_prototype_plus_node": 0.6859375,
+        "C_edge_only": 0.8904513888888889,
+        "D_full_v2": 0.8965277777777777,
+        "E_typed_edge_only": 0.9039930555555555,
+        "F_full_v3": 0.946875,
+        "H_covariance": 0.8963541666666667,
+        "I_v2_plus_cov": 0.8095486111111111,
+        "J_v3_plus_cov": 0.9515625000000001,
+        "G_weighted_v3": 0.9185763888888889
+      }
+    },
+    "KA06": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.26562500000000006,
+          "B_prototype_plus_node": 0.28750000000000003,
+          "C_edge_only": 0.6083333333333334,
+          "D_full_v2": 0.6385416666666667,
+          "E_typed_edge_only": 0.8395833333333333,
+          "F_full_v3": 0.9302083333333333,
+          "H_covariance": 0.73125,
+          "I_v2_plus_cov": 0.671875,
+          "J_v3_plus_cov": 0.9354166666666666,
+          "G_weighted_v3": 0.8479166666666668
+        },
+        "K002": {
+          "A_prototype_only": 0.5,
+          "B_prototype_plus_node": 0.5458333333333334,
+          "C_edge_only": 0.884375,
+          "D_full_v2": 0.9791666666666667,
+          "E_typed_edge_only": 0.9541666666666667,
+          "F_full_v3": 0.9552083333333333,
+          "H_covariance": 0.9864583333333333,
+          "I_v2_plus_cov": 0.9864583333333333,
+          "J_v3_plus_cov": 0.9833333333333334,
+          "G_weighted_v3": 0.9479166666666666
+        },
+        "K003": {
+          "A_prototype_only": 0.39583333333333337,
+          "B_prototype_plus_node": 0.4114583333333333,
+          "C_edge_only": 0.9145833333333333,
+          "D_full_v2": 0.8875000000000001,
+          "E_typed_edge_only": 0.9864583333333333,
+          "F_full_v3": 0.9979166666666666,
+          "H_covariance": 0.90625,
+          "I_v2_plus_cov": 0.6489583333333333,
+          "J_v3_plus_cov": 0.9979166666666666,
+          "G_weighted_v3": 0.9979166666666666
+        },
+        "K004": {
+          "A_prototype_only": 0.8083333333333333,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 0.9229166666666667,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.49062500000000003,
+          "B_prototype_plus_node": 0.5416666666666667,
+          "C_edge_only": 0.9989583333333333,
+          "D_full_v2": 0.9979166666666667,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9833333333333334,
+          "I_v2_plus_cov": 0.9375,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.563888888888889,
+        "B_prototype_plus_node": 0.631076388888889,
+        "C_edge_only": 0.9010416666666666,
+        "D_full_v2": 0.9171875000000002,
+        "E_typed_edge_only": 0.9633680555555556,
+        "F_full_v3": 0.9805555555555555,
+        "H_covariance": 0.9345486111111111,
+        "I_v2_plus_cov": 0.8741319444444443,
+        "J_v3_plus_cov": 0.986111111111111,
+        "G_weighted_v3": 0.9656250000000001
+      }
+    },
+    "KA07": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.47916666666666663,
+          "B_prototype_plus_node": 0.5239583333333333,
+          "C_edge_only": 0.9708333333333334,
+          "D_full_v2": 0.9708333333333334,
+          "E_typed_edge_only": 0.7322916666666666,
+          "F_full_v3": 0.9489583333333333,
+          "H_covariance": 0.7645833333333334,
+          "I_v2_plus_cov": 0.7458333333333333,
+          "J_v3_plus_cov": 0.9489583333333333,
+          "G_weighted_v3": 0.9635416666666667
+        },
+        "K002": {
+          "A_prototype_only": 0.5625000000000001,
+          "B_prototype_plus_node": 0.4822916666666667,
+          "C_edge_only": 0.9489583333333333,
+          "D_full_v2": 0.9635416666666666,
+          "E_typed_edge_only": 0.9416666666666667,
+          "F_full_v3": 0.9770833333333334,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9385416666666667
+        },
+        "K003": {
+          "A_prototype_only": 0.39583333333333337,
+          "B_prototype_plus_node": 0.41041666666666665,
+          "C_edge_only": 0.9239583333333333,
+          "D_full_v2": 0.9,
+          "E_typed_edge_only": 0.9875,
+          "F_full_v3": 0.9875,
+          "H_covariance": 0.8145833333333334,
+          "I_v2_plus_cov": 0.5895833333333333,
+          "J_v3_plus_cov": 0.9875,
+          "G_weighted_v3": 0.9895833333333334
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.5,
+          "B_prototype_plus_node": 0.5395833333333334,
+          "C_edge_only": 0.9333333333333333,
+          "D_full_v2": 0.928125,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9260416666666667,
+          "I_v2_plus_cov": 0.8072916666666666,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9979166666666666
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.65625,
+        "B_prototype_plus_node": 0.659375,
+        "C_edge_only": 0.9628472222222223,
+        "D_full_v2": 0.9604166666666666,
+        "E_typed_edge_only": 0.9435763888888888,
+        "F_full_v3": 0.9855902777777779,
+        "H_covariance": 0.9175347222222222,
+        "I_v2_plus_cov": 0.8571180555555556,
+        "J_v3_plus_cov": 0.9894097222222222,
+        "G_weighted_v3": 0.9815972222222223
+      }
+    },
+    "KA08": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 79,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.4272151898734178,
+          "B_prototype_plus_node": 0.3681434599156118,
+          "C_edge_only": 0.8734177215189873,
+          "D_full_v2": 0.8734177215189873,
+          "E_typed_edge_only": 0.5875527426160337,
+          "F_full_v3": 0.8386075949367089,
+          "H_covariance": 0.7658227848101266,
+          "I_v2_plus_cov": 0.6561181434599156,
+          "J_v3_plus_cov": 0.8386075949367089,
+          "G_weighted_v3": 0.8343881856540084
+        },
+        "K002": {
+          "A_prototype_only": 0.5337552742616034,
+          "B_prototype_plus_node": 0.5210970464135021,
+          "C_edge_only": 0.8723628691983122,
+          "D_full_v2": 0.8481012658227848,
+          "E_typed_edge_only": 0.9588607594936708,
+          "F_full_v3": 0.9757383966244726,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9472573839662447
+        },
+        "K003": {
+          "A_prototype_only": 0.39345991561181437,
+          "B_prototype_plus_node": 0.4345991561181435,
+          "C_edge_only": 0.5,
+          "D_full_v2": 0.4662447257383966,
+          "E_typed_edge_only": 0.8354430379746837,
+          "F_full_v3": 0.7943037974683544,
+          "H_covariance": 0.6635021097046414,
+          "I_v2_plus_cov": 0.3860759493670886,
+          "J_v3_plus_cov": 0.8069620253164557,
+          "G_weighted_v3": 0.809071729957806
+        },
+        "K004": {
+          "A_prototype_only": 0.9715189873417721,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 0.9578059071729959,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.44198312236286924,
+          "B_prototype_plus_node": 0.5337552742616034,
+          "C_edge_only": 0.9504219409282699,
+          "D_full_v2": 0.939873417721519,
+          "E_typed_edge_only": 0.9936708860759493,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.910337552742616,
+          "I_v2_plus_cov": 0.7890295358649788,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.6209563994374121,
+        "B_prototype_plus_node": 0.6429324894514769,
+        "C_edge_only": 0.8660337552742615,
+        "D_full_v2": 0.8546061884669479,
+        "E_typed_edge_only": 0.8959212376933897,
+        "F_full_v3": 0.934774964838256,
+        "H_covariance": 0.8899437412095641,
+        "I_v2_plus_cov": 0.8052039381153305,
+        "J_v3_plus_cov": 0.940928270042194,
+        "G_weighted_v3": 0.9317862165963432
+      }
+    },
+    "KA09": {
+      "category": "outer_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.5885416666666667,
+          "B_prototype_plus_node": 0.9604166666666666,
+          "C_edge_only": 0.9833333333333334,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 0.959375,
+          "F_full_v3": 0.9927083333333333,
+          "H_covariance": 0.7760416666666667,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 0.9927083333333333,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 0.5802083333333334,
+          "B_prototype_plus_node": 0.853125,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 0.9083333333333333,
+          "F_full_v3": 0.9624999999999999,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9041666666666667
+        },
+        "K003": {
+          "A_prototype_only": 0.5322916666666667,
+          "B_prototype_plus_node": 0.66875,
+          "C_edge_only": 0.8770833333333333,
+          "D_full_v2": 0.8708333333333331,
+          "E_typed_edge_only": 0.9906250000000001,
+          "F_full_v3": 0.9989583333333333,
+          "H_covariance": 0.7520833333333333,
+          "I_v2_plus_cov": 0.7125,
+          "J_v3_plus_cov": 0.9989583333333333,
+          "G_weighted_v3": 0.9895833333333334
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.5104166666666667,
+          "B_prototype_plus_node": 0.8125,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.965625,
+          "I_v2_plus_cov": 0.8875000000000001,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.7019097222222223,
+        "B_prototype_plus_node": 0.8824652777777778,
+        "C_edge_only": 0.9767361111111111,
+        "D_full_v2": 0.9784722222222223,
+        "E_typed_edge_only": 0.9763888888888889,
+        "F_full_v3": 0.9923611111111111,
+        "H_covariance": 0.915625,
+        "I_v2_plus_cov": 0.9333333333333335,
+        "J_v3_plus_cov": 0.9986111111111112,
+        "G_weighted_v3": 0.9822916666666668
+      }
+    },
+    "KA04": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KA15": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KA16": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KA22": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KA30": {
+      "category": "outer_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.43541666666666673,
+          "B_prototype_plus_node": 0.6604166666666667,
+          "C_edge_only": 0.8583333333333334,
+          "D_full_v2": 0.9104166666666667,
+          "E_typed_edge_only": 0.6770833333333333,
+          "F_full_v3": 0.9104166666666668,
+          "H_covariance": 0.7010416666666667,
+          "I_v2_plus_cov": 0.7385416666666667,
+          "J_v3_plus_cov": 0.9135416666666666,
+          "G_weighted_v3": 0.9114583333333334
+        },
+        "K002": {
+          "A_prototype_only": 0.49270833333333336,
+          "B_prototype_plus_node": 0.7281249999999999,
+          "C_edge_only": 0.9572916666666668,
+          "D_full_v2": 0.9677083333333333,
+          "E_typed_edge_only": 0.9260416666666667,
+          "F_full_v3": 0.9520833333333333,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9197916666666668
+        },
+        "K003": {
+          "A_prototype_only": 0.390625,
+          "B_prototype_plus_node": 0.475,
+          "C_edge_only": 0.8583333333333333,
+          "D_full_v2": 0.8406250000000001,
+          "E_typed_edge_only": 0.9916666666666667,
+          "F_full_v3": 0.9895833333333334,
+          "H_covariance": 0.7802083333333334,
+          "I_v2_plus_cov": 0.5614583333333334,
+          "J_v3_plus_cov": 0.9895833333333334,
+          "G_weighted_v3": 0.9895833333333334
+        },
+        "K004": {
+          "A_prototype_only": 0.8916666666666667,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 0.940625,
+          "B_prototype_plus_node": 0.9989583333333333,
+          "C_edge_only": 0.9989583333333333,
+          "D_full_v2": 0.9989583333333333,
+          "E_typed_edge_only": 0.9989583333333333,
+          "F_full_v3": 0.9989583333333333,
+          "H_covariance": 0.996875,
+          "I_v2_plus_cov": 0.996875,
+          "J_v3_plus_cov": 0.9979166666666666,
+          "G_weighted_v3": 0.9989583333333333
+        },
+        "K006": {
+          "A_prototype_only": 0.45937500000000003,
+          "B_prototype_plus_node": 0.5854166666666667,
+          "C_edge_only": 0.778125,
+          "D_full_v2": 0.7739583333333333,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9354166666666667,
+          "I_v2_plus_cov": 0.8197916666666666,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9895833333333334
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.6017361111111111,
+        "B_prototype_plus_node": 0.7413194444444443,
+        "C_edge_only": 0.9085069444444445,
+        "D_full_v2": 0.9152777777777779,
+        "E_typed_edge_only": 0.9322916666666666,
+        "F_full_v3": 0.975173611111111,
+        "H_covariance": 0.9022569444444445,
+        "I_v2_plus_cov": 0.8527777777777777,
+        "J_v3_plus_cov": 0.9835069444444445,
+        "G_weighted_v3": 0.9682291666666667
+      }
+    },
+    "KI01": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.46875,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9958333333333333,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 0.7479166666666667,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 0.5270833333333333,
+          "B_prototype_plus_node": 0.9895833333333333,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9656250000000001,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.5,
+          "B_prototype_plus_node": 0.9989583333333333,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.7072916666666668,
+        "B_prototype_plus_node": 0.9980902777777777,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 0.9935763888888888,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KI03": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KI05": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.47708333333333336,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 0.8875000000000001,
+          "D_full_v2": 0.9791666666666666,
+          "E_typed_edge_only": 0.7552083333333333,
+          "F_full_v3": 0.9333333333333333,
+          "H_covariance": 0.83125,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 0.9375,
+          "G_weighted_v3": 0.9760416666666667
+        },
+        "K002": {
+          "A_prototype_only": 0.5208333333333334,
+          "B_prototype_plus_node": 0.6864583333333333,
+          "C_edge_only": 0.8479166666666667,
+          "D_full_v2": 0.9145833333333334,
+          "E_typed_edge_only": 0.990625,
+          "F_full_v3": 0.990625,
+          "H_covariance": 0.9989583333333333,
+          "I_v2_plus_cov": 0.9989583333333333,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9770833333333333
+        },
+        "K003": {
+          "A_prototype_only": 0.46145833333333336,
+          "B_prototype_plus_node": 0.640625,
+          "C_edge_only": 0.5593750000000001,
+          "D_full_v2": 0.6041666666666666,
+          "E_typed_edge_only": 0.9447916666666667,
+          "F_full_v3": 0.9239583333333333,
+          "H_covariance": 0.6197916666666667,
+          "I_v2_plus_cov": 0.65,
+          "J_v3_plus_cov": 0.9281250000000001,
+          "G_weighted_v3": 0.93125
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.5239583333333333,
+          "B_prototype_plus_node": 0.678125,
+          "C_edge_only": 0.8260416666666667,
+          "D_full_v2": 0.8437500000000001,
+          "E_typed_edge_only": 0.903125,
+          "F_full_v3": 0.9739583333333334,
+          "H_covariance": 0.765625,
+          "I_v2_plus_cov": 0.7374999999999999,
+          "J_v3_plus_cov": 0.9739583333333334,
+          "G_weighted_v3": 0.9510416666666666
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.6638888888888889,
+        "B_prototype_plus_node": 0.8342013888888888,
+        "C_edge_only": 0.8534722222222223,
+        "D_full_v2": 0.8902777777777778,
+        "E_typed_edge_only": 0.9322916666666666,
+        "F_full_v3": 0.9703124999999999,
+        "H_covariance": 0.8692708333333333,
+        "I_v2_plus_cov": 0.8977430555555554,
+        "J_v3_plus_cov": 0.9732638888888888,
+        "G_weighted_v3": 0.9725694444444445
+      }
+    },
+    "KI07": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.5302083333333333,
+          "B_prototype_plus_node": 0.9791666666666666,
+          "C_edge_only": 0.9802083333333333,
+          "D_full_v2": 0.99375,
+          "E_typed_edge_only": 0.9020833333333333,
+          "F_full_v3": 0.9354166666666667,
+          "H_covariance": 0.9020833333333333,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 0.9354166666666667,
+          "G_weighted_v3": 0.98125
+        },
+        "K002": {
+          "A_prototype_only": 0.49583333333333335,
+          "B_prototype_plus_node": 0.628125,
+          "C_edge_only": 0.9187500000000001,
+          "D_full_v2": 0.9083333333333334,
+          "E_typed_edge_only": 0.91875,
+          "F_full_v3": 0.9677083333333333,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.8968750000000001
+        },
+        "K003": {
+          "A_prototype_only": 0.4947916666666667,
+          "B_prototype_plus_node": 0.6083333333333334,
+          "C_edge_only": 0.7458333333333335,
+          "D_full_v2": 0.7333333333333334,
+          "E_typed_edge_only": 0.9041666666666667,
+          "F_full_v3": 0.8812500000000001,
+          "H_covariance": 0.8177083333333334,
+          "I_v2_plus_cov": 0.66875,
+          "J_v3_plus_cov": 0.8843749999999999,
+          "G_weighted_v3": 0.8864583333333333
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.59375,
+          "B_prototype_plus_node": 0.6614583333333333,
+          "C_edge_only": 0.9291666666666666,
+          "D_full_v2": 0.93125,
+          "E_typed_edge_only": 0.9979166666666667,
+          "F_full_v3": 0.9979166666666667,
+          "H_covariance": 0.8447916666666666,
+          "I_v2_plus_cov": 0.7958333333333333,
+          "J_v3_plus_cov": 0.9979166666666667,
+          "G_weighted_v3": 0.9958333333333333
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.6857638888888888,
+        "B_prototype_plus_node": 0.8128472222222222,
+        "C_edge_only": 0.9289930555555554,
+        "D_full_v2": 0.9277777777777779,
+        "E_typed_edge_only": 0.9538194444444444,
+        "F_full_v3": 0.9637152777777778,
+        "H_covariance": 0.9274305555555555,
+        "I_v2_plus_cov": 0.9107638888888889,
+        "J_v3_plus_cov": 0.9696180555555557,
+        "G_weighted_v3": 0.9600694444444445
+      }
+    },
+    "KI08": {
+      "category": "inner_ring",
+      "origin": "artificial",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.7041666666666667,
+          "B_prototype_plus_node": 0.9677083333333334,
+          "C_edge_only": 0.9927083333333333,
+          "D_full_v2": 0.9947916666666667,
+          "E_typed_edge_only": 0.7208333333333333,
+          "F_full_v3": 0.9583333333333333,
+          "H_covariance": 0.8135416666666666,
+          "I_v2_plus_cov": 0.9937500000000001,
+          "J_v3_plus_cov": 0.9583333333333333,
+          "G_weighted_v3": 0.9958333333333333
+        },
+        "K002": {
+          "A_prototype_only": 0.6291666666666665,
+          "B_prototype_plus_node": 0.709375,
+          "C_edge_only": 0.9989583333333333,
+          "D_full_v2": 0.9989583333333333,
+          "E_typed_edge_only": 0.9270833333333333,
+          "F_full_v3": 0.9760416666666667,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9197916666666667
+        },
+        "K003": {
+          "A_prototype_only": 0.5635416666666666,
+          "B_prototype_plus_node": 0.5927083333333334,
+          "C_edge_only": 0.896875,
+          "D_full_v2": 0.8666666666666667,
+          "E_typed_edge_only": 0.971875,
+          "F_full_v3": 0.9666666666666667,
+          "H_covariance": 0.8031250000000001,
+          "I_v2_plus_cov": 0.6520833333333333,
+          "J_v3_plus_cov": 0.9666666666666667,
+          "G_weighted_v3": 0.9697916666666667
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.5614583333333334,
+          "B_prototype_plus_node": 0.6854166666666667,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 0.9947916666666666,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.8864583333333333,
+          "I_v2_plus_cov": 0.7749999999999999,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9989583333333333
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.7430555555555555,
+        "B_prototype_plus_node": 0.8258680555555555,
+        "C_edge_only": 0.9814236111111111,
+        "D_full_v2": 0.9767361111111111,
+        "E_typed_edge_only": 0.935763888888889,
+        "F_full_v3": 0.9835069444444443,
+        "H_covariance": 0.9171875000000002,
+        "I_v2_plus_cov": 0.9034722222222223,
+        "J_v3_plus_cov": 0.9874999999999999,
+        "G_weighted_v3": 0.9807291666666665
+      }
+    },
+    "KI04": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.3572916666666667,
+          "B_prototype_plus_node": 0.33125000000000004,
+          "C_edge_only": 0.95625,
+          "D_full_v2": 0.9552083333333332,
+          "E_typed_edge_only": 0.86875,
+          "F_full_v3": 0.9854166666666666,
+          "H_covariance": 0.5677083333333333,
+          "I_v2_plus_cov": 0.50625,
+          "J_v3_plus_cov": 0.9989583333333333,
+          "G_weighted_v3": 0.984375
+        },
+        "K002": {
+          "A_prototype_only": 0.48125,
+          "B_prototype_plus_node": 0.7666666666666667,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 0.9864583333333333,
+          "F_full_v3": 0.9864583333333333,
+          "H_covariance": 0.996875,
+          "I_v2_plus_cov": 0.996875,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 0.9677083333333333
+        },
+        "K003": {
+          "A_prototype_only": 0.41770833333333335,
+          "B_prototype_plus_node": 0.4375,
+          "C_edge_only": 0.7229166666666667,
+          "D_full_v2": 0.6989583333333333,
+          "E_typed_edge_only": 0.9874999999999999,
+          "F_full_v3": 0.9864583333333334,
+          "H_covariance": 0.6802083333333333,
+          "I_v2_plus_cov": 0.3791666666666667,
+          "J_v3_plus_cov": 0.9864583333333334,
+          "G_weighted_v3": 0.9875
+        },
+        "K004": {
+          "A_prototype_only": 0.9760416666666666,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 0.9958333333333333,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9979166666666666,
+          "I_v2_plus_cov": 0.9979166666666666,
+          "J_v3_plus_cov": 0.9989583333333333,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.5,
+          "B_prototype_plus_node": 0.5416666666666667,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 0.9645833333333333,
+          "I_v2_plus_cov": 0.8875000000000001,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.6213541666666668,
+        "B_prototype_plus_node": 0.6795138888888889,
+        "C_edge_only": 0.9465277777777779,
+        "D_full_v2": 0.9423611111111111,
+        "E_typed_edge_only": 0.9737847222222222,
+        "F_full_v3": 0.9930555555555555,
+        "H_covariance": 0.8678819444444444,
+        "I_v2_plus_cov": 0.7946180555555555,
+        "J_v3_plus_cov": 0.9973958333333334,
+        "G_weighted_v3": 0.9899305555555555
+      }
+    },
+    "KI14": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KI16": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KI17": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KI18": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KI21": {
+      "category": "inner_ring",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KB23": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.7052083333333332,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 0.9208333333333333,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 0.5822916666666667,
+          "B_prototype_plus_node": 0.9979166666666666,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 0.8916666666666667,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.85,
+        "B_prototype_plus_node": 0.9996527777777778,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KB24": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 0.9385416666666667,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 0.9897569444444444,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    },
+    "KB27": {
+      "category": "combined",
+      "origin": "real",
+      "n": 80,
+      "per_client_auroc": {
+        "K001": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K002": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K003": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K004": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K005": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        },
+        "K006": {
+          "A_prototype_only": 1.0,
+          "B_prototype_plus_node": 1.0,
+          "C_edge_only": 1.0,
+          "D_full_v2": 1.0,
+          "E_typed_edge_only": 1.0,
+          "F_full_v3": 1.0,
+          "H_covariance": 1.0,
+          "I_v2_plus_cov": 1.0,
+          "J_v3_plus_cov": 1.0,
+          "G_weighted_v3": 1.0
+        }
+      },
+      "mean_across_clients": {
+        "A_prototype_only": 1.0,
+        "B_prototype_plus_node": 1.0,
+        "C_edge_only": 1.0,
+        "D_full_v2": 1.0,
+        "E_typed_edge_only": 1.0,
+        "F_full_v3": 1.0,
+        "H_covariance": 1.0,
+        "I_v2_plus_cov": 1.0,
+        "J_v3_plus_cov": 1.0,
+        "G_weighted_v3": 1.0
+      }
+    }
+  },
+  "summary_mean_auroc": {
+    "A_prototype_only": 0.8285771157903278,
+    "B_prototype_plus_node": 0.8875086213891593,
+    "C_edge_only": 0.9697406145190954,
+    "D_full_v2": 0.9712909431461647,
+    "E_typed_edge_only": 0.9773270988856433,
+    "F_full_v3": 0.9894317828356594,
+    "H_covariance": 0.9614788725251542,
+    "I_v2_plus_cov": 0.944117085226658,
+    "J_v3_plus_cov": 0.9913778501298279,
+    "G_weighted_v3": 0.9865924720058422
+  },
+  "category_summary": {
+    "A_prototype_only": {
+      "outer_ring": 0.773491158286451,
+      "inner_ring": 0.8564867424242425,
+      "combined": 0.9465856481481482
+    },
+    "B_prototype_plus_node": {
+      "outer_ring": 0.8270875454172528,
+      "inner_ring": 0.9227746212121212,
+      "combined": 0.9998842592592593
+    },
+    "C_edge_only": {
+      "outer_ring": 0.9585699425691514,
+      "inner_ring": 0.9736742424242425,
+      "combined": 1.0
+    },
+    "D_full_v2": {
+      "outer_ring": 0.959700978668542,
+      "inner_ring": 0.976104797979798,
+      "combined": 1.0
+    },
+    "E_typed_edge_only": {
+      "outer_ring": 0.967903737400375,
+      "inner_ring": 0.9814236111111111,
+      "combined": 1.0
+    },
+    "F_full_v3": {
+      "outer_ring": 0.984553006329114,
+      "inner_ring": 0.9918718434343435,
+      "combined": 1.0
+    },
+    "H_covariance": {
+      "outer_ring": 0.9519252886193154,
+      "inner_ring": 0.961395202020202,
+      "combined": 1.0
+    },
+    "I_v2_plus_cov": {
+      "outer_ring": 0.9200372494725739,
+      "inner_ring": 0.955145202020202,
+      "combined": 1.0
+    },
+    "J_v3_plus_cov": {
+      "outer_ring": 0.9873371937998124,
+      "inner_ring": 0.9934343434343433,
+      "combined": 1.0
+    },
+    "G_weighted_v3": {
+      "outer_ring": 0.9790088050867324,
+      "inner_ring": 0.9912089646464647,
+      "combined": 1.0
+    }
+  },
+  "n_valid_prototypes_for_cov_calib": [
+    3,
+    3,
+    4,
+    3,
+    3,
+    3
+  ]
+}

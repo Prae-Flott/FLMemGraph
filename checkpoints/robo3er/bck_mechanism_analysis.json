@@ -1,0 +1,34 @@
+{
+ "bc_argmax_agreement_rate": 0.7492957746478873,
+ "bk_argmax_agreement_rate": 0.4226190476190476,
+ "ck_argmax_agreement_rate": 0.44047619047619047,
+ "total_samples": 355,
+ "total_paired_samples": 336,
+ "mean_d_norm_over_all": 0.4515029788017273,
+ "mean_dhat_norm_over_all": 0.2679273188114166,
+ "mean_resid_norm_over_all": 0.41914111375808716,
+ "dhat_to_d_ratio": 0.5934120734305955,
+ "resid_to_d_ratio": 0.9283241383468706,
+ "mean_pearson_score_bc": 0.9944070039725381,
+ "mean_pearson_score_bk": 0.1929693890215216,
+ "per_client": [
+  {
+   "client": 1,
+   "fault": "cable trapped",
+   "n": 206,
+   "mean_d_norm": 0.44038379192352295,
+   "mean_dhat_norm": 0.21958352625370026,
+   "mean_resid_norm": 0.3804914653301239,
+   "frac_dhat_over_d": 0.4986185465502657
+  },
+  {
+   "client": 4,
+   "fault": "stuck",
+   "n": 149,
+   "mean_d_norm": 0.46687594056129456,
+   "mean_dhat_norm": 0.33476507663726807,
+   "mean_resid_norm": 0.4725761413574219,
+   "frac_dhat_over_d": 0.7170321868248014
+  }
+ ]
+}
