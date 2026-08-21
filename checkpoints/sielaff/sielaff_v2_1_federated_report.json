@@ -92,6 +92,7 @@
     "machine0": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 0,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 79,
@@ -132,6 +133,7 @@
     "machine1": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 382,
@@ -179,6 +181,7 @@
     "machine2": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 477,
@@ -226,6 +229,7 @@
     "machine3": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 418,
@@ -266,6 +270,7 @@
     "machine4": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 359,
@@ -306,6 +311,7 @@
     "machine5": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 523,
@@ -353,6 +359,7 @@
     "machine6": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 350,
@@ -393,6 +400,7 @@
     "machine7": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 534,
@@ -440,6 +448,7 @@
     "machine8": {
       "excluded_nodes": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 271,
@@ -489,6 +498,7 @@
         "cleaning_duration"
       ],
       "n_valid_cov_prototypes": 2,
+      "num_prototypes": 16,
       "fault_types": {
         "bottle_recognition": {
           "n": 419,

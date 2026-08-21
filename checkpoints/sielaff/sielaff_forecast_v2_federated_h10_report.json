@@ -96,6 +96,7 @@
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [],
       "n_valid_cov_prototypes": 0,
+      "num_prototypes": 16,
       "has_forecast": false,
       "fault_types": {
         "bottle_recognition": {
@@ -147,6 +148,7 @@
         "read barcode_RingCamera 5"
       ],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -212,6 +214,7 @@
         "read barcode_RingCamera 2"
       ],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -305,6 +308,7 @@
         "read barcode_RingCamera 3"
       ],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -376,6 +380,7 @@
         "read barcode_RingCamera 5"
       ],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -438,6 +443,7 @@
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -531,6 +537,7 @@
         "read barcode_RingCamera 6"
       ],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -602,6 +609,7 @@
         "read barcode_RingCamera 6"
       ],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -691,6 +699,7 @@
         "read barcode_RingCamera 2"
       ],
       "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
@@ -777,6 +786,7 @@
         "receipt_count"
       ],
       "n_valid_cov_prototypes": 2,
+      "num_prototypes": 16,
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
