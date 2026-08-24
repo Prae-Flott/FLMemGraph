@@ -26,16 +26,14 @@ other federated group score here, for consistency.
 
 Usage:
     python3 run_robo3er_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior]
-        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema,shrinkage}] [--alpha 20]
+        [--out-suffix NAME] [--calib-mode {global,shrinkage}] [--alpha 20|auto]
 
 `--calib-mode` (default `global`, UNCHANGED behavior): see
 `run_robo3er_v3_1_federated.py`'s module docstring and
-`memory/calib-in-prototype-ab.md` for the full Path A/B/shrinkage
-explanation. Applies identically here to signal K (`k_resid`) on top of
-B/C/E/H -- `per_prototype` fits `model.score_calib_k` from the calib
-split's PAIRED k_resid array (via `set_k_calibration`); `ema`/`shrinkage`
-modes have no online/federated hook for K in this script (matches C's
-fallback) and stay global for K.
+`memory/calib-in-prototype-ab.md` for the full `shrinkage` explanation (and
+the two other calibration paths that investigation explored and dropped).
+`shrinkage` has no federated hook for K in this script (matches C's
+fallback) and stays global for K.
 """
 import argparse
 import json
@@ -227,7 +225,7 @@ def forecast_scores(model, x_in, x_future, batch_size=BATCH_SIZE):
     return np.concatenate(k_resid_all)
 
 
-def train_local(model, fit_in, fit_future, epochs, calib_mode="global"):
+def train_local(model, fit_in, fit_future, epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(torch.from_numpy(fit_in), torch.from_numpy(fit_future)),
@@ -248,8 +246,6 @@ def train_local(model, fit_in, fit_future, epochs, calib_mode="global"):
                     + LAMBDA_TYPED * l_typed + LAMBDA_FORECAST * l_forecast)
             loss.backward()
             optimizer.step()
-            if calib_mode == "ema":
-                model.memory.update_ema(out["d_node"].detach(), out["idx"].detach())
     return model
 
 
@@ -265,14 +261,11 @@ def topk_mean(x, k):
     return np.sort(x, axis=1)[:, -k:].mean(axis=1)
 
 
-def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG, score_head=None, idx_calib=None, idx_x=None,
-                          ema_memory=None):
-    if score_head is not None:
-        z_calib = score_head.zscore(raw_calib, idx_calib)
-        z_x = score_head.zscore(raw_x, idx_x)
-    elif ema_memory is not None:
-        z_calib = ema_memory.ema_zscore(raw_calib, idx_calib)
-        z_x = ema_memory.ema_zscore(raw_x, idx_x)
+def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG, idx_calib=None, idx_x=None,
+                          dev_memory=None):
+    if dev_memory is not None:
+        z_calib = dev_memory.dev_zscore(raw_calib, idx_calib)
+        z_x = dev_memory.dev_zscore(raw_x, idx_x)
     else:
         z_calib = zscore(raw_calib, raw_calib)
         z_x = zscore(raw_x, raw_calib)
@@ -315,7 +308,7 @@ def add_forecast_scores(base, forecast_score, mask):
 
 
 def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global", alpha=20.0):
-    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
+    assert calib_mode in ("global", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     forecast_h = STRIDE * horizon_mult
@@ -362,7 +355,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             n2, t2, f2 = x_future_raw.shape
             x_future = (scaler.transform(x_future_raw.reshape(-1, f2)).reshape(n2, t2, f2).astype(np.float32)
                         if n2 > 0 else x_future_raw)
-            train_local(model, x_in, x_future, LOCAL_EPOCHS, calib_mode=calib_mode)
+            train_local(model, x_in, x_future, LOCAL_EPOCHS)
             fit_counts.append(len(x_in))
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
@@ -418,9 +411,6 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         model.cov_head.set_calibration(d_node_calib_b, calib_idx_w, min_samples=cov_min)
 
         _, d_node_calib, resid_struct_calib, resid_phys_calib, calib_idx_w, _, d_mahal_calib = per_sample_scores(model, calib_w)
-        if calib_mode == "per_prototype":
-            model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w,
-                                        min_samples=MIN_PROTO_SAMPLES)
 
         vi, chains, _ = build_pairs(c.calib_idx, targets, window_robot, horizon_mult, True, True)
         calib_in = scale_client(data, scaler, vi) if len(vi) else np.zeros((0, WINDOW_LEN, num_nodes), dtype=np.float32)
@@ -435,9 +425,6 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             _, _, _, _, k_idx_calib, _, _ = per_sample_scores(model, calib_in)
         else:
             k_idx_calib = np.zeros((0,), dtype=int)
-        if calib_mode == "per_prototype" and len(vi):
-            model.set_k_calibration(k_resid_calib, k_idx_calib, min_samples=MIN_PROTO_SAMPLES)
-
         calib_data[c.client_id] = (d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib,
                                     k_resid_calib, calib_idx_w, k_idx_calib)
 
@@ -453,17 +440,15 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             print(f"client {c.client_id} ({c.robot_name}): no fault windows, skipping evaluation")
             continue
 
-        node_head = model.score_calib_node if calib_mode == "per_prototype" else None
-        struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        k_head = model.score_calib_k if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C/K have no
-        # online/federated hook -> global fallback; ema_zscore() reused as-is for shrinkage.
+        dev_mem = model.memory if calib_mode == "shrinkage" else None  # C/K have no
+        # shrinkage hook -> global fallback; dev_zscore() reads whatever
+        # load_shrinkage_stats() populated this round.
 
         test_w = scale_client(data, scaler, c.test_normal_idx)
         _, d_node_normal, resid_struct_normal, resid_phys_normal, idx_normal, _, d_mahal_normal = per_sample_scores(model, test_w)
-        node_score_normal = two_stage_group_score(d_node_calib, d_node_normal, score_head=node_head,
-                                                   idx_calib=calib_idx_w, idx_x=idx_normal, ema_memory=ema_mem)
-        edge_score_normal = two_stage_group_score(resid_struct_calib, resid_struct_normal, score_head=struct_head,
+        node_score_normal = two_stage_group_score(d_node_calib, d_node_normal,
+                                                   idx_calib=calib_idx_w, idx_x=idx_normal, dev_memory=dev_mem)
+        edge_score_normal = two_stage_group_score(resid_struct_calib, resid_struct_normal,
                                                    idx_calib=calib_idx_w, idx_x=idx_normal)
         typed_score_normal = two_stage_group_score(resid_phys_calib, resid_phys_normal)
         cov_score_normal = zscore(d_mahal_normal, d_mahal_calib)
@@ -478,7 +463,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             k_resid_normal = forecast_scores(model, test_normal_in, test_normal_future)
             if len(k_resid_calib):
                 _, _, _, _, k_idx_normal, _, _ = per_sample_scores(model, test_normal_in)
-                forecast_score_normal = two_stage_group_score(k_resid_calib, k_resid_normal, score_head=k_head,
+                forecast_score_normal = two_stage_group_score(k_resid_calib, k_resid_normal,
                                                                idx_calib=k_idx_calib, idx_x=k_idx_normal)
             else:
                 forecast_score_normal = np.zeros(len(vi_n))
@@ -492,9 +477,9 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             name = label_map[str(label_id)]
             fault_w = scale_client(data, scaler, fault_idx)
             _, d_node_f, resid_struct_f, resid_phys_f, idx_f, _, d_mahal_f = per_sample_scores(model, fault_w)
-            node_score_f = two_stage_group_score(d_node_calib, d_node_f, score_head=node_head,
-                                                  idx_calib=calib_idx_w, idx_x=idx_f, ema_memory=ema_mem)
-            edge_score_f = two_stage_group_score(resid_struct_calib, resid_struct_f, score_head=struct_head,
+            node_score_f = two_stage_group_score(d_node_calib, d_node_f,
+                                                  idx_calib=calib_idx_w, idx_x=idx_f, dev_memory=dev_mem)
+            edge_score_f = two_stage_group_score(resid_struct_calib, resid_struct_f,
                                                   idx_calib=calib_idx_w, idx_x=idx_f)
             typed_score_f = two_stage_group_score(resid_phys_calib, resid_phys_f)
             cov_score_f = zscore(d_mahal_f, d_mahal_calib)
@@ -509,7 +494,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
                 k_resid_f = forecast_scores(model, fault_in, fault_future)
                 if len(k_resid_calib):
                     _, _, _, _, k_idx_f, _, _ = per_sample_scores(model, fault_in)
-                    forecast_score_f = two_stage_group_score(k_resid_calib, k_resid_f, score_head=k_head,
+                    forecast_score_f = two_stage_group_score(k_resid_calib, k_resid_f,
                                                              idx_calib=k_idx_calib, idx_x=k_idx_f)
                 else:
                     forecast_score_f = np.zeros(len(vi_f))
@@ -545,8 +530,6 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
     report["summary_mean_auroc_overall"] = summary_overall
     if calib_mode == "shrinkage":
         mode_suffix = f"_calibmode_shrinkage_alpha{'auto' if alpha is None else int(alpha)}"
-    elif calib_mode != "global":
-        mode_suffix = f"_calibmode_{calib_mode}"
     else:
         mode_suffix = ""
     suffix = out_suffix if out_suffix is not None else (
@@ -566,7 +549,7 @@ if __name__ == "__main__":
     parser.add_argument("--horizon-mult", type=int, default=10)
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "shrinkage"], default="global")
     parser.add_argument("--alpha", type=str, default="20",
                         help="shrinkage strength for --calib-mode shrinkage, or 'auto' for data-driven per-slot alpha")
     args = parser.parse_args()

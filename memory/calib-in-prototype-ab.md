@@ -1,6 +1,6 @@
 ---
 name: calib-in-prototype-ab
-description: Branch experiment (calib-in-prototype-ab) closing the B/C/K-vs-H/E calibration-architecture gap -- Path B (offline per-prototype median/IQR, new ScoreCalibrationHead) vs Path A (online EMA per-prototype mean/var) vs shrinkage vs the existing global-median/IQR baseline, robo3er + Sielaff + Paderborn, federated, single seed.
+description: Branch experiment (calib-in-prototype-ab) closing the B/C/K-vs-H/E calibration-architecture gap -- compared Path B (offline per-prototype median/IQR), Path A (online EMA), and shrinkage (empirical-Bayes fleet-pooled) against the global-median/IQR baseline across robo3er + Sielaff + Paderborn, federated, single seed. FINAL STATE: Path A/B removed from the codebase (2026-08-24 cleanup); shrinkage is the sole kept non-global calib mode, with an optional dynamic (data-driven) alpha.
 metadata:
   type: project
 ---
@@ -478,7 +478,51 @@ point:
   original problem, but not an improvement over the already-working `ema`
   fix either.
 
-**Net assessment: on this single seed, `shrinkage` is a real, working
+## Cleanup (2026-08-24): `per_prototype` (Path B) and `ema` (Path A) removed
+## from the codebase; `shrinkage` kept as the sole non-`global` calib mode
+
+Decision made after the dynamic-alpha validation above (and the full
+3-dataset comparison across all sections of this doc): `shrinkage` is the
+project's answer for federated-shared per-prototype tolerance calibration;
+`per_prototype` and `ema` were investigative dead ends (each won on at
+most one dataset, `shrinkage` was competitive-or-best on Paderborn and
+never worse than `ema`'s own failures elsewhere) and are no longer worth
+carrying as live code paths.
+
+**Removed**: `ScoreCalibrationHead` class and all `score_calib_node`/
+`score_calib_struct`/`score_calib_k` attributes + `set_score_calibration()`/
+`set_k_calibration()` methods (Path B, `joint_prototype_model.py`);
+`JointPrototypeMemory.update_ema()` + `ema_decay`/`ema_warmup_steps`/
+`ema_step` (Path A's online-update machinery only). All 6
+`run_*_federated.py` scripts: `--calib-mode` choices reduced to
+`{global, shrinkage}`, `per_prototype`/`ema` branches deleted from
+`train_local()`/`two_stage_group_score()`/`zscore_mode()`/`main()`, dead
+per-mode report fields (`n_valid_score_*_prototypes`) removed.
+
+**Kept, renamed for honesty**: the EMA-buffer MECHANISM itself
+(`ema_mean`/`ema_var`/`ema_initialized`/`ema_global_*` -> `dev_mean`/
+`dev_var`/`dev_valid`/`dev_global_*`; `ema_zscore()` -> `dev_zscore()`)
+survives, since `shrinkage`'s `load_shrinkage_stats()` always repurposed
+these same buffers/read-path -- they were never EMA-specific in what they
+DO, only in how `ema` mode used to populate them (a decayed running
+update, now gone) versus how `shrinkage` populates them (a fresh per-round
+overwrite, unchanged). Keeping the old `ema_*` names after deleting `ema`
+mode would have been actively misleading to a future reader, so this was a
+rename, not just a deletion.
+
+**Verified non-regression**: every one of the 6 scripts' `global` mode
+reproduces its pre-cleanup AUROC exactly (spot-checked against numbers
+recorded earlier in this doc); `shrinkage` mode likewise reproduces its
+known alpha=20 numbers exactly (e.g. robo3er v3_1 B=0.828, Paderborn
+forecast_v2 B=0.925) -- the only diff in the two re-run checkpoint JSONs
+committed alongside this cleanup is the new `shrinkage_alpha` field
+`compute_shrinkage_stats` now always logs per round (added for the dynamic-
+alpha work above, unrelated to this cleanup but landed in the same
+session).
+
+## Net assessment (shrinkage, pre-cleanup context retained below)
+
+**On this single seed, `shrinkage` is a real, working
 implementation of the agreed design, but it does not achieve the specific
 hoped-for outcome (robot01's `cable_trapped` not regressing the way it did
 under `federated_ema`, while robo3er's overall B improves over `ema`).**

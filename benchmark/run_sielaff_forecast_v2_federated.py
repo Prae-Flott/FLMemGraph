@@ -17,15 +17,15 @@ Adds `K_forecast_max`/`BK_max`/`CK_max`/`HK_max`, reusing
 
 Usage:
     python3 run_sielaff_forecast_v2_federated.py [--horizon-mult M] [--no-forecast-prior]
-        [--out-suffix NAME] [--calib-mode {global,per_prototype,ema,shrinkage}]
-        [--num-prototypes N] [--alpha 20]
+        [--out-suffix NAME] [--calib-mode {global,shrinkage}]
+        [--num-prototypes N] [--alpha 20|auto]
 
 `--calib-mode` (default `global`, unchanged behavior): see
 `run_robo3er_v3_1_federated.py`'s docstring and
-`memory/calib-in-prototype-ab.md`. Applies to B/C/K's per-node z-score
-(the reliability mask stays global in every mode, same simplification as
-`run_sielaff_v2_1_federated.py`). `ema`/`shrinkage` have no hook for C/K,
-falling back to `global` for those (same scope limit as elsewhere).
+`memory/calib-in-prototype-ab.md`. Applies to B's per-node z-score (the
+reliability mask stays global in every mode, same simplification as
+`run_sielaff_v2_1_federated.py`). `shrinkage` has no hook for C/K, falling
+back to `global` for those (same scope limit as elsewhere).
 
 `--num-prototypes` (default `NUM_PROTOTYPES` below, unchanged behavior):
 see `run_sielaff_v2_1_federated.py`'s docstring and
@@ -187,7 +187,7 @@ def forecast_scores(model, x_in, x_future, batch_size=BATCH_SIZE):
     return np.concatenate(k_resid_all)
 
 
-def train_local(model, fit_in, fit_future, epochs, calib_mode="global"):
+def train_local(model, fit_in, fit_future, epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(torch.from_numpy(fit_in), torch.from_numpy(fit_future)),
@@ -206,8 +206,6 @@ def train_local(model, fit_in, fit_future, epochs, calib_mode="global"):
             loss = l_pred + BETA * l_me + l_mc + LAMBDA_EDGE * l_edge + LAMBDA_FORECAST * l_forecast
             loss.backward()
             optimizer.step()
-            if calib_mode == "ema":
-                model.memory.update_ema(out["d_node"].detach(), out["idx"].detach())
     return model
 
 
@@ -218,18 +216,16 @@ def zscore(x, calib_x):
     return (x - median) / iqr, iqr
 
 
-def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
-    if score_head is not None:
-        return score_head.zscore(x, idx_x)
-    if ema_memory is not None:
-        return ema_memory.ema_zscore(x, idx_x)
+def zscore_mode(x, idx_x, calib_x, idx_calib, dev_memory=None):
+    if dev_memory is not None:
+        return dev_memory.dev_zscore(x, idx_x)
     z, _ = zscore(x, calib_x)
     return z
 
 
 def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="global",
          num_prototypes=NUM_PROTOTYPES, alpha=20.0):
-    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
+    assert calib_mode in ("global", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     forecast_h = STRIDE * horizon_mult
@@ -267,7 +263,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             n2, t2, f2 = x_future_raw.shape
             x_future = (scaler.transform(x_future_raw.reshape(-1, f2)).reshape(n2, t2, f2).astype(np.float32)
                         if n2 > 0 else x_future_raw)
-            train_local(model, x_in, x_future, LOCAL_EPOCHS, calib_mode=calib_mode)
+            train_local(model, x_in, x_future, LOCAL_EPOCHS)
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
         usage_counts = [m.memory.usage_count.detach().clone() for m in models]
@@ -316,13 +312,9 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         d_proto_calib, d_node_calib, resid_struct_calib, calib_idx_w, d_mahal_calib = per_sample_scores(model, calib_arr)
         d_proto_normal, d_node_normal, resid_struct_normal, idx_normal, d_mahal_normal = per_sample_scores(model, test_normal_arr)
 
-        if calib_mode == "per_prototype":
-            model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w, min_samples=MIN_PROTO_SAMPLES)
-        node_head = model.score_calib_node if calib_mode == "per_prototype" else None
-        struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        k_head_ref = model.score_calib_k if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C/K fall back
-        # to global (no online/federated hook); ema_zscore() reused as-is for shrinkage.
+        dev_mem = model.memory if calib_mode == "shrinkage" else None  # C/K fall back
+        # to global (no shrinkage hook); dev_zscore() reads whatever
+        # load_shrinkage_stats() populated this round.
 
         vi_c, chains_c, _ = build_pairs(c.calib_idx, targets, window_machine, horizon_mult, True, True)
         calib_in = scale_client(data, scaler, vi_c)
@@ -337,9 +329,6 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             _, _, _, k_idx_calib, _ = per_sample_scores(model, calib_in)
         else:
             k_idx_calib = np.zeros((0,), dtype=int)
-        if calib_mode == "per_prototype" and len(vi_c):
-            model.set_k_calibration(k_resid_calib, k_idx_calib, min_samples=MIN_PROTO_SAMPLES)
-
         vi_n, chains_n, mask_n = build_pairs(c.test_normal_idx, targets, window_machine, horizon_mult, True, True)
         test_normal_in = scale_client(data, scaler, vi_n)
         future_n_raw = gather_future(data, chains_n, STRIDE)
@@ -369,8 +358,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
         else:
             forecast_mask = np.ones(num_nodes, dtype=bool)
 
-        z_node_normal = zscore_mode(d_node_normal, idx_normal, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
-        z_struct_normal = zscore_mode(resid_struct_normal, idx_normal, resid_struct_calib, calib_idx_w, score_head=struct_head)
+        z_node_normal = zscore_mode(d_node_normal, idx_normal, d_node_calib, calib_idx_w, dev_memory=dev_mem)
+        z_struct_normal = zscore_mode(resid_struct_normal, idx_normal, resid_struct_calib, calib_idx_w)
         z_mahal_normal, _ = zscore(d_mahal_normal, d_mahal_calib)
         b_normal_full = z_node_normal[:, reliable_mask].max(axis=1)
         c_normal_full = z_struct_normal.max(axis=1)
@@ -385,7 +374,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
             # centralized `run_sielaff_forecast_v2.py`'s convention.
             b_masked, c_masked, h_masked = (base_normal["B_node_max"][mask_n], base_normal["C_struct_max"][mask_n],
                                              base_normal["H_cov_mahal"][mask_n])
-            z_forecast_normal = zscore_mode(k_resid_normal, k_idx_normal, k_resid_calib, k_idx_calib, score_head=k_head_ref)
+            z_forecast_normal = zscore_mode(k_resid_normal, k_idx_normal, k_resid_calib, k_idx_calib)
             k_normal = z_forecast_normal[:, forecast_mask].max(axis=1)
             scores_normal = dict(base_normal)
             scores_normal["K_forecast_max"] = k_normal
@@ -401,11 +390,6 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
                           "num_prototypes": num_prototypes,
                           "has_forecast": has_forecast,
                           "fault_types": {}}
-        if calib_mode == "per_prototype":
-            client_report["n_valid_score_node_prototypes"] = int(model.score_calib_node.calib_valid.sum())
-            client_report["n_valid_score_struct_prototypes"] = int(model.score_calib_struct.calib_valid.sum())
-            if has_forecast:
-                client_report["n_valid_score_k_prototypes"] = int(model.score_calib_k.calib_valid.sum())
         rows = {k: [] for k in scores_normal}
         for label_id_str, name in label_map.items():
             label_id = int(label_id_str)
@@ -417,8 +401,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
                 continue
             fault_arr = scale_client(data, scaler, fault_idx)
             d_proto_f, d_node_f, resid_struct_f, idx_f, d_mahal_f = per_sample_scores(model, fault_arr)
-            z_node_f = zscore_mode(d_node_f, idx_f, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
-            z_struct_f = zscore_mode(resid_struct_f, idx_f, resid_struct_calib, calib_idx_w, score_head=struct_head)
+            z_node_f = zscore_mode(d_node_f, idx_f, d_node_calib, calib_idx_w, dev_memory=dev_mem)
+            z_struct_f = zscore_mode(resid_struct_f, idx_f, resid_struct_calib, calib_idx_w)
             z_mahal_f, _ = zscore(d_mahal_f, d_mahal_calib)
             b_f_full = z_node_f[:, reliable_mask].max(axis=1)
             c_f_full = z_struct_f.max(axis=1)
@@ -440,7 +424,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
                                                        base_f["H_cov_mahal"][mask_f])
                 if len(k_resid_f):
                     _, _, _, k_idx_f, _ = per_sample_scores(model, fault_in)
-                    z_forecast_f = zscore_mode(k_resid_f, k_idx_f, k_resid_calib, k_idx_calib, score_head=k_head_ref)
+                    z_forecast_f = zscore_mode(k_resid_f, k_idx_f, k_resid_calib, k_idx_calib)
                     k_f = z_forecast_f[:, forecast_mask].max(axis=1)
                 else:
                     k_f = np.zeros(0)
@@ -479,17 +463,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
     if calib_mode == "shrinkage":
         report["config"]["alpha"] = "auto" if alpha is None else alpha
     report["summary_mean_auroc_overall"] = summary_overall
-    if calib_mode == "per_prototype":
-        report["summary_n_valid_score_node_prototypes"] = [
-            report["clients"][k].get("n_valid_score_node_prototypes") for k in report["clients"]]
-        report["summary_n_valid_score_struct_prototypes"] = [
-            report["clients"][k].get("n_valid_score_struct_prototypes") for k in report["clients"]]
-        report["summary_n_valid_score_k_prototypes"] = [
-            report["clients"][k].get("n_valid_score_k_prototypes") for k in report["clients"]]
     if calib_mode == "shrinkage":
         mode_suffix = f"_calibmode_shrinkage_alpha{'auto' if alpha is None else int(alpha)}"
-    elif calib_mode != "global":
-        mode_suffix = f"_calibmode_{calib_mode}"
     else:
         mode_suffix = ""
     proto_suffix = f"_m{num_prototypes}" if num_prototypes != NUM_PROTOTYPES else ""
@@ -509,7 +484,7 @@ if __name__ == "__main__":
     parser.add_argument("--horizon-mult", type=int, default=10)
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "shrinkage"], default="global")
     parser.add_argument("--num-prototypes", type=int, default=NUM_PROTOTYPES)
     parser.add_argument("--alpha", type=str, default="20",
                         help="shrinkage strength for --calib-mode shrinkage, or 'auto' for data-driven per-slot alpha")

@@ -63,35 +63,46 @@
       "num_multi_client_clusters": 0,
       "num_shared_prototypes": 0,
       "num_personalized_prototypes_per_client": 2,
-      "round": 1
+      "round": 1,
+      "shrinkage_alpha": []
     },
     {
       "num_components": 10,
       "num_multi_client_clusters": 0,
       "num_shared_prototypes": 0,
       "num_personalized_prototypes_per_client": 2,
-      "round": 2
+      "round": 2,
+      "shrinkage_alpha": []
     },
     {
       "num_components": 3,
       "num_multi_client_clusters": 1,
       "num_shared_prototypes": 1,
       "num_personalized_prototypes_per_client": 1,
-      "round": 3
+      "round": 3,
+      "shrinkage_alpha": [
+        20.0
+      ]
     },
     {
       "num_components": 1,
       "num_multi_client_clusters": 1,
       "num_shared_prototypes": 1,
       "num_personalized_prototypes_per_client": 1,
-      "round": 4
+      "round": 4,
+      "shrinkage_alpha": [
+        20.0
+      ]
     },
     {
       "num_components": 1,
       "num_multi_client_clusters": 1,
       "num_shared_prototypes": 1,
       "num_personalized_prototypes_per_client": 1,
-      "round": 5
+      "round": 5,
+      "shrinkage_alpha": [
+        20.0
+      ]
     }
   ],
   "clients": {

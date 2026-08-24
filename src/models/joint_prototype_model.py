@@ -63,28 +63,28 @@ class JointPrototypeMemory(nn.Module):
     (no EMA), matching gdn_memory_model.DiscretePrototypicalMemory's
     convention but jointly over all N nodes instead of per-node."""
 
-    def __init__(self, num_prototypes: int, num_nodes: int, embed_dim: int,
-                 ema_decay: float = 0.99, ema_warmup_steps: int = 20):
+    def __init__(self, num_prototypes: int, num_nodes: int, embed_dim: int):
         super().__init__()
         self.num_prototypes = num_prototypes
         self.num_nodes = num_nodes
         self.codebook = nn.Parameter(torch.randn(num_prototypes, num_nodes, embed_dim) * 0.02)
         self.register_buffer("usage_count", torch.zeros(num_prototypes))
 
-        # Path A of memory/calib-in-prototype-ab.md: online, VQ-VAE-codebook-EMA-style
-        # per-prototype mean/var of d_node, as an ALTERNATIVE to Path B's offline
-        # calib-split pass (ScoreCalibrationHead above). Not touched unless
-        # `update_ema()` is called explicitly (calib_mode="ema" only) -- default
-        # behavior for every other calib_mode is unaffected by these buffers existing.
-        self.ema_decay = ema_decay
-        self.ema_warmup_steps = ema_warmup_steps
-        self.register_buffer("ema_step", torch.zeros(1))
-        self.register_buffer("ema_mean", torch.zeros(num_prototypes, num_nodes))
-        self.register_buffer("ema_var", torch.ones(num_prototypes, num_nodes))
-        self.register_buffer("ema_initialized", torch.zeros(num_prototypes, dtype=torch.bool))
-        self.register_buffer("ema_global_mean", torch.zeros(num_nodes))
-        self.register_buffer("ema_global_var", torch.ones(num_nodes))
-        self.register_buffer("ema_global_initialized", torch.zeros(1, dtype=torch.bool))
+        # Per-prototype (+ global fallback) mean/var of d_node, populated once per
+        # federated round by `load_shrinkage_stats()` (server-computed, empirical-
+        # Bayes-blended per-client statistic -- see federated_memory.compute_shrinkage_stats)
+        # and read by `dev_zscore()`. This is the "shrinkage" calib mode of
+        # memory/calib-in-prototype-ab.md -- the two other calibration paths that
+        # branch explored (offline per-prototype ScoreCalibrationHead, online EMA)
+        # were dropped after that investigation concluded shrinkage was the one worth
+        # keeping (see that doc for the full comparison); these buffers are what's left
+        # of the EMA-buffer mechanism shrinkage's load_shrinkage_stats() repurposes.
+        self.register_buffer("dev_mean", torch.zeros(num_prototypes, num_nodes))
+        self.register_buffer("dev_var", torch.ones(num_prototypes, num_nodes))
+        self.register_buffer("dev_valid", torch.zeros(num_prototypes, dtype=torch.bool))
+        self.register_buffer("dev_global_mean", torch.zeros(num_nodes))
+        self.register_buffer("dev_global_var", torch.ones(num_nodes))
+        self.register_buffer("dev_global_valid", torch.zeros(1, dtype=torch.bool))
 
     def forward(self, z, node_weights=None):
         """z: [B, N, D]. Returns dict with:
@@ -121,67 +121,20 @@ class JointPrototypeMemory(nn.Module):
     def codebook_utilization(self):
         return float((self.usage_count > 0).float().mean())
 
-    @torch.no_grad()
-    def update_ema(self, d_node: torch.Tensor, idx: torch.Tensor):
-        """Path A: online per-prototype mean/var EMA update of `d_node`,
-        analogous to a VQ-VAE codebook's EMA update -- call once per
-        training step (AFTER `forward()`, with `d_node`/`idx` detached)
-        when `calib_mode="ema"`. Gated by `ema_warmup_steps`: prototype
-        assignments are unstable in early training (codebook still
-        settling), so the first `ema_warmup_steps` calls are counted but
-        do not update the running statistics -- avoids baking in noisy
-        early-training deviation scales. Mirrors `DeviationCovarianceHead`
-        mean/var (NOT median/IQR -- an EMA has no closed-form running
-        median, this is Path A's documented divergence from Path B/the
-        current global-median/IQR script-level behavior). A global
-        (non-prototype-conditioned) EMA is also tracked unconditionally
-        as an initialization/fallback source for prototypes never seen
-        before warm-up ends."""
-        self.ema_step += 1
-        # unconditional global EMA (available even before/without warm-up, as fallback)
-        batch_mean_g = d_node.mean(dim=0)
-        batch_var_g = d_node.var(dim=0, unbiased=False) if d_node.shape[0] > 1 else torch.zeros_like(batch_mean_g)
-        if not bool(self.ema_global_initialized.item()):
-            self.ema_global_mean = batch_mean_g
-            self.ema_global_var = batch_var_g.clamp(min=1e-6)
-            self.ema_global_initialized[0] = True
-        else:
-            d = self.ema_decay
-            self.ema_global_mean = d * self.ema_global_mean + (1 - d) * batch_mean_g
-            self.ema_global_var = d * self.ema_global_var + (1 - d) * batch_var_g.clamp(min=1e-6)
-
-        if self.ema_step.item() < self.ema_warmup_steps:
-            return
-        for m in torch.unique(idx):
-            mask = idx == m
-            n_m = int(mask.sum().item())
-            if n_m == 0:
-                continue
-            batch_mean = d_node[mask].mean(dim=0)
-            batch_var = d_node[mask].var(dim=0, unbiased=False) if n_m > 1 else torch.zeros_like(batch_mean)
-            mi = int(m.item())
-            if not bool(self.ema_initialized[mi].item()):
-                self.ema_mean[mi] = batch_mean
-                self.ema_var[mi] = batch_var.clamp(min=1e-6)
-                self.ema_initialized[mi] = True
-            else:
-                d = self.ema_decay
-                self.ema_mean[mi] = d * self.ema_mean[mi] + (1 - d) * batch_mean
-                self.ema_var[mi] = d * self.ema_var[mi] + (1 - d) * batch_var.clamp(min=1e-6)
-
-    def ema_zscore(self, raw: np.ndarray, idx: np.ndarray) -> np.ndarray:
+    def dev_zscore(self, raw: np.ndarray, idx: np.ndarray) -> np.ndarray:
         """raw: [B, num_nodes] numpy, idx: [B] numpy matched-prototype
-        indices. Returns EMA-mean/std z-scored [B, num_nodes], numpy --
-        Path A's drop-in replacement for `zscore(x, calib_x)`'s first
-        stage, using the online-accumulated statistics instead of an
-        offline calib pass. Falls back to the global EMA for prototypes
-        never initialized (e.g. unused this federated round, or warm-up
-        never reached)."""
-        valid = self.ema_initialized.cpu().numpy()[idx]
-        cmean = self.ema_mean.cpu().numpy()[idx]
-        cstd = np.sqrt(self.ema_var.cpu().numpy()[idx])
-        gmean = self.ema_global_mean.cpu().numpy()[None, :]
-        gstd = np.sqrt(self.ema_global_var.cpu().numpy())[None, :]
+        indices. Returns mean/std z-scored [B, num_nodes], numpy, against
+        `dev_mean`/`dev_var` (populated by `load_shrinkage_stats()` each
+        round) -- "shrinkage" calib mode's drop-in replacement for
+        `zscore(x, calib_x)`'s first stage. Falls back to the global
+        dev stats for prototypes `load_shrinkage_stats()` didn't mark
+        valid this round (e.g. a personalized slot with zero local
+        traffic)."""
+        valid = self.dev_valid.cpu().numpy()[idx]
+        cmean = self.dev_mean.cpu().numpy()[idx]
+        cstd = np.sqrt(self.dev_var.cpu().numpy()[idx])
+        gmean = self.dev_global_mean.cpu().numpy()[None, :]
+        gstd = np.sqrt(self.dev_global_var.cpu().numpy())[None, :]
         mean = np.where(valid[:, None], cmean, gmean)
         std = np.where(valid[:, None], cstd, gstd)
         return (raw - mean) / np.maximum(std, 1e-8)
@@ -191,78 +144,67 @@ class JointPrototypeMemory(nn.Module):
         tensor (`federated_memory.align_and_split`'s P_G,n) and reset usage
         counts for the new round -- same convention as `fl_model.FLGDNMemory.load_memory`.
 
-        Also resets ALL EMA calibration state (Path A, `calib_mode="ema"`).
-        Bug fix (2026-08-21): this used to only zero `usage_count`, leaving
-        `ema_mean`/`ema_var`/`ema_initialized`/`ema_step`/the global EMA
-        buffers untouched across rounds. Since the codebook is a completely
-        different set of vectors after each `load_memory()` call, slot index
-        `m`'s "meaning" changes every round, but the old EMA stats (indexed
-        purely by `m`) kept being blended in at `ema_decay` (0.99, i.e. 99%
-        weight on the stale value) via `update_ema()` -- and since `ema_step`
-        was never reset either, `ema_warmup_steps`'s "don't trust early
-        updates" gate only ever fired once, at the very start of round 1, not
-        again after every subsequent codebook swap. Net effect: from round 2
-        onward, every EMA update was dominated by statistics computed under a
-        codebook geometry that no longer existed. This was the dominant cause
-        of Path A's measured AUROC regression, not the (also real, but
-        smaller) fit-split bias risk it was originally flagged for -- see
-        [[calib-in-prototype-ab]]. Resetting here means each round must earn
-        its own warm-up again; `ema_warmup_steps` was lowered from 200 to 20
-        to fit within a single round's local-epoch step budget (robo3er's
-        smallest federated client has ~135 fit windows / batch_size=256, i.e.
-        as few as ~12 steps per local epoch)."""
+        Also resets `dev_mean`/`dev_var`/`dev_valid` (+ global fallback)
+        to scratch. Since the codebook is a completely different set of
+        vectors after each `load_memory()` call, slot index `m`'s "meaning"
+        changes every round -- stale per-round deviation stats indexed
+        purely by `m` would otherwise get blended into `compute_shrinkage_stats`'s
+        pooling under a codebook geometry that no longer exists. (This reset
+        was originally added to fix an analogous bug in the now-removed
+        online-EMA calibration path -- see [[calib-in-prototype-ab]]'s "Bug
+        fix" section for that history -- but the reset itself is still
+        needed here since `load_shrinkage_stats()` is called fresh every
+        round and shouldn't inherit anything from the previous round's
+        codebook.)"""
         with torch.no_grad():
             self.codebook.copy_(prototypes.to(self.codebook.device))
         self.usage_count.zero_()
-        self.ema_step.zero_()
-        self.ema_mean.zero_()
-        self.ema_var.fill_(1.0)
-        self.ema_initialized.zero_()
-        self.ema_global_mean.zero_()
-        self.ema_global_var.fill_(1.0)
-        self.ema_global_initialized.zero_()
+        self.dev_mean.zero_()
+        self.dev_var.fill_(1.0)
+        self.dev_valid.zero_()
+        self.dev_global_mean.zero_()
+        self.dev_global_var.fill_(1.0)
+        self.dev_global_valid.zero_()
 
     @torch.no_grad()
     def load_shrinkage_stats(self, mean: np.ndarray, var: np.ndarray, valid: np.ndarray):
         """"shrinkage" calib mode of `memory/calib-in-prototype-ab.md` --
         empirical-Bayes per-client, per-prototype shrinkage of `d_node`
-        deviation statistics, the successor to both plain `ema` (pure local
-        stats, small clients never clear warm-up within a round) and the
-        reverted `federated_ema` (one fused stat shared identically by every
-        client in a cluster, which let large clients overwrite small ones').
+        deviation statistics, the successor to the reverted `federated_ema`
+        (one fused stat shared identically by every client in a cluster,
+        which let large clients overwrite small ones') and to two other
+        calibration paths (offline per-prototype calibration, online EMA)
+        that branch also explored and dropped -- see that doc for the full
+        comparison and the reasoning behind keeping only this one.
 
         Loads server-computed, ALREADY-BLENDED per-client `(mean, var)`
         (`federated_memory.compute_shrinkage_stats`'s output -- each row is
         this client's own local statistic pulled partway toward a fleet-wide
         pooled prior, weighted by this client's own per-prototype sample
-        count this round) directly into the SAME `ema_mean`/`ema_var`/
-        `ema_initialized` buffers `ema_zscore()` already reads, exactly as
-        `update_ema()`/plain `ema` mode would populate them -- so
-        `ema_zscore()` is reused UNCHANGED for scoring, same pattern as the
-        (reverted) `federated_ema` mode's `load_fed_ema_stats`.
+        count this round) into `dev_mean`/`dev_var`/`dev_valid`, which
+        `dev_zscore()` reads for scoring.
 
         Call once per round, right after `load_memory()` (which already
         reset these buffers to scratch) and after this round's one-shot
-        local dev-stats pass. `valid` (unlike plain `ema`'s `n > 0` gate) is
-        driven by `compute_shrinkage_stats`'s own validity rule: a shared
-        slot is valid whenever ANY client had data this round (this client's
-        own local `n` may be 0 and the slot is still valid, since the blend
-        already fell back fully to the fleet prior in that case); a
-        personalized slot is valid only when THIS client's own `n > 0` (no
-        fleet borrowing applies there -- see that function's docstring)."""
-        device = self.ema_mean.device
+        local dev-stats pass. A shared slot's `valid` is True whenever ANY
+        client had data this round (this client's own local `n` may be 0
+        and the slot is still valid, since the blend already fell back
+        fully to the fleet prior in that case); a personalized slot is
+        valid only when THIS client's own `n > 0` (no fleet borrowing
+        applies there -- see `compute_shrinkage_stats`'s docstring)."""
+        device = self.dev_mean.device
         valid_t = torch.tensor(valid, dtype=torch.bool, device=device)
         mean_t = torch.tensor(mean, dtype=torch.float32, device=device)
         var_t = torch.tensor(var, dtype=torch.float32, device=device).clamp(min=1e-6)
 
-        self.ema_mean = torch.where(valid_t.unsqueeze(1), mean_t, self.ema_mean)
-        self.ema_var = torch.where(valid_t.unsqueeze(1), var_t, self.ema_var)
-        self.ema_initialized = valid_t
+        self.dev_mean = torch.where(valid_t.unsqueeze(1), mean_t, self.dev_mean)
+        self.dev_var = torch.where(valid_t.unsqueeze(1), var_t, self.dev_var)
+        self.dev_valid = valid_t
 
         if bool(valid_t.any()):
             # client-local (not federated) global fallback for any slot that's still
             # invalid (e.g. a personalized slot this client never routed traffic to
-            # this round) -- same "rarely hit" role ema_zscore()'s global fallback
+            # this round) -- same "rarely hit" role dev_zscore()'s global fallback
             # already plays; unweighted mean/var pool over valid slots since a
             # per-slot n weighting isn't meaningful here (some valid slots' n is 0,
             # by design, once the fleet prior alone made them valid).
@@ -270,9 +212,9 @@ class JointPrototypeMemory(nn.Module):
             var_v = var_t[valid_t]
             g_mean = mean_v.mean(dim=0)
             g_var = (var_v.mean(dim=0) + ((mean_v - g_mean.unsqueeze(0)) ** 2).mean(dim=0)).clamp(min=1e-6)
-            self.ema_global_mean = g_mean
-            self.ema_global_var = g_var
-            self.ema_global_initialized[0] = True
+            self.dev_global_mean = g_mean
+            self.dev_global_var = g_var
+            self.dev_global_valid[0] = True
 
 
 class DeviationCovarianceHead(nn.Module):
@@ -352,85 +294,6 @@ class DeviationCovarianceHead(nn.Module):
         )
         diff = d_node - mu  # [B, N]
         return torch.einsum("bi,bij,bj->b", diff, cov_inv, diff)  # [B]
-
-
-class ScoreCalibrationHead(nn.Module):
-    """Per-prototype (with global fallback) median/IQR calibration for a
-    raw [B, N] score array (`d_node`/`resid_struct`/`k_resid` -- signals
-    B/C/K), replacing the GLOBAL median/IQR computed ad-hoc at benchmark-
-    script level (`zscore()`/`two_stage_group_score()` in
-    `run_*_federated.py`). Structured to match `DeviationCovarianceHead`/
-    `TypedRelationAnomalyHead`'s existing pattern exactly: no trainable
-    parameters, buffers populated by a one-time offline `set_calibration()`
-    call after training from the held-out calib split, `min_samples`
-    fallback to global stats for sparsely-populated prototypes. Kept as a
-    separate small head (not folded into `JointPrototypeMemory`) since it's
-    reused identically for 3 different raw score arrays of possibly
-    different dimensionality (`num_dims` = num_nodes for B/C, num_nodes for
-    K too, but this class doesn't assume any particular meaning for the
-    dimension).
-
-    This is Path B of `memory/calib-in-prototype-ab.md`'s branch experiment
-    -- median/IQR (not mean/std) is kept deliberately, matching what B/C/K
-    already used at script level, unlike H/E which already used mean/std.
-    Per-prototype IS a real behavior change vs. the current global
-    behavior (not just a refactor); `calib_mode="global"` bypasses this
-    class entirely and reproduces the exact prior numbers (regression
-    check)."""
-
-    def __init__(self, num_prototypes: int, num_dims: int, min_samples: int = 10):
-        super().__init__()
-        self.num_prototypes = num_prototypes
-        self.num_dims = num_dims
-        self.min_samples = min_samples
-        self.register_buffer("calib_median", torch.zeros(num_prototypes, num_dims))
-        self.register_buffer("calib_iqr", torch.ones(num_prototypes, num_dims))
-        self.register_buffer("calib_valid", torch.zeros(num_prototypes, dtype=torch.bool))
-        self.register_buffer("global_median", torch.zeros(num_dims))
-        self.register_buffer("global_iqr", torch.ones(num_dims))
-
-    def set_calibration(self, raw_calib: np.ndarray, idx_calib: np.ndarray, min_samples: int = None):
-        """raw_calib: [Ncalib, num_dims] numpy (e.g. d_node from the calib
-        split); idx_calib: [Ncalib] numpy matched-prototype indices. Same
-        calib split / disjoint-from-fit-set discipline as
-        `DeviationCovarianceHead.set_calibration`."""
-        min_samples = self.min_samples if min_samples is None else min_samples
-        g_med = np.median(raw_calib, axis=0)
-        q75, q25 = np.percentile(raw_calib, [75, 25], axis=0)
-        g_iqr = np.maximum(q75 - q25, 1e-8)
-        self.global_median = torch.tensor(g_med, dtype=torch.float32)
-        self.global_iqr = torch.tensor(g_iqr, dtype=torch.float32)
-
-        med_all = np.tile(g_med, (self.num_prototypes, 1))
-        iqr_all = np.tile(g_iqr, (self.num_prototypes, 1))
-        valid = np.zeros(self.num_prototypes, dtype=bool)
-        for m in range(self.num_prototypes):
-            mask = idx_calib == m
-            n_m = int(mask.sum())
-            if n_m >= min_samples:
-                d_m = raw_calib[mask]
-                med_all[m] = np.median(d_m, axis=0)
-                q75m, q25m = np.percentile(d_m, [75, 25], axis=0)
-                iqr_all[m] = np.maximum(q75m - q25m, 1e-8)
-                valid[m] = True
-        self.calib_median = torch.tensor(med_all, dtype=torch.float32)
-        self.calib_iqr = torch.tensor(iqr_all, dtype=torch.float32)
-        self.calib_valid = torch.tensor(valid)
-
-    def zscore(self, raw: np.ndarray, idx: np.ndarray) -> np.ndarray:
-        """raw: [B, num_dims] numpy, idx: [B] numpy matched-prototype
-        indices (for calib-split rows, pass the SAME idx used to fit this
-        head). Returns per-prototype (global-fallback) median/IQR z-scored
-        [B, num_dims], numpy -- drop-in replacement for the script-level
-        `zscore(x, calib_x)`'s first stage."""
-        valid = self.calib_valid.cpu().numpy()[idx]
-        cmed = self.calib_median.cpu().numpy()[idx]
-        ciqr = self.calib_iqr.cpu().numpy()[idx]
-        gmed = self.global_median.cpu().numpy()[None, :]
-        giqr = self.global_iqr.cpu().numpy()[None, :]
-        med = np.where(valid[:, None], cmed, gmed)
-        iqr = np.where(valid[:, None], ciqr, giqr)
-        return (raw - med) / iqr
 
 
 class TrendGraphAttentionHead(nn.Module):
@@ -583,21 +446,11 @@ class JointPrototypeV21(JointPrototypeV2):
                          prior_edges=prior_edges, top_k=top_k,
                          node_weights=node_weights)
         self.cov_head = DeviationCovarianceHead(num_prototypes, num_nodes)
-        # Path B (memory/calib-in-prototype-ab.md): see JointPrototypeV31's identical
-        # score_calib_node/struct additions -- same purpose, mirrored here for V21's
-        # no-declared-edge datasets (Sielaff).
-        self.score_calib_node = ScoreCalibrationHead(num_prototypes, num_nodes)
-        self.score_calib_struct = ScoreCalibrationHead(num_prototypes, num_nodes)
 
     def forward(self, x, training_mode=False):
         out = super().forward(x, training_mode=training_mode)
         out["d_mahal"] = self.cov_head(out["d_node"], out["idx"])
         return out
-
-    def set_score_calibration(self, d_node_calib: np.ndarray, resid_struct_calib: np.ndarray,
-                              idx_calib: np.ndarray, min_samples: int = 10):
-        self.score_calib_node.set_calibration(d_node_calib, idx_calib, min_samples=min_samples)
-        self.score_calib_struct.set_calibration(resid_struct_calib, idx_calib, min_samples=min_samples)
 
 
 class JointPrototypeV21Forecast(JointPrototypeV21):
@@ -623,7 +476,6 @@ class JointPrototypeV21Forecast(JointPrototypeV21):
         fe = prior_edges if forecast_prior_edges is self._NO_OVERRIDE else forecast_prior_edges
         self.forecast_head = ForecastHead(num_nodes, window_size, forecast_h, embed_dim,
                                           top_k=top_k, prior_edges=fe)
-        self.score_calib_k = ScoreCalibrationHead(num_prototypes, num_nodes)
 
     def forward(self, x, training_mode=False, x_future=None):
         out = super().forward(x, training_mode=training_mode)
@@ -632,9 +484,6 @@ class JointPrototypeV21Forecast(JointPrototypeV21):
         if x_future is not None:
             out["k_resid"] = (x_future - x_hat_future).pow(2).sum(dim=1)
         return out
-
-    def set_k_calibration(self, k_resid_calib: np.ndarray, idx_calib: np.ndarray, min_samples: int = 10):
-        self.score_calib_k.set_calibration(k_resid_calib, idx_calib, min_samples=min_samples)
 
 
 class TypedRelationAnomalyHead(nn.Module):
@@ -833,29 +682,11 @@ class JointPrototypeV31(JointPrototypeV3):
                          prior_edges, edge_types, top_k=top_k,
                          node_weights=node_weights)
         self.cov_head = DeviationCovarianceHead(num_prototypes, num_nodes)
-        # Path B (memory/calib-in-prototype-ab.md): per-prototype median/IQR
-        # calibration for signals B (d_node) and C (resid_struct), same
-        # set_calibration()/min_samples convention as cov_head/typed_head
-        # above. Unused unless the calling script's calib_mode="per_prototype"
-        # explicitly calls set_score_calibration() and reads these heads'
-        # .zscore() instead of the script-level global zscore() -- default
-        # (calib_mode="global") behavior is completely unaffected.
-        self.score_calib_node = ScoreCalibrationHead(num_prototypes, num_nodes)
-        self.score_calib_struct = ScoreCalibrationHead(num_prototypes, num_nodes)
 
     def forward(self, x, training_mode=False):
         out = super().forward(x, training_mode=training_mode)
         out["d_mahal"] = self.cov_head(out["d_node"], out["idx"])
         return out
-
-    def set_score_calibration(self, d_node_calib: np.ndarray, resid_struct_calib: np.ndarray,
-                              idx_calib: np.ndarray, min_samples: int = 10):
-        """Stage B, Path B: fit `score_calib_node`/`score_calib_struct` from
-        the same held-out calib split (and the same `idx_calib` passed to
-        `cov_head`/`typed_head.set_calibration`) -- one call covers both
-        signals B and C."""
-        self.score_calib_node.set_calibration(d_node_calib, idx_calib, min_samples=min_samples)
-        self.score_calib_struct.set_calibration(resid_struct_calib, idx_calib, min_samples=min_samples)
 
 
 class ForecastHead(nn.Module):
@@ -985,9 +816,6 @@ class JointPrototypeV31Forecast(JointPrototypeV31):
         fe = prior_edges if forecast_prior_edges is self._NO_OVERRIDE else forecast_prior_edges
         self.forecast_head = ForecastHead(num_nodes, window_size, forecast_h, embed_dim,
                                           top_k=top_k, prior_edges=fe)
-        # Path B: per-prototype median/IQR calibration for signal K (k_resid),
-        # same convention as score_calib_node/score_calib_struct on JointPrototypeV31.
-        self.score_calib_k = ScoreCalibrationHead(num_prototypes, num_nodes)
 
     def forward(self, x, training_mode=False, x_future=None):
         """x: [B, T, N] (full input window). x_future: [B, forecast_h, N]
@@ -1002,9 +830,3 @@ class JointPrototypeV31Forecast(JointPrototypeV31):
         if x_future is not None:
             out["k_resid"] = (x_future - x_hat_future).pow(2).sum(dim=1)  # [B, N]
         return out
-
-    def set_k_calibration(self, k_resid_calib: np.ndarray, idx_calib: np.ndarray, min_samples: int = 10):
-        """Stage B, Path B, for signal K specifically (separate from
-        `set_score_calibration` since K needs its own paired calib pass --
-        see `run_robo3er_forecast_v2_federated.py`'s `build_pairs`)."""
-        self.score_calib_k.set_calibration(k_resid_calib, idx_calib, min_samples=min_samples)

@@ -31,9 +31,9 @@ bearings.
 **WINDOW-level scoring (changed from the original file-level-aggregate
 design)**: originally this script averaged raw d_node/resid_struct/etc.
 across all windows of a file FIRST, then z-scored that one aggregate
-per file (`per_file_scores`). Adding `--calib-mode {per_prototype,ema,
-shrinkage}` requires knowing which prototype each WINDOW matched (`idx`),
-information the file-level average destroys. This script now scores at
+per file (`per_file_scores`). Adding `--calib-mode shrinkage` requires
+knowing which prototype each WINDOW matched (`idx`), information the
+file-level average destroys. This script now scores at
 WINDOW level throughout (matching `run_robo3er_v3_1_federated.py`/
 `run_sielaff_v2_1_federated.py`'s own convention) -- z-score each window
 individually (optionally per-prototype), THEN aggregate. This is a
@@ -50,15 +50,14 @@ Otherwise identical to `run_paderborn_joint_prototype_v3.py`: same node
 set, declared physics edges, edge types, core hyperparameters.
 
 Usage:
-    python3 run_paderborn_v3_1_federated.py [--calib-mode {global,per_prototype,ema,shrinkage}] [--alpha 20]
+    python3 run_paderborn_v3_1_federated.py [--calib-mode {global,shrinkage}] [--alpha 20|auto]
 
 `--calib-mode` (default `global`): see `run_robo3er_v3_1_federated.py`'s
-module docstring for the full mechanism explanation (per-prototype
-`ScoreCalibrationHead` for Path B, online `JointPrototypeMemory.update_ema()`
-for Path A, empirical-Bayes fleet-pooled shrinkage for Path C) -- identical
-here, just applied to Paderborn's 6-node/16-prototype setup. `resid_struct`/C
-has no `ema`/`shrinkage` hook (falls back to `global`), same scope limit as
-the other two scripts.
+module docstring for the full mechanism explanation (empirical-Bayes
+fleet-pooled shrinkage, and the two other calibration paths that
+investigation explored and dropped) -- identical here, just applied to
+Paderborn's 6-node/16-prototype setup. `resid_struct`/C has no shrinkage
+hook (falls back to `global`), same scope limit as the other two scripts.
 """
 import argparse
 import json
@@ -160,7 +159,7 @@ def per_sample_scores(model, windows, batch_size=BATCH_SIZE):
             np.concatenate(d_mahal_all))
 
 
-def train_local(model, fit_windows, epochs, calib_mode="global"):
+def train_local(model, fit_windows, epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(torch.from_numpy(fit_windows)),
@@ -179,10 +178,6 @@ def train_local(model, fit_windows, epochs, calib_mode="global"):
             loss = l_pred + BETA * l_me + l_mc + LAMBDA_EDGE * l_edge + LAMBDA_TYPED * l_typed
             loss.backward()
             optimizer.step()
-            if calib_mode == "ema":
-                # Path A: online EMA update of d_node's per-prototype mean/var,
-                # same one-step-lag convention as run_robo3er_v3_1_federated.py.
-                model.memory.update_ema(out["d_node"].detach(), out["idx"].detach())
     return model
 
 
@@ -199,20 +194,17 @@ def topk_mean(x, k):
     return np.sort(x, axis=1)[:, -k:].mean(axis=1)
 
 
-def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG, score_head=None, idx_calib=None, idx_x=None,
-                          ema_memory=None):
+def two_stage_group_score(raw_calib, raw_x, k=TOP_K_AGG, idx_calib=None, idx_x=None,
+                          dev_memory=None):
     """Identical to `run_robo3er_v3_1_federated.py`'s function of the same
     name -- top-k-mean over the node/edge group, THEN a second calibration
     stage re-z-scoring that aggregate statistic against its own calib-split
-    distribution. `score_head`/`ema_memory` optionally swap stage 1's
-    GLOBAL per-dimension z-score for a per-prototype one (Path B/A/C);
+    distribution. `dev_memory` optionally swaps stage 1's GLOBAL per-
+    dimension z-score for a per-prototype one ("shrinkage" calib mode);
     default is bit-identical global behavior. Stage 2 always stays global."""
-    if score_head is not None:
-        z_calib = score_head.zscore(raw_calib, idx_calib)
-        z_x = score_head.zscore(raw_x, idx_x)
-    elif ema_memory is not None:
-        z_calib = ema_memory.ema_zscore(raw_calib, idx_calib)
-        z_x = ema_memory.ema_zscore(raw_x, idx_x)
+    if dev_memory is not None:
+        z_calib = dev_memory.dev_zscore(raw_calib, idx_calib)
+        z_x = dev_memory.dev_zscore(raw_x, idx_x)
     else:
         z_calib = zscore(raw_calib, raw_calib)
         z_x = zscore(raw_x, raw_calib)
@@ -237,7 +229,7 @@ def ablation_scores(node_score, edge_score, typed_score, cov_score):
 
 
 def main(calib_mode="global", alpha=20.0):
-    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
+    assert calib_mode in ("global", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     num_nodes = len(NODE_NAMES)
@@ -278,7 +270,7 @@ def main(calib_mode="global", alpha=20.0):
         fit_counts = []
         for c, model in zip(clients, models):
             fit_windows, _ = make_windows(c["fit"])
-            train_local(model, fit_windows, LOCAL_EPOCHS, calib_mode=calib_mode)
+            train_local(model, fit_windows, LOCAL_EPOCHS)
             fit_counts.append(len(fit_windows))
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
@@ -325,8 +317,6 @@ def main(calib_mode="global", alpha=20.0):
             per_sample_scores(model, calib_windows)
         model.typed_head.set_calibration(calib_r_edge_w, calib_idx_w, NUM_PROTOTYPES, min_samples=MIN_PROTO_SAMPLES)
         model.cov_head.set_calibration(d_node_calib, calib_idx_w, min_samples=cov_min)
-        if calib_mode == "per_prototype":
-            model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w, min_samples=MIN_PROTO_SAMPLES)
         calib_data[c["code"]] = (d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib, calib_idx_w)
         n_valid_cov_per_client.append(int(model.cov_head.calib_valid.sum()))
         # calib-time mean of each component's OWN raw training-objective quantity -- see
@@ -356,17 +346,15 @@ def main(calib_mode="global", alpha=20.0):
     normal_scores_per_client = []
     for c, model in zip(clients, models):
         d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib, calib_idx_w = calib_data[c["code"]]
-        node_head = model.score_calib_node if calib_mode == "per_prototype" else None
-        struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C has no
-        # online EMA hook (or shrinkage hook) -> falls back to global; ema_zscore() is
-        # reused as-is for shrinkage since load_shrinkage_stats() populates the SAME buffers.
+        dev_mem = model.memory if calib_mode == "shrinkage" else None  # C has no
+        # shrinkage hook -> falls back to global; dev_zscore() reads whatever
+        # load_shrinkage_stats() populated this round.
 
         test_normal_windows, _ = make_windows(c["test_normal"])
         _, d_node_n, resid_struct_n, resid_phys_n, idx_n, _, d_mahal_n = per_sample_scores(model, test_normal_windows)
-        node_score_n = two_stage_group_score(d_node_calib, d_node_n, score_head=node_head,
-                                              idx_calib=calib_idx_w, idx_x=idx_n, ema_memory=ema_mem)
-        edge_score_n = two_stage_group_score(resid_struct_calib, resid_struct_n, score_head=struct_head,
+        node_score_n = two_stage_group_score(d_node_calib, d_node_n,
+                                              idx_calib=calib_idx_w, idx_x=idx_n, dev_memory=dev_mem)
+        edge_score_n = two_stage_group_score(resid_struct_calib, resid_struct_n,
                                               idx_calib=calib_idx_w, idx_x=idx_n)
         typed_score_n = two_stage_group_score(resid_phys_calib, resid_phys_n)
         cov_score_n = zscore(d_mahal_n, d_mahal_calib)
@@ -381,16 +369,14 @@ def main(calib_mode="global", alpha=20.0):
         per_client_auroc = {k: [] for k in rows}
         for c, model, scores_normal in zip(clients, models, normal_scores_per_client):
             d_node_calib, resid_struct_calib, resid_phys_calib, d_mahal_calib, calib_idx_w = calib_data[c["code"]]
-            node_head = model.score_calib_node if calib_mode == "per_prototype" else None
-            struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-            ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None
+            dev_mem = model.memory if calib_mode == "shrinkage" else None
 
             arr_scaled = c["scaler"].transform(arr.reshape(-1, num_nodes)).reshape(arr.shape).astype(np.float32)
             fault_windows, _ = make_windows(arr_scaled)
             _, d_node_f, resid_struct_f, resid_phys_f, idx_f, _, d_mahal_f = per_sample_scores(model, fault_windows)
-            node_score_f = two_stage_group_score(d_node_calib, d_node_f, score_head=node_head,
-                                                  idx_calib=calib_idx_w, idx_x=idx_f, ema_memory=ema_mem)
-            edge_score_f = two_stage_group_score(resid_struct_calib, resid_struct_f, score_head=struct_head,
+            node_score_f = two_stage_group_score(d_node_calib, d_node_f,
+                                                  idx_calib=calib_idx_w, idx_x=idx_f, dev_memory=dev_mem)
+            edge_score_f = two_stage_group_score(resid_struct_calib, resid_struct_f,
                                                   idx_calib=calib_idx_w, idx_x=idx_f)
             typed_score_f = two_stage_group_score(resid_phys_calib, resid_phys_f)
             cov_score_f = zscore(d_mahal_f, d_mahal_calib)
@@ -433,8 +419,6 @@ def main(calib_mode="global", alpha=20.0):
     suffix = "_encdec_synced" if SYNC_ENCODER_DECODER else ""
     if calib_mode == "shrinkage":
         mode_suffix = f"_calibmode_shrinkage_alpha{'auto' if alpha is None else int(alpha)}"
-    elif calib_mode != "global":
-        mode_suffix = f"_calibmode_{calib_mode}"
     else:
         mode_suffix = ""
     out_json = OUT_DIR / f"paderborn_v3_1_federated{suffix}{mode_suffix}_report.json"
@@ -448,7 +432,7 @@ def main(calib_mode="global", alpha=20.0):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "shrinkage"], default="global")
     parser.add_argument("--alpha", type=str, default="20",
                         help="shrinkage strength for --calib-mode shrinkage, or 'auto' for data-driven per-slot alpha")
     args = parser.parse_args()

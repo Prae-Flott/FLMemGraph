@@ -20,25 +20,27 @@ Federated protocol: encoder/edge_head/cov_head stay local; ONLY the
 JointPrototypeMemory codebook is exchanged each round via align_and_split.
 
 Usage:
-    python3 run_sielaff_v2_1_federated.py [--calib-mode {global,per_prototype,ema,shrinkage}]
-                                           [--num-prototypes N] [--alpha 20]
+    python3 run_sielaff_v2_1_federated.py [--calib-mode {global,shrinkage}]
+                                           [--num-prototypes N] [--alpha 20|auto]
 
 `--calib-mode` (default `global`, unchanged behavior): see
 `run_robo3er_v3_1_federated.py`'s docstring and
-`memory/calib-in-prototype-ab.md` for the full Path A/B/shrinkage
-explanation. Only B (`d_node`)/C (`resid_struct`)'s per-node z-score (stage
-before the `.max(axis=1)`) is affected; the reliability mask
-(`RELIABILITY_RATIO`) stays computed from the GLOBAL calib IQR in every
-mode -- it is a coarse near-constant-node filter, not part of this A/B
-test's scope.
+`memory/calib-in-prototype-ab.md` for the full `shrinkage` explanation (and
+the two other calibration paths that doc explored and dropped -- offline
+per-prototype calibration regressed badly on Sielaff's 16-prototype setup,
+which is part of why they were dropped). Only B (`d_node`)/C
+(`resid_struct`)'s per-node z-score (stage before the `.max(axis=1)`) is
+affected; the reliability mask (`RELIABILITY_RATIO`) stays computed from
+the GLOBAL calib IQR in every mode -- it is a coarse near-constant-node
+filter, not part of this calib-mode axis.
 
 `--num-prototypes` (default `NUM_PROTOTYPES` below, unchanged behavior):
 overrides the codebook size. Added for the `NUM_PROTOTYPES` grid search in
 `memory/sielaff-num-prototypes-sweep.md` -- Sielaff's prototype count was
 never swept (unlike robo3er's, see `run_robo3er_v3_1_federated.py`'s
-docstring) and is suspected to interact with `--calib-mode per_prototype`'s
-Sielaff regression (fewer/more prototypes changes how many calib windows
-each prototype's median/IQR is fit from).
+docstring) and was suspected to interact with the (now-removed)
+per-prototype calibration's Sielaff regression (fewer/more prototypes
+changes how many calib windows each prototype's median/IQR is fit from).
 """
 import argparse
 import json
@@ -149,7 +151,7 @@ def per_sample_scores(model, windows, batch_size=BATCH_SIZE):
             np.concatenate(d_mahal_all))
 
 
-def train_local(model, fit_arr, epochs, calib_mode="global"):
+def train_local(model, fit_arr, epochs):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(torch.from_numpy(fit_arr)),
@@ -167,8 +169,6 @@ def train_local(model, fit_arr, epochs, calib_mode="global"):
             loss = l_pred + BETA * l_me + l_mc + LAMBDA_EDGE * l_edge
             loss.backward()
             optimizer.step()
-            if calib_mode == "ema":
-                model.memory.update_ema(out["d_node"].detach(), out["idx"].detach())
     return model
 
 
@@ -179,20 +179,18 @@ def zscore(x, calib_x):
     return (x - median) / iqr, iqr
 
 
-def zscore_mode(x, idx_x, calib_x, idx_calib, score_head=None, ema_memory=None):
-    """Like `zscore()` but with an optional per-prototype (`score_head`,
-    Path B) or EMA (`ema_memory`, Path A) override -- default (both None)
-    is bit-identical to `zscore(x, calib_x)`'s first return value."""
-    if score_head is not None:
-        return score_head.zscore(x, idx_x)
-    if ema_memory is not None:
-        return ema_memory.ema_zscore(x, idx_x)
+def zscore_mode(x, idx_x, calib_x, idx_calib, dev_memory=None):
+    """Like `zscore()` but with an optional per-prototype (`dev_memory`,
+    "shrinkage" calib mode) override -- default (`dev_memory=None`) is
+    bit-identical to `zscore(x, calib_x)`'s first return value."""
+    if dev_memory is not None:
+        return dev_memory.dev_zscore(x, idx_x)
     z, _ = zscore(x, calib_x)
     return z
 
 
 def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
-    assert calib_mode in ("global", "per_prototype", "ema", "shrinkage")
+    assert calib_mode in ("global", "shrinkage")
     torch.manual_seed(SEED)
     np.random.seed(SEED)
 
@@ -219,7 +217,7 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
     for rnd in range(1, ROUNDS + 1):
         for c, model, scaler in zip(clients, models, scalers):
             fit_w = scale_client(data, scaler, c.fit_idx)
-            train_local(model, fit_w, LOCAL_EPOCHS, calib_mode=calib_mode)
+            train_local(model, fit_w, LOCAL_EPOCHS)
 
         codebooks = [m.memory.codebook.detach().clone() for m in models]
         usage_counts = [m.memory.usage_count.detach().clone() for m in models]
@@ -266,19 +264,16 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
         d_proto_calib, d_node_calib, resid_struct_calib, calib_idx_w, d_mahal_calib = per_sample_scores(model, calib_arr)
         d_proto_normal, d_node_normal, resid_struct_normal, idx_normal, d_mahal_normal = per_sample_scores(model, test_normal_arr)
 
-        if calib_mode == "per_prototype":
-            model.set_score_calibration(d_node_calib, resid_struct_calib, calib_idx_w, min_samples=MIN_PROTO_SAMPLES)
-        node_head = model.score_calib_node if calib_mode == "per_prototype" else None
-        struct_head = model.score_calib_struct if calib_mode == "per_prototype" else None
-        ema_mem = model.memory if calib_mode in ("ema", "shrinkage") else None  # C has no
-        # online/federated hook -> global fallback; ema_zscore() reused as-is for shrinkage.
+        dev_mem = model.memory if calib_mode == "shrinkage" else None  # C has no
+        # shrinkage hook -> global fallback; dev_zscore() reads whatever
+        # load_shrinkage_stats() populated this round.
 
         _, node_iqr = zscore(d_node_normal, d_node_calib)  # reliability mask always global, see module docstring
         median_iqr = np.median(node_iqr)
         reliable_mask = node_iqr >= RELIABILITY_RATIO * median_iqr
 
-        z_node_normal = zscore_mode(d_node_normal, idx_normal, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
-        z_struct_normal = zscore_mode(resid_struct_normal, idx_normal, resid_struct_calib, calib_idx_w, score_head=struct_head)
+        z_node_normal = zscore_mode(d_node_normal, idx_normal, d_node_calib, calib_idx_w, dev_memory=dev_mem)
+        z_struct_normal = zscore_mode(resid_struct_normal, idx_normal, resid_struct_calib, calib_idx_w)
         z_mahal_normal, _ = zscore(d_mahal_normal, d_mahal_calib)
         z_node_normal_masked = z_node_normal[:, reliable_mask]
         b_normal = z_node_normal_masked.max(axis=1)
@@ -293,9 +288,6 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
                           "n_valid_cov_prototypes": int(model.cov_head.calib_valid.sum()),
                           "num_prototypes": num_prototypes,
                           "fault_types": {}}
-        if calib_mode == "per_prototype":
-            client_report["n_valid_score_node_prototypes"] = int(model.score_calib_node.calib_valid.sum())
-            client_report["n_valid_score_struct_prototypes"] = int(model.score_calib_struct.calib_valid.sum())
         rows = {k: [] for k in scores_normal}
         for label_id_str, name in label_map.items():
             label_id = int(label_id_str)
@@ -308,8 +300,8 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
                 continue
             fault_arr = scale_client(data, scaler, fault_idx)
             d_proto_f, d_node_f, resid_struct_f, idx_f, d_mahal_f = per_sample_scores(model, fault_arr)
-            z_node_f = zscore_mode(d_node_f, idx_f, d_node_calib, calib_idx_w, score_head=node_head, ema_memory=ema_mem)
-            z_struct_f = zscore_mode(resid_struct_f, idx_f, resid_struct_calib, calib_idx_w, score_head=struct_head)
+            z_node_f = zscore_mode(d_node_f, idx_f, d_node_calib, calib_idx_w, dev_memory=dev_mem)
+            z_struct_f = zscore_mode(resid_struct_f, idx_f, resid_struct_calib, calib_idx_w)
             z_mahal_f, _ = zscore(d_mahal_f, d_mahal_calib)
             z_node_f_masked = z_node_f[:, reliable_mask]
             b_f = z_node_f_masked.max(axis=1)
@@ -345,15 +337,8 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
     if calib_mode == "shrinkage":
         report["config"]["alpha"] = "auto" if alpha is None else alpha
     report["summary_mean_auroc_overall"] = summary_overall
-    if calib_mode == "per_prototype":
-        report["summary_n_valid_score_node_prototypes"] = [
-            report["clients"][k].get("n_valid_score_node_prototypes") for k in report["clients"]]
-        report["summary_n_valid_score_struct_prototypes"] = [
-            report["clients"][k].get("n_valid_score_struct_prototypes") for k in report["clients"]]
     if calib_mode == "shrinkage":
         mode_suffix = f"_calibmode_shrinkage_alpha{'auto' if alpha is None else int(alpha)}"
-    elif calib_mode != "global":
-        mode_suffix = f"_calibmode_{calib_mode}"
     else:
         mode_suffix = ""
     proto_suffix = f"_m{num_prototypes}" if num_prototypes != NUM_PROTOTYPES else ""
@@ -368,7 +353,7 @@ def main(calib_mode="global", num_prototypes=NUM_PROTOTYPES, alpha=20.0):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
+    parser.add_argument("--calib-mode", choices=["global", "shrinkage"], default="global")
     parser.add_argument("--num-prototypes", type=int, default=NUM_PROTOTYPES)
     parser.add_argument("--alpha", type=str, default="20",
                         help="shrinkage strength for --calib-mode shrinkage, or 'auto' for data-driven per-slot alpha")
