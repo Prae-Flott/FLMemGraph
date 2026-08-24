@@ -388,7 +388,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
                 _, d_node_fit, _, _, idx_fit, _, _ = per_sample_scores(model, x_in)
                 client_dev_stats.append(compute_prototype_dev_stats(d_node_fit, idx_fit, NUM_PROTOTYPES))
             num_shared = diag["num_shared_prototypes"]
-            shrink_stats = compute_shrinkage_stats(client_dev_stats, num_shared, alpha)
+            shrink_stats, alpha_used = compute_shrinkage_stats(client_dev_stats, num_shared, alpha)
+            diag["shrinkage_alpha"] = alpha_used.tolist()
             for model, (mean_s, var_s, valid_s) in zip(models, shrink_stats):
                 model.memory.load_shrinkage_stats(mean_s, var_s, valid_s)
 
@@ -540,10 +541,10 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, calib_mode="
 
     report["config"]["calib_mode"] = calib_mode
     if calib_mode == "shrinkage":
-        report["config"]["alpha"] = alpha
+        report["config"]["alpha"] = "auto" if alpha is None else alpha
     report["summary_mean_auroc_overall"] = summary_overall
     if calib_mode == "shrinkage":
-        mode_suffix = f"_calibmode_shrinkage_alpha{int(alpha)}"
+        mode_suffix = f"_calibmode_shrinkage_alpha{'auto' if alpha is None else int(alpha)}"
     elif calib_mode != "global":
         mode_suffix = f"_calibmode_{calib_mode}"
     else:
@@ -566,7 +567,9 @@ if __name__ == "__main__":
     parser.add_argument("--no-forecast-prior", action="store_true")
     parser.add_argument("--out-suffix", type=str, default=None)
     parser.add_argument("--calib-mode", choices=["global", "per_prototype", "ema", "shrinkage"], default="global")
-    parser.add_argument("--alpha", type=float, default=20.0, help="shrinkage strength for --calib-mode shrinkage")
+    parser.add_argument("--alpha", type=str, default="20",
+                        help="shrinkage strength for --calib-mode shrinkage, or 'auto' for data-driven per-slot alpha")
     args = parser.parse_args()
+    args.alpha = None if args.alpha == "auto" else float(args.alpha)
     main(horizon_mult=args.horizon_mult, use_forecast_prior=not args.no_forecast_prior,
          out_suffix=args.out_suffix, calib_mode=args.calib_mode, alpha=args.alpha)

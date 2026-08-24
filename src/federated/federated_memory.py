@@ -155,13 +155,27 @@ def _merge_dev_stats_pair(n_a, mean_a, var_a, n_b, mean_b, var_b):
     return n, mean, m2 / n
 
 
-def compute_shrinkage_stats(client_dev_stats, num_shared: int, alpha: float):
+def compute_shrinkage_stats(client_dev_stats, num_shared: int, alpha):
     """Empirical-Bayes per-client, per-prototype shrinkage, "shrinkage" calib
     mode of `memory/calib-in-prototype-ab.md` -- the design that replaces
     both plain `ema` (pure local stats, small clients never clear warm-up)
     and the reverted `federated_ema` (one fused stat shared IDENTICALLY by
     every client in a cluster, which let large clients overwrite small ones'
     real statistics -- see that doc's "Why federated_ema failed" section).
+
+    `alpha`: either a fixed float (broadcast to every shared slot, the
+    original behavior) or `None` to auto-estimate a PER-SLOT alpha from
+    this round's own `client_dev_stats` via the standard normal-normal
+    empirical-Bayes moment estimator (James-Stein/Efron-Morris form) --
+    see "Dynamic alpha" note in `memory/calib-in-prototype-ab.md`. In the
+    hierarchical-normal model this shrinkage formula comes from
+    (`lambda = n / (n + sigma^2/tau^2)`), `alpha` IS `sigma^2/tau^2`:
+    within-client sampling variance over between-client variance of the
+    TRUE per-slot mean. Passing a fixed `alpha` (the original design) is a
+    hand-picked shortcut for this ratio, not truly "empirical" Bayes in the
+    sense the name implies; `alpha=None` computes it from data instead, per
+    shared slot per round (not swept, not tuned, not global across slots/
+    rounds -- each slot's own within/between variance ratio this round).
 
     `client_dev_stats`: list of C `(n, mean, var)` triples from
     `compute_prototype_dev_stats`, one per client, each computed via a
@@ -193,19 +207,22 @@ def compute_shrinkage_stats(client_dev_stats, num_shared: int, alpha: float):
 
     For each shared slot `k`, blends client `c`'s own local `(mean, var)`
     with the fleet-pooled `(mean, var)` via `lambda_{c,k} = n_{c,k} /
-    (n_{c,k} + alpha)` (client's own local `n` this round; `alpha` is the
-    shrinkage-strength hyperparameter, swept by callers, not tuned here) --
-    `lambda` never reaches exactly 0 unless `n=0` (full fallback to the
-    fleet-pooled prior, expected/fine) and never reaches exactly 1 unless
-    `alpha=0`.
+    (n_{c,k} + alpha_k)` (client's own local `n` this round; `alpha_k` is
+    either the caller-supplied fixed value or the data-driven per-slot
+    estimate, see above) -- `lambda` never reaches exactly 0 unless `n=0`
+    (full fallback to the fleet-pooled prior, expected/fine) and never
+    reaches exactly 1 unless `alpha_k=0`.
 
-    Returns a list of C `(mean_star [M, num_nodes], var_star [M, num_nodes],
-    valid [M] bool)` triples ready for
-    `JointPrototypeMemory.load_shrinkage_stats()`. `valid[k]` is True for
-    shared slots whenever the FLEET pool has any data (`global_n[k] > 0`,
-    regardless of this client's own `n_{c,k}`) and for personalized slots
-    whenever this client's OWN `n_{c,k} > 0` (matching plain `ema`'s
-    validity convention there, since no fleet borrowing applies)."""
+    Returns `(out, alpha_arr)`: `out` is a list of C `(mean_star
+    [M, num_nodes], var_star [M, num_nodes], valid [M] bool)` triples ready
+    for `JointPrototypeMemory.load_shrinkage_stats()` (`valid[k]` is True
+    for shared slots whenever the FLEET pool has any data (`global_n[k] >
+    0`, regardless of this client's own `n_{c,k}`) and for personalized
+    slots whenever this client's OWN `n_{c,k} > 0`, matching plain `ema`'s
+    validity convention there, since no fleet borrowing applies);
+    `alpha_arr` is the `[num_shared]` array of alpha values actually used
+    (the fixed value broadcast, or the per-slot estimate) -- callers should
+    log this even in fixed-alpha mode for a uniform report schema."""
     C = len(client_dev_stats)
     M, num_nodes = client_dev_stats[0][1].shape
     n_list = [ds[0].astype(np.float64) for ds in client_dev_stats]
@@ -232,18 +249,66 @@ def compute_shrinkage_stats(client_dev_stats, num_shared: int, alpha: float):
             global_var[k] = var_acc
     shared_valid = global_n > 0  # [num_shared]
 
+    if alpha is None:
+        alpha_arr = _estimate_alpha_per_slot(n_list, mean_list, var_list, num_shared, C)
+    else:
+        alpha_arr = np.full(num_shared, float(alpha), dtype=np.float64)
+
     out = []
     for c in range(C):
         mean_star = mean_list[c].copy()
         var_star = var_list[c].copy()
         valid = n_list[c] > 0  # personalized-slot validity: this client's own coverage only
         if num_shared > 0:
-            lam = (n_list[c][:num_shared] / (n_list[c][:num_shared] + alpha))[:, None]
+            lam = (n_list[c][:num_shared] / (n_list[c][:num_shared] + alpha_arr))[:, None]
             mean_star[:num_shared] = lam * mean_list[c][:num_shared] + (1 - lam) * global_mean
             var_star[:num_shared] = lam * var_list[c][:num_shared] + (1 - lam) * global_var
             valid[:num_shared] = shared_valid  # even this client's own n=0 is valid (lambda->0)
         out.append((mean_star, var_star, valid))
-    return out
+    return out, alpha_arr
+
+
+# clamps for _estimate_alpha_per_slot -- pure data-driven sigma^2/tau^2 can blow up
+# (near-zero between-client variance -> huge alpha, i.e. "trust the fleet completely")
+# or collapse near 0 (large between-client variance vs. tiny within-client noise ->
+# "trust local data completely") -- both are legitimate outcomes of the estimator, but
+# unbounded values risk numerical issues in the n/(n+alpha) division; clamp to a wide
+# but finite range rather than let either extreme go unbounded.
+_ALPHA_MIN, _ALPHA_MAX = 1e-3, 1e6
+_ALPHA_FALLBACK = 20.0  # used when a slot has <2 clients with n>0 -- not enough
+                         # data to estimate a between-client variance at all
+
+
+def _estimate_alpha_per_slot(n_list, mean_list, var_list, num_shared, C):
+    """Method-of-moments (James-Stein-style) estimate of `alpha_k = sigma^2_k
+    / tau^2_k` per shared prototype slot `k`, from THIS ROUND's
+    `client_dev_stats` alone (no cross-round history). Reduces each
+    client's per-node `mean`/`var` to a single scalar (plain average across
+    nodes) first -- one alpha per slot, not per (slot, node), matching the
+    existing `lam` shape (`[num_shared, 1]` broadcast over nodes) so the
+    blending logic itself doesn't need to change. `sigma^2_k` (within-
+    client sampling variance) is the n-weighted average of each client's
+    own `var_{c,k}`; `tau^2_k` (between-client variance of the TRUE mean)
+    is the n-weighted variance of the per-client means MINUS the average
+    sampling-variance-of-the-mean-estimator (`sigma^2/n`), the standard
+    unbiased-in-expectation moment correction, floored at a small epsilon
+    (never exactly 0, so `alpha` never blows up to infinity)."""
+    alpha_arr = np.full(num_shared, _ALPHA_FALLBACK, dtype=np.float64)
+    for k in range(num_shared):
+        ns = np.array([n_list[c][k] for c in range(C)], dtype=np.float64)
+        valid_c = ns > 0
+        if valid_c.sum() < 2:
+            continue  # can't estimate a between-client variance from <2 clients
+        ns_v = ns[valid_c]
+        means_scalar = np.array([mean_list[c][k].mean() for c in range(C) if ns[c] > 0])
+        vars_scalar = np.array([var_list[c][k].mean() for c in range(C) if ns[c] > 0])
+        sigma2 = float(np.average(vars_scalar, weights=ns_v))
+        grand_mean = np.average(means_scalar, weights=ns_v)
+        between_var_raw = np.average((means_scalar - grand_mean) ** 2, weights=ns_v)
+        sampling_var_of_mean = np.average(vars_scalar / np.maximum(ns_v, 1.0), weights=ns_v)
+        tau2 = max(between_var_raw - sampling_var_of_mean, 1e-8)
+        alpha_arr[k] = np.clip(sigma2 / tau2, _ALPHA_MIN, _ALPHA_MAX)
+    return alpha_arr
 
 
 def _bfs_components(adj, n):

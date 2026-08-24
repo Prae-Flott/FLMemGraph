@@ -1,6 +1,6 @@
 ---
 name: calib-in-prototype-ab
-description: Branch experiment (calib-in-prototype-ab) closing the B/C/K-vs-H/E calibration-architecture gap -- Path B (offline per-prototype median/IQR, new ScoreCalibrationHead) vs Path A (online EMA per-prototype mean/var) vs the existing global-median/IQR baseline, robo3er + Sielaff, federated, single seed.
+description: Branch experiment (calib-in-prototype-ab) closing the B/C/K-vs-H/E calibration-architecture gap -- Path B (offline per-prototype median/IQR, new ScoreCalibrationHead) vs Path A (online EMA per-prototype mean/var) vs shrinkage vs the existing global-median/IQR baseline, robo3er + Sielaff + Paderborn, federated, single seed.
 metadata:
   type: project
 ---
@@ -522,3 +522,258 @@ this design, distinct from both `ema`'s warm-up problem and
 See also the "Why federated_ema failed" section above (this section's
 starting point) and [[scoring-signals-B-C-E-H]]/[[three-dataset-bck-comparison]]
 (baseline tables this section's numbers are directly comparable to).
+
+## Paderborn (2026-08-24): all 4 calib_modes ported and run, but required a
+## non-regression-safe scoring-architecture change first
+
+Unlike robo3er/Sielaff, `run_paderborn_v3_1_federated.py`/
+`run_paderborn_forecast_v2_federated.py` had NO `--calib-mode` support at
+all before this session -- Paderborn was the dataset explicitly flagged as
+"not run" everywhere above. Porting it exposed a real architectural
+mismatch, not just a missing flag.
+
+### The mismatch: Paderborn scored at FILE level, robo3er/Sielaff score at
+### WINDOW level, and per_prototype/ema/shrinkage need window-level `idx`
+
+Paderborn's original design (`per_file_scores`): average raw `d_node`/
+`resid_struct`/etc. across ALL windows of one physical measurement file
+FIRST (`agg_by_file`), THEN z-score that one per-file aggregate
+(`zscore(mean(raw))`). robo3er/Sielaff have no such file concept -- they're
+continuous sensor streams with no natural per-file boundary, so their
+`two_stage_group_score` always scored at window level directly.
+
+`per_prototype`/`ema`/`shrinkage` all require knowing which prototype EACH
+WINDOW matched (`idx`) to pick that window's own calibration stats --
+different windows in the same Paderborn file can legitimately match
+different prototypes (different points in a measurement session can be
+different operating regimes). Averaging raw `d_node` across a file's
+windows FIRST destroys this per-window `idx` correspondence before
+`per_prototype`/`ema`/`shrinkage` ever get a chance to use it -- the
+information is unrecoverable after that averaging step, regardless of
+dataset.
+
+### The fix actually implemented: switched Paderborn to pure window-level
+### scoring (matching robo3er/Sielaff), NOT a hybrid
+
+Both `run_paderborn_v3_1_federated.py` and `run_paderborn_forecast_v2_federated.py`
+were rewritten to score at WINDOW level throughout (each window is now its
+own AUROC sample, using `two_stage_group_score`/`topk_mean`, ported
+verbatim from `run_robo3er_v3_1_federated.py`) -- **not** a hybrid that
+would z-score per-window (using `idx`) and then re-aggregate the
+CALIBRATED z-scores back to file level before AUROC. The hybrid was
+identified as architecturally possible (idx-based per-window z-scoring
+does not itself require abandoning file-level AUROC -- only the RAW-value
+averaging step does) and would likely have avoided the regression
+described below, but was not built; this was a deliberate scope choice
+(reuse the existing, already-validated `two_stage_group_score` code path
+unmodified rather than design a new file-reaggregation variant), not a
+technical necessity. **Flagged as the clearest follow-up if this line is
+revisited.**
+
+**Consequence: `--calib-mode global` under the new scripts is NOT
+bit-identical to the pre-existing file-level-aggregate baseline.** Old
+(file-level, committed baseline) vs. new (window-level) `global` mode,
+`v3_1` script:
+
+| signal | file-level (old) | window-level (new) |
+|---|---|---|
+| B | 0.888 | 0.858 |
+| C | 0.970 | 0.953 |
+| H | 0.961 | 0.955 |
+| F | 0.989 | 0.953 |
+
+This is a real, non-noise-level drop, diagnosed (not directly instrumented,
+but consistent with known dataset physics) as TWO compounding effects:
+
+1. **Averaging-as-denoising is lost.** File-level aggregation averages out
+   window-to-window sampling noise before z-scoring, tightening the
+   calib-split IQR; window-level z-scoring uses the raw (noisier) per-window
+   IQR, which is larger, which directly shrinks every z-score
+   (`z = (x-median)/IQR`), pulling normal/fault distributions closer
+   together.
+2. **Bearing faults are impulsive/intermittent, not sustained** (already
+   documented in `diagnose_paderborn_localization_federated.py`'s own
+   docstring: "bearing faults manifest as impulsive vibration"). AUROC
+   ground truth is assigned PER FILE -- every window of a damaged bearing's
+   file is labeled "fault," even though only the windows coinciding with an
+   actual impulse event carry real signal; the "quiet" windows between
+   impulses look near-normal. File-level aggregation averages quiet +
+   impulsive windows together into one still-somewhat-elevated file
+   statistic (a real, if diluted, signal). Window-level scoring instead
+   feeds each "quiet" fault window into AUROC as its own false-negative-
+   prone positive-labeled sample -- a weak-label problem specific to
+   Paderborn's file structure, invisible on robo3er/Sielaff (no per-file
+   fault-event grouping there at all, so no analogous "quiet window inside
+   a labeled-positive file" case exists).
+
+Both effects push the SAME direction (window-level AUROC lower than
+file-level), consistent with the measured drop. Not directly instrumented
+(e.g. by inspecting per-window score distributions inside known-fault
+files to confirm the "quiet window" story specifically) -- flagged as the
+next diagnostic step if this line continues.
+
+### Results: all 4 calib_modes, window-level scoring throughout (this is
+### the ONLY basis for a fair within-Paderborn calib_mode comparison --
+### don't compare these numbers to the old file-level baseline table above)
+
+**v3_1 (`run_paderborn_v3_1_federated.py`, B/C/H):**
+
+| calib_mode | B | C | H |
+|---|---|---|---|
+| global (new baseline) | 0.858 | 0.953 | 0.955 |
+| per_prototype | **0.918** | **0.968** | 0.955 |
+| ema | 0.822 | 0.953 | 0.955 |
+| shrinkage (alpha=20) | **0.918** | 0.953 | 0.955 |
+
+**forecast_v2 (`run_paderborn_forecast_v2_federated.py`, adds K,
+horizon_mult=10):**
+
+| calib_mode | B | K | BK |
+|---|---|---|---|
+| global (new baseline) | 0.886 | 0.864 | 0.901 |
+| per_prototype | **0.933** | 0.879 | **0.948** |
+| ema | 0.785 | 0.864 (no hook, falls back to global) | 0.868 |
+| shrinkage (alpha=20) | **0.925** | 0.864 | **0.924** |
+
+### Headline: Paderborn's calib_mode ranking is different from BOTH
+### robo3er's and Sielaff's
+
+- **`per_prototype` and `shrinkage` are both clear wins here, and land
+  within ~1pt of each other** -- the first dataset of the three where
+  `shrinkage` is competitive with (not worse than) `per_prototype`. On
+  robo3er, `shrinkage` was WORSE than `ema` at every alpha tested; on
+  Sielaff, `shrinkage` was worse than `ema` but better than `per_prototype`.
+  Here it's essentially tied with the best mode. Not diagnosed why
+  (candidate explanation, unverified: Paderborn's 6 federated clients are
+  all roughly the SAME size, unlike robo3er's 103-vs-3231-sample imbalance
+  that broke `shrinkage`/`federated_ema` there -- if true, this would
+  support the standing hypothesis that `shrinkage`'s failure mode is
+  specifically about client-size imbalance, not the method itself; not
+  directly checked against actual per-client `n` at the shared prototype
+  slot the way robo3er's was).
+- **`ema` is the only mode that regresses BELOW the `global` baseline
+  here** (v3_1: 0.822 < 0.858; forecast: 0.785 < 0.886) -- worse than on
+  Sielaff (ema fully recovers to global) and worse than robo3er (ema
+  partially recovers, stays above global's per-fault low points on the
+  small clients it doesn't help). All 6 Paderborn clients are "small" in
+  the same sense that hurt robo3er's small clients (may not clear
+  `ema_warmup_steps` within a round) -- but unlike robo3er, there's no
+  large client here to pull the fleet average up, so the small-client
+  warm-up problem dominates the whole dataset's number instead of just
+  part of it. Not directly confirmed by inspecting per-client warm-up
+  step counts (the diagnostic robo3er's write-up above already did) --
+  flagged as the natural next check if this line continues.
+- **K is nearly calib_mode-invariant** (0.864 -> 0.879, `per_prototype`
+  only) -- expected, since `ema`/`shrinkage` have no hook for K here (same
+  scope limit as C in every script) and even `per_prototype`'s own gain is
+  small, suggesting K's own signal is not particularly sensitive to this
+  calibration axis on this dataset.
+- **`NUM_PROTOTYPES=16` (same as Sielaff) does NOT reproduce Sielaff's
+  per_prototype regression here** -- this breaks the earlier working
+  hypothesis (from [[sielaff-num-prototypes-sweep]]) that a high prototype
+  count alone predicts `per_prototype` regression via too-few-calib-
+  samples-per-slot. Candidate explanation (not verified): Paderborn's
+  6-node feature space may cluster into far more stable/separable
+  operating regimes than Sielaff's, so even with 16 prototype slots,
+  Paderborn's calib windows land in ENOUGH distinct-but-populated slots to
+  avoid the small-sample IQR blowup that hurt Sielaff -- not checked
+  directly against the per-prototype valid-slot fraction the way
+  [[sielaff-num-prototypes-sweep]] did for Sielaff itself.
+
+### What's still open (Paderborn-specific)
+
+- **The window-level-vs-file-level regression's "quiet window" mechanism
+  is not directly instrumented** -- inferred from documented dataset
+  physics (impulsive fault signature) and the direction/magnitude of the
+  observed AUROC drop, not from inspecting actual per-window score
+  distributions inside known-fault files.
+- **The hybrid design (per-window `idx`-based z-scoring, re-aggregated to
+  file level before AUROC) was identified but not built** -- would likely
+  recover close to the old file-level baseline's `global` numbers while
+  still supporting `per_prototype`/`ema`/`shrinkage`, decoupling "does
+  calib_mode help" from "does window-level scoring itself hurt." The
+  current numbers conflate both effects (calib_mode gains are measured
+  against an already-degraded window-level `global` baseline, not the
+  dataset's true achievable ceiling).
+- **Why `shrinkage` ties `per_prototype` on Paderborn but not on robo3er/
+  Sielaff, and why `NUM_PROTOTYPES=16` doesn't hurt `per_prototype` here
+  the way it does on Sielaff** -- both flagged above as plausible-but-
+  unverified explanations tied to Paderborn's more balanced client sizes
+  and/or more separable feature space; neither checked directly.
+- Single seed, per this project's standing convention.
+
+See also [[paderborn-diagnosis-localization]] (the separate, `global`-only
+node-level localization/diagnosis task, unaffected by any of the above --
+that script still uses its own independent scoring path) and the Paderborn
+physics note in `benchmark/datasets/paderborn_physics.md` for the
+impulsive-fault-signature background this section's mechanism argument
+relies on.
+
+## Dynamic (data-driven) alpha, tested and kept as an option, NOT the default
+## (2026-08-24)
+
+`shrinkage`'s `lambda_{c,k} = n_{c,k} / (n_{c,k} + alpha)` is exactly the
+normal-normal empirical-Bayes/James-Stein posterior-mean weight, where
+`alpha = sigma^2/tau^2` (within-client sampling variance over between-
+client variance of the true per-slot mean) -- a quantity that can in
+principle be ESTIMATED from data rather than hand-picked. The original
+implementation always used a fixed, swept `alpha` (5/20/50), which is not
+truly "empirical" Bayes despite the name. `federated_memory.compute_shrinkage_stats`
+now accepts `alpha=None` to trigger a per-slot, per-round method-of-moments
+estimate (`_estimate_alpha_per_slot`, clamped to `[1e-3, 1e6]`, falling back
+to 20.0 when a slot has <2 clients with data); all 6 `run_*_federated.py`
+scripts expose this via `--alpha auto`. Return signature changed:
+`compute_shrinkage_stats` now returns `(out, alpha_arr)` instead of just
+`out` -- all 6 call sites updated to log `alpha_arr` into that round's
+`alignment_log` entry as `shrinkage_alpha`.
+
+**Result: dynamic alpha does not change AUROC in any tested case** (all 6
+detection scripts, robo3er + Sielaff + Paderborn, `B_node_max`):
+
+| dataset/script | fixed alpha=20 | dynamic (auto) |
+|---|---|---|
+| robo3er v3_1 | 0.828 | 0.833 |
+| robo3er forecast | 0.826 | 0.829 |
+| Sielaff v2_1 | 0.946 | 0.946 |
+| Sielaff forecast | 0.960 | 0.958 |
+| Paderborn v3_1 | 0.918 | 0.918 |
+| Paderborn forecast | 0.925 | 0.925 |
+
+**But the per-round `shrinkage_alpha` values reveal a real, previously-
+undiagnosed structural difference between datasets, consistent with
+everything else this document has found about `shrinkage`'s failure mode:**
+
+- **Paderborn (6 roughly-equal-size clients)**: converges cleanly to
+  `alpha≈20.0` from round 2 onward -- almost exactly the hand-picked
+  default, i.e. the estimator independently confirms 20 was already a
+  reasonable choice here.
+- **robo3er (5 clients, 103-vs-3231 sample imbalance)**: never stabilizes.
+  No shared slot for 2 rounds, then hits the `1e6` clamp (near-total fleet
+  trust) for 2 rounds, then settles at `alpha=343` in round 5 -- 17x the
+  default, i.e. the data-driven estimate independently concludes MORE
+  fleet-pooling is warranted here, the opposite of what robot01's
+  `cable_trapped` regression (documented above) would want. This is
+  consistent with, not a fix for, the "fleet pool dominated by one large
+  client" mechanism already diagnosed -- the estimator is accurately
+  describing the imbalance, not correcting for it.
+- **Sielaff (10 clients)**: round-1 estimates swing 0.91 to `1e6` across
+  the 8 shared slots in the SAME round (6 orders of magnitude), settling to
+  `alpha=0.85` (near-zero shrinkage) by round 5 -- the moment estimator
+  itself is high-variance at this scale, not just the underlying quantity
+  it's estimating.
+
+**Conclusion: alpha was never the bottleneck.** Making it data-driven
+doesn't hurt (matches or lands within the already-explored 5-50 range
+everywhere) but doesn't help either -- `shrinkage`'s known regressions
+(robo3er's robot01/`cable_trapped`, Sielaff's mild across-the-board
+regression) come from the fleet-pooling mechanism itself under client-size
+imbalance, not from a mistuned scalar. **Decision: `shrinkage` is kept as
+the project's answer for federated-shared per-prototype tolerance
+distributions (per the branch's overall recommendation above), with the
+fixed default `alpha=20` unchanged; `--alpha auto` is kept as an available,
+validated option, not switched to as the new default**, since it adds a
+data-dependent, higher-variance quantity (visible in Sielaff's round-1
+swings) for no measured benefit. Not swept further (e.g. trying non-clamp
+bounds, or per-node instead of per-slot-averaged alpha) since the core
+finding -- alpha isn't the bottleneck -- makes further tuning of it a low-
+priority follow-up.
