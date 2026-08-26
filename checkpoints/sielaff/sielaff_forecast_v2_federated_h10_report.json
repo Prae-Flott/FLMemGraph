@@ -56,10 +56,10 @@
   ],
   "alignment_log": [
     {
-      "num_components": 133,
-      "num_multi_client_clusters": 2,
-      "num_shared_prototypes": 2,
-      "num_personalized_prototypes_per_client": 14,
+      "num_components": 132,
+      "num_multi_client_clusters": 3,
+      "num_shared_prototypes": 3,
+      "num_personalized_prototypes_per_client": 13,
       "round": 1
     },
     {
@@ -70,21 +70,21 @@
       "round": 2
     },
     {
-      "num_components": 121,
+      "num_components": 124,
       "num_multi_client_clusters": 2,
       "num_shared_prototypes": 2,
       "num_personalized_prototypes_per_client": 14,
       "round": 3
     },
     {
-      "num_components": 120,
+      "num_components": 119,
       "num_multi_client_clusters": 2,
       "num_shared_prototypes": 2,
       "num_personalized_prototypes_per_client": 14,
       "round": 4
     },
     {
-      "num_components": 120,
+      "num_components": 119,
       "num_multi_client_clusters": 2,
       "num_shared_prototypes": 2,
       "num_personalized_prototypes_per_client": 14,
@@ -138,14 +138,22 @@
     "machine1": {
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [
+        "total_quantity",
+        "total_deposit",
+        "total_weight",
+        "unique_categories",
         "reject_count",
+        "has_reject",
         "cleaning_count",
-        "cleaning_duration",
-        "cleaning_begin_pixels",
-        "\u00f6ffnen_Weiche 6",
-        "\u00f6ffnen_Weiche 7",
+        "cleaning_end_pixels",
+        "schlie\u00dfen_Weiche 3",
+        "schlie\u00dfen_Weiche 7",
+        "\u00f6ffnen_Weiche 3",
+        "\u00f6ffnen_Weiche 4",
+        "read SM_RingCamera 1",
         "read SM_RingCamera 2",
-        "read barcode_RingCamera 5"
+        "read SM_RingCamera 6",
+        "read barcode_RingCamera 3"
       ],
       "n_valid_cov_prototypes": 1,
       "num_prototypes": 16,
@@ -181,36 +189,38 @@
         },
         "other": {
           "n": 30,
-          "B_node_max": 0.9639269406392693,
-          "C_struct_max": 0.949771689497717,
-          "H_cov_mahal": 0.9136986301369863,
-          "I_node_cov_max": 0.9639269406392693
+          "B_node_max": 0.973972602739726,
+          "C_struct_max": 0.9707762557077625,
+          "H_cov_mahal": 0.858447488584475,
+          "I_node_cov_max": 0.973972602739726
         }
       },
       "client_mean_auroc": {
-        "B_node_max": 0.9927853881278539,
-        "C_struct_max": 0.9899543378995433,
-        "H_cov_mahal": 0.9827397260273972,
-        "I_node_cov_max": 0.9927853881278539
+        "B_node_max": 0.9947945205479453,
+        "C_struct_max": 0.9941552511415525,
+        "H_cov_mahal": 0.9716894977168951,
+        "I_node_cov_max": 0.9947945205479453
       }
     },
     "machine2": {
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [
+        "total_quantity",
+        "total_deposit",
+        "total_weight",
+        "unique_categories",
         "reject_count",
         "has_reject",
         "cleaning_count",
-        "cleaning_duration",
-        "cleaning_begin_pixels",
         "cleaning_end_pixels",
-        "schlie\u00dfen_Weiche 5",
+        "receipt_count",
+        "schlie\u00dfen_Weiche 3",
         "schlie\u00dfen_Weiche 7",
-        "\u00f6ffnen_Weiche 5",
-        "\u00f6ffnen_Weiche 6",
+        "\u00f6ffnen_Weiche 3",
+        "\u00f6ffnen_Weiche 4",
+        "read SM_RingCamera 1",
         "read SM_RingCamera 2",
-        "read SM_RingCamera 3",
-        "read SM_RingCamera 4",
-        "read barcode_RingCamera 1",
+        "read SM_RingCamera 6",
         "read barcode_RingCamera 2"
       ],
       "n_valid_cov_prototypes": 1,
@@ -220,13 +230,14 @@
         "bottle_recognition": {
           "n": 477,
           "B_node_max": 1.0,
-          "C_struct_max": 1.0,
-          "H_cov_mahal": 0.9999218433925485,
+          "C_struct_max": 0.9999999999999999,
+          "H_cov_mahal": 0.9999264408400457,
           "I_node_cov_max": 1.0,
-          "K_forecast_max": 0.9999829862528924,
+          "K_forecast_max": 1.0,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 1.0
+          "HK_max": 0.9998809037702464,
+          "BCK_max": 1.0
         },
         "mechanical_jam": {
           "n": 16,
@@ -237,146 +248,75 @@
           "K_forecast_max": 1.0,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 1.0
+          "HK_max": 1.0,
+          "BCK_max": 1.0
         },
         "compactor_status": {
           "n": 75,
           "B_node_max": 0.9999122807017544,
-          "C_struct_max": 0.9998538011695907,
-          "H_cov_mahal": 0.9985380116959064,
+          "C_struct_max": 0.9998830409356726,
+          "H_cov_mahal": 0.9978070175438597,
           "I_node_cov_max": 0.9999122807017544,
           "K_forecast_max": 1.0,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.9991397849462366
+          "HK_max": 0.9987096774193549,
+          "BCK_max": 1.0
         },
         "crate_recognition": {
           "n": 8,
-          "B_node_max": 0.9997258771929824,
-          "C_struct_max": 0.9997258771929824,
-          "H_cov_mahal": 0.9983552631578947,
-          "I_node_cov_max": 0.9997258771929824,
+          "B_node_max": 0.9997258771929826,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 0.9978070175438596,
+          "I_node_cov_max": 0.9997258771929826,
           "K_forecast_max": 1.0,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 1.0
+          "HK_max": 0.9994959677419355,
+          "BCK_max": 1.0
         },
         "other": {
           "n": 17,
           "B_node_max": 0.9993550051599588,
-          "C_struct_max": 0.9993550051599588,
-          "H_cov_mahal": 0.9941950464396284,
+          "C_struct_max": 0.9992260061919505,
+          "H_cov_mahal": 0.9871001031991744,
           "I_node_cov_max": 0.9993550051599588,
-          "K_forecast_max": 0.9554079696394686,
+          "K_forecast_max": 0.9952561669829222,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.9601518026565465
+          "HK_max": 0.9933586337760911,
+          "BCK_max": 1.0
         }
       },
       "client_mean_auroc": {
         "B_node_max": 0.9997986326109392,
-        "C_struct_max": 0.9997869367045065,
-        "H_cov_mahal": 0.9982020329371956,
+        "C_struct_max": 0.9998218094255247,
+        "H_cov_mahal": 0.9965281158253878,
         "I_node_cov_max": 0.9997986326109392,
-        "K_forecast_max": 0.9910781911784723,
+        "K_forecast_max": 0.9990512333965844,
         "BK_max": 1.0,
         "CK_max": 1.0,
-        "HK_max": 0.9918583175205565
+        "HK_max": 0.9982890365415257,
+        "BCK_max": 1.0
       }
     },
     "machine3": {
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [
         "total_quantity",
+        "total_deposit",
+        "total_weight",
+        "unique_categories",
         "reject_count",
         "has_reject",
-        "cleaning_count",
-        "cleaning_duration",
-        "cleaning_begin_pixels",
         "cleaning_end_pixels",
-        "schlie\u00dfen_Weiche 3",
-        "schlie\u00dfen_Weiche 5",
+        "receipt_count",
         "schlie\u00dfen_Weiche 7",
-        "\u00f6ffnen_Weiche 5",
-        "\u00f6ffnen_Weiche 6",
-        "\u00f6ffnen_Weiche 7",
+        "\u00f6ffnen_Weiche 3",
+        "\u00f6ffnen_Weiche 4",
+        "read SM_RingCamera 1",
         "read SM_RingCamera 2",
-        "read SM_RingCamera 3",
-        "read SM_RingCamera 4",
-        "read barcode_RingCamera 1",
-        "read barcode_RingCamera 2",
-        "read barcode_RingCamera 3"
-      ],
-      "n_valid_cov_prototypes": 1,
-      "num_prototypes": 16,
-      "has_forecast": true,
-      "fault_types": {
-        "bottle_recognition": {
-          "n": 418,
-          "B_node_max": 0.9948596922281133,
-          "C_struct_max": 0.9911346753452015,
-          "H_cov_mahal": 0.986816960501171,
-          "I_node_cov_max": 0.9948596922281133,
-          "K_forecast_max": 0.8520017993702205,
-          "BK_max": 0.9955833640044166,
-          "CK_max": 0.9939884676726781,
-          "HK_max": 0.9767922136343189
-        },
-        "mechanical_jam": {
-          "n": 20,
-          "B_node_max": 0.9975225225225226,
-          "C_struct_max": 0.998048048048048,
-          "H_cov_mahal": 0.989039039039039,
-          "I_node_cov_max": 0.9975225225225226,
-          "K_forecast_max": 0.891025641025641,
-          "BK_max": 0.9985042735042735,
-          "CK_max": 0.9987179487179487,
-          "HK_max": 0.967948717948718
-        },
-        "compactor_status": {
-          "n": 122,
-          "B_node_max": 0.9892802638704278,
-          "C_struct_max": 0.9885787426771033,
-          "H_cov_mahal": 0.9799881849062175,
-          "I_node_cov_max": 0.9892802638704278,
-          "K_forecast_max": 0.8324225865209471,
-          "BK_max": 0.990612302087712,
-          "CK_max": 0.9913829340058848,
-          "HK_max": 0.9396805380411938
-        },
-        "other": {
-          "n": 42,
-          "B_node_max": 0.9728299728299729,
-          "C_struct_max": 0.9748319748319748,
-          "H_cov_mahal": 0.9712569712569712,
-          "I_node_cov_max": 0.9728299728299729,
-          "K_forecast_max": 0.8571428571428572,
-          "BK_max": 0.9743589743589743,
-          "CK_max": 0.9788359788359788,
-          "HK_max": 0.9133089133089133
-        }
-      },
-      "client_mean_auroc": {
-        "B_node_max": 0.9886231128627592,
-        "C_struct_max": 0.988148360225582,
-        "H_cov_mahal": 0.9817752889258496,
-        "I_node_cov_max": 0.9886231128627592,
-        "K_forecast_max": 0.8581482210149164,
-        "BK_max": 0.9897647284888442,
-        "CK_max": 0.9907313323081226,
-        "HK_max": 0.949432595733286
-      }
-    },
-    "machine4": {
-      "excluded_nodes_node": [],
-      "excluded_nodes_forecast": [
-        "reject_count",
-        "has_reject",
-        "cleaning_duration",
-        "cleaning_end_pixels",
-        "read SM_RingCamera 2",
-        "read barcode_RingCamera 1",
-        "read barcode_RingCamera 3",
+        "read SM_RingCamera 6",
         "read barcode_RingCamera 5"
       ],
       "n_valid_cov_prototypes": 1,
@@ -384,59 +324,144 @@
       "has_forecast": true,
       "fault_types": {
         "bottle_recognition": {
-          "n": 359,
-          "B_node_max": 0.999341883742998,
-          "C_struct_max": 0.9987296825736938,
-          "H_cov_mahal": 0.9997704245615109,
-          "I_node_cov_max": 0.999341883742998,
-          "K_forecast_max": 0.9941948924416564,
-          "BK_max": 0.9999531846164649,
-          "CK_max": 1.0,
-          "HK_max": 1.0
+          "n": 418,
+          "B_node_max": 0.9945543629754157,
+          "C_struct_max": 0.9898487003750162,
+          "H_cov_mahal": 0.9871474345158555,
+          "I_node_cov_max": 0.9945543629754157,
+          "K_forecast_max": 0.8378726536621274,
+          "BK_max": 0.9945712182554288,
+          "CK_max": 0.9923322291743344,
+          "HK_max": 0.9828855355171144,
+          "BCK_max": 0.9945712182554288
         },
         "mechanical_jam": {
-          "n": 10,
-          "B_node_max": 0.9983516483516484,
-          "C_struct_max": 0.9983516483516484,
-          "H_cov_mahal": 0.9967032967032967,
-          "I_node_cov_max": 0.9983516483516484,
-          "K_forecast_max": 1.0,
-          "BK_max": 1.0,
-          "CK_max": 1.0,
-          "HK_max": 0.9983193277310924
+          "n": 20,
+          "B_node_max": 0.9960960960960962,
+          "C_struct_max": 0.9953453453453454,
+          "H_cov_mahal": 0.9912912912912912,
+          "I_node_cov_max": 0.9960960960960962,
+          "K_forecast_max": 0.870940170940171,
+          "BK_max": 0.9952991452991452,
+          "CK_max": 0.9974358974358973,
+          "HK_max": 0.9807692307692308,
+          "BCK_max": 0.9952991452991452
         },
         "compactor_status": {
-          "n": 36,
-          "B_node_max": 0.9906898656898657,
-          "C_struct_max": 0.9903846153846153,
-          "H_cov_mahal": 0.9938949938949939,
-          "I_node_cov_max": 0.9906898656898657,
-          "K_forecast_max": 0.9906629318394025,
-          "BK_max": 0.9974323062558357,
-          "CK_max": 0.9981325863678805,
-          "HK_max": 0.9971988795518207
+          "n": 122,
+          "B_node_max": 0.9892556490917147,
+          "C_struct_max": 0.9871018559543149,
+          "H_cov_mahal": 0.9791266676512578,
+          "I_node_cov_max": 0.9892556490917146,
+          "K_forecast_max": 0.8332632758862267,
+          "BK_max": 0.9898416701695391,
+          "CK_max": 0.9892111531455794,
+          "HK_max": 0.9456354210452571,
+          "BCK_max": 0.9898416701695391
         },
         "other": {
-          "n": 26,
-          "B_node_max": 0.962806424344886,
-          "C_struct_max": 0.82396449704142,
-          "H_cov_mahal": 0.9797125950972104,
-          "I_node_cov_max": 0.962806424344886,
-          "K_forecast_max": 0.9951519069166128,
-          "BK_max": 0.9915966386554621,
-          "CK_max": 0.8962508080155139,
-          "HK_max": 0.9941822882999354
+          "n": 42,
+          "B_node_max": 0.9733662233662235,
+          "C_struct_max": 0.9742599742599742,
+          "H_cov_mahal": 0.9783354783354783,
+          "I_node_cov_max": 0.9733662233662235,
+          "K_forecast_max": 0.9027269027269027,
+          "BK_max": 0.9748677248677249,
+          "CK_max": 0.9761904761904762,
+          "HK_max": 0.9853479853479854,
+          "BCK_max": 0.9748677248677249
         }
       },
       "client_mean_auroc": {
-        "B_node_max": 0.9877974555323495,
-        "C_struct_max": 0.9528576108378444,
-        "H_cov_mahal": 0.992520327564253,
-        "I_node_cov_max": 0.9877974555323495,
-        "K_forecast_max": 0.9950024327994179,
-        "BK_max": 0.9972455323819407,
-        "CK_max": 0.9735958485958486,
-        "HK_max": 0.9974251238957121
+        "B_node_max": 0.9883180828823626,
+        "C_struct_max": 0.9866389689836628,
+        "H_cov_mahal": 0.9839752179484706,
+        "I_node_cov_max": 0.9883180828823626,
+        "K_forecast_max": 0.861200750803857,
+        "BK_max": 0.9886449396479595,
+        "CK_max": 0.9887924389865719,
+        "HK_max": 0.9736595431698969,
+        "BCK_max": 0.9886449396479595
+      }
+    },
+    "machine4": {
+      "excluded_nodes_node": [],
+      "excluded_nodes_forecast": [
+        "total_deposit",
+        "unique_categories",
+        "reject_count",
+        "cleaning_duration",
+        "cleaning_begin_pixels",
+        "cleaning_end_pixels",
+        "\u00f6ffnen_Weiche 2",
+        "read SM_RingCamera 1",
+        "read SM_RingCamera 3",
+        "read SM_RingCamera 5",
+        "read barcode_RingCamera 2"
+      ],
+      "n_valid_cov_prototypes": 1,
+      "num_prototypes": 16,
+      "has_forecast": true,
+      "fault_types": {
+        "bottle_recognition": {
+          "n": 359,
+          "B_node_max": 0.9994337139183936,
+          "C_struct_max": 0.9986837674859959,
+          "H_cov_mahal": 0.9998469497076741,
+          "I_node_cov_max": 0.9994337139183936,
+          "K_forecast_max": 0.9878514079726598,
+          "BK_max": 0.9999063692329301,
+          "CK_max": 1.0,
+          "HK_max": 0.99990636923293,
+          "BCK_max": 0.9999297769246974
+        },
+        "mechanical_jam": {
+          "n": 10,
+          "B_node_max": 1.0,
+          "C_struct_max": 1.0,
+          "H_cov_mahal": 1.0,
+          "I_node_cov_max": 1.0,
+          "K_forecast_max": 1.0,
+          "BK_max": 1.0,
+          "CK_max": 1.0,
+          "HK_max": 1.0,
+          "BCK_max": 1.0
+        },
+        "compactor_status": {
+          "n": 36,
+          "B_node_max": 0.9896214896214897,
+          "C_struct_max": 0.9899267399267399,
+          "H_cov_mahal": 0.9932844932844933,
+          "I_node_cov_max": 0.9896214896214897,
+          "K_forecast_max": 0.9827264239028946,
+          "BK_max": 0.9969654528478058,
+          "CK_max": 0.9983660130718954,
+          "HK_max": 0.9974323062558356,
+          "BCK_max": 0.9969654528478059
+        },
+        "other": {
+          "n": 26,
+          "B_node_max": 0.9628064243448858,
+          "C_struct_max": 0.8987743026204564,
+          "H_cov_mahal": 0.9693575655114117,
+          "I_node_cov_max": 0.9628064243448858,
+          "K_forecast_max": 0.9915966386554621,
+          "BK_max": 0.9909502262443438,
+          "CK_max": 0.9586296056884293,
+          "HK_max": 0.9941822882999354,
+          "BCK_max": 0.9909502262443439
+        }
+      },
+      "client_mean_auroc": {
+        "B_node_max": 0.9879654069711923,
+        "C_struct_max": 0.9718462025082981,
+        "H_cov_mahal": 0.9906222521258947,
+        "I_node_cov_max": 0.9879654069711923,
+        "K_forecast_max": 0.9905436176327541,
+        "BK_max": 0.99695551208127,
+        "CK_max": 0.9892489046900812,
+        "HK_max": 0.9978802409471752,
+        "BCK_max": 0.9969613640042118
       }
     },
     "machine5": {
@@ -449,81 +474,86 @@
         "bottle_recognition": {
           "n": 523,
           "B_node_max": 0.9993896329484447,
-          "C_struct_max": 0.9979960708988366,
-          "H_cov_mahal": 0.9962065359591513,
+          "C_struct_max": 0.9979173138599262,
+          "H_cov_mahal": 0.994963924900788,
           "I_node_cov_max": 0.9993896329484447,
-          "K_forecast_max": 0.9927787781469862,
-          "BK_max": 0.9971969035994728,
-          "CK_max": 0.9956375652044775,
-          "HK_max": 0.9927787781469862
+          "K_forecast_max": 0.9935584473444838,
+          "BK_max": 0.9978095008260781,
+          "CK_max": 0.9961387811171546,
+          "HK_max": 0.9935584473444838,
+          "BCK_max": 0.9978466279307209
         },
         "mechanical_jam": {
           "n": 17,
-          "B_node_max": 0.9994615695248351,
-          "C_struct_max": 0.9974424552429667,
-          "H_cov_mahal": 0.9970386323865931,
-          "I_node_cov_max": 0.9994615695248351,
+          "B_node_max": 0.9993269619060439,
+          "C_struct_max": 0.9973078476241756,
+          "H_cov_mahal": 0.9959617714362633,
+          "I_node_cov_max": 0.9993269619060439,
           "K_forecast_max": 0.9931467732724157,
           "BK_max": 0.9954311821816105,
-          "CK_max": 0.9954311821816105,
-          "HK_max": 0.9931467732724157
+          "CK_max": 0.9948600799543118,
+          "HK_max": 0.9931467732724157,
+          "BCK_max": 0.9954311821816105
         },
         "compactor_status": {
           "n": 48,
-          "B_node_max": 0.9963768115942029,
-          "C_struct_max": 0.9945652173913043,
-          "H_cov_mahal": 0.9905606407322655,
-          "I_node_cov_max": 0.9963768115942029,
+          "B_node_max": 0.9967105263157895,
+          "C_struct_max": 0.9946128909229595,
+          "H_cov_mahal": 0.9918954996186118,
+          "I_node_cov_max": 0.9967105263157895,
           "K_forecast_max": 0.9941343042071198,
           "BK_max": 0.9953478964401294,
-          "CK_max": 0.9949433656957929,
-          "HK_max": 0.9941343042071198
+          "CK_max": 0.9945388349514563,
+          "HK_max": 0.9941343042071198,
+          "BCK_max": 0.9953478964401294
         },
         "crate_recognition": {
           "n": 8,
-          "B_node_max": 0.9971395881006865,
-          "C_struct_max": 0.9954233409610984,
-          "H_cov_mahal": 0.9919908466819222,
-          "I_node_cov_max": 0.9971395881006865,
+          "B_node_max": 0.9979977116704806,
+          "C_struct_max": 0.9948512585812357,
+          "H_cov_mahal": 0.9914187643020594,
+          "I_node_cov_max": 0.9979977116704806,
           "K_forecast_max": 1.0,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 1.0
+          "HK_max": 1.0,
+          "BCK_max": 1.0
         },
         "other": {
           "n": 40,
-          "B_node_max": 0.9918764302059496,
-          "C_struct_max": 0.9901029748283753,
-          "H_cov_mahal": 0.9925057208237985,
-          "I_node_cov_max": 0.9918764302059496,
-          "K_forecast_max": 0.996116504854369,
-          "BK_max": 0.9966019417475728,
-          "CK_max": 0.9966019417475728,
-          "HK_max": 0.996116504854369
+          "B_node_max": 0.9918192219679633,
+          "C_struct_max": 0.9899313501144165,
+          "H_cov_mahal": 0.9913043478260869,
+          "I_node_cov_max": 0.9918192219679633,
+          "K_forecast_max": 0.9963592233009708,
+          "BK_max": 0.9968446601941747,
+          "CK_max": 0.9968446601941747,
+          "HK_max": 0.9963592233009708,
+          "BCK_max": 0.9968446601941747
         }
       },
       "client_mean_auroc": {
-        "B_node_max": 0.9968488064748238,
-        "C_struct_max": 0.9951060118645163,
-        "H_cov_mahal": 0.9936604753167462,
-        "I_node_cov_max": 0.9968488064748238,
-        "K_forecast_max": 0.9952352720961782,
-        "BK_max": 0.9969155847937572,
-        "CK_max": 0.9965228109658908,
-        "HK_max": 0.9952352720961782
+        "B_node_max": 0.9970488109617444,
+        "C_struct_max": 0.9949241322205428,
+        "H_cov_mahal": 0.9931088616167619,
+        "I_node_cov_max": 0.9970488109617444,
+        "K_forecast_max": 0.995439749624998,
+        "BK_max": 0.9970866479283986,
+        "CK_max": 0.9964764712434195,
+        "HK_max": 0.995439749624998,
+        "BCK_max": 0.9970940733493272
       }
     },
     "machine6": {
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [
+        "total_deposit",
         "reject_count",
         "has_reject",
         "cleaning_count",
         "cleaning_duration",
         "cleaning_begin_pixels",
         "cleaning_end_pixels",
-        "schlie\u00dfen_Weiche 7",
-        "read SM_RingCamera 1",
         "read SM_RingCamera 2",
         "read SM_RingCamera 3",
         "read SM_RingCamera 4",
@@ -542,71 +572,79 @@
       "fault_types": {
         "bottle_recognition": {
           "n": 350,
-          "B_node_max": 0.9842672811059908,
-          "C_struct_max": 0.984589861751152,
-          "H_cov_mahal": 0.9877972350230414,
-          "I_node_cov_max": 0.9842672811059908,
-          "K_forecast_max": 0.7377714285714286,
-          "BK_max": 0.9518857142857142,
+          "B_node_max": 0.9841935483870968,
+          "C_struct_max": 0.9844608294930876,
+          "H_cov_mahal": 0.9889585253456221,
+          "I_node_cov_max": 0.9841935483870968,
+          "K_forecast_max": 0.8740571428571428,
+          "BK_max": 0.9517428571428571,
           "CK_max": 0.9533714285714285,
-          "HK_max": 0.9629714285714286
+          "HK_max": 0.9665142857142857,
+          "BCK_max": 0.9518571428571428
         },
         "mechanical_jam": {
           "n": 7,
           "B_node_max": 0.9778801843317972,
-          "C_struct_max": 0.9834101382488479,
-          "H_cov_mahal": 0.9824884792626728,
+          "C_struct_max": 0.9824884792626728,
+          "H_cov_mahal": 0.9797235023041474,
           "I_node_cov_max": 0.9778801843317972,
-          "K_forecast_max": 0.72,
+          "K_forecast_max": 0.8457142857142858,
           "BK_max": 0.9314285714285714,
-          "CK_max": 0.9485714285714285,
-          "HK_max": 0.9457142857142857
+          "CK_max": 0.9457142857142856,
+          "HK_max": 0.937142857142857,
+          "BCK_max": 0.9314285714285714
         },
         "compactor_status": {
           "n": 19,
-          "B_node_max": 0.967911714770798,
-          "C_struct_max": 0.9674023769100168,
-          "H_cov_mahal": 0.9663837011884551,
-          "I_node_cov_max": 0.967911714770798,
-          "K_forecast_max": 0.8825,
+          "B_node_max": 0.967402376910017,
+          "C_struct_max": 0.968760611205433,
+          "H_cov_mahal": 0.969439728353141,
+          "I_node_cov_max": 0.967402376910017,
+          "K_forecast_max": 0.9037499999999999,
           "BK_max": 0.9199999999999999,
           "CK_max": 0.9199999999999999,
-          "HK_max": 0.9199999999999999
+          "HK_max": 0.9299999999999999,
+          "BCK_max": 0.9199999999999999
         },
         "other": {
           "n": 20,
-          "B_node_max": 0.9438709677419355,
-          "C_struct_max": 0.9293548387096775,
-          "H_cov_mahal": 0.6087096774193548,
-          "I_node_cov_max": 0.9438709677419355,
-          "K_forecast_max": 0.8519999999999999,
-          "BK_max": 0.859,
-          "CK_max": 0.869,
-          "HK_max": 0.796
+          "B_node_max": 0.9500000000000001,
+          "C_struct_max": 0.9438709677419355,
+          "H_cov_mahal": 0.4390322580645161,
+          "I_node_cov_max": 0.9500000000000001,
+          "K_forecast_max": 0.778,
+          "BK_max": 0.856,
+          "CK_max": 0.87,
+          "HK_max": 0.724,
+          "BCK_max": 0.857
         }
       },
       "client_mean_auroc": {
-        "B_node_max": 0.9684825369876304,
-        "C_struct_max": 0.9661893039049236,
-        "H_cov_mahal": 0.8863447732233809,
-        "I_node_cov_max": 0.9684825369876304,
-        "K_forecast_max": 0.7980678571428571,
-        "BK_max": 0.9155785714285714,
-        "CK_max": 0.9227357142857142,
-        "HK_max": 0.9061714285714286
+        "B_node_max": 0.9698690274072278,
+        "C_struct_max": 0.9698952219257823,
+        "H_cov_mahal": 0.8442885035168566,
+        "I_node_cov_max": 0.9698690274072278,
+        "K_forecast_max": 0.8503803571428571,
+        "BK_max": 0.9147928571428571,
+        "CK_max": 0.9222714285714285,
+        "HK_max": 0.8894142857142857,
+        "BCK_max": 0.9150714285714285
       }
     },
     "machine7": {
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [
+        "total_quantity",
+        "total_deposit",
+        "total_weight",
         "reject_count",
-        "cleaning_count",
-        "cleaning_duration",
-        "cleaning_begin_pixels",
-        "\u00f6ffnen_Weiche 6",
+        "has_reject",
+        "cleaning_end_pixels",
+        "schlie\u00dfen_Weiche 7",
+        "\u00f6ffnen_Weiche 4",
+        "read SM_RingCamera 1",
         "read SM_RingCamera 2",
-        "read barcode_RingCamera 5",
-        "read barcode_RingCamera 6"
+        "read SM_RingCamera 6"
       ],
       "n_valid_cov_prototypes": 1,
       "num_prototypes": 16,
@@ -614,89 +652,97 @@
       "fault_types": {
         "bottle_recognition": {
           "n": 534,
-          "B_node_max": 0.9843571284397497,
-          "C_struct_max": 0.9905694229518491,
-          "H_cov_mahal": 0.9839085873197426,
-          "I_node_cov_max": 0.9844692637197514,
-          "K_forecast_max": 0.9610242587601078,
+          "B_node_max": 0.9843234878557492,
+          "C_struct_max": 0.9905918500078494,
+          "H_cov_mahal": 0.9841216443517459,
+          "I_node_cov_max": 0.9844019825517504,
+          "K_forecast_max": 0.9624797843665769,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 1.0
+          "HK_max": 1.0,
+          "BCK_max": 1.0
         },
         "mechanical_jam": {
           "n": 5,
-          "B_node_max": 0.9616766467065869,
-          "C_struct_max": 0.955688622754491,
-          "H_cov_mahal": 0.970059880239521,
-          "I_node_cov_max": 0.9616766467065869,
-          "K_forecast_max": 0.9485714285714286,
+          "B_node_max": 0.9616766467065868,
+          "C_struct_max": 0.9556886227544911,
+          "H_cov_mahal": 0.9664670658682635,
+          "I_node_cov_max": 0.9616766467065868,
+          "K_forecast_max": 0.982857142857143,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.9657142857142856
+          "HK_max": 1.0,
+          "BCK_max": 1.0
         },
         "compactor_status": {
           "n": 29,
           "B_node_max": 0.956225480074334,
-          "C_struct_max": 0.9566384472434442,
-          "H_cov_mahal": 0.9405327276481521,
+          "C_struct_max": 0.955812512905224,
+          "H_cov_mahal": 0.9388808589717117,
           "I_node_cov_max": 0.956225480074334,
-          "K_forecast_max": 0.967487684729064,
+          "K_forecast_max": 0.9645320197044336,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.9881773399014778
+          "HK_max": 0.9881773399014778,
+          "BCK_max": 1.0
         },
         "crate_recognition": {
           "n": 7,
           "B_node_max": 0.9880239520958083,
           "C_struct_max": 0.9880239520958084,
-          "H_cov_mahal": 0.9880239520958085,
+          "H_cov_mahal": 0.9880239520958083,
           "I_node_cov_max": 0.9880239520958083,
-          "K_forecast_max": 0.9510204081632653,
+          "K_forecast_max": 0.9387755102040817,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 1.0
+          "HK_max": 1.0,
+          "BCK_max": 1.0
         },
         "other": {
           "n": 29,
           "B_node_max": 0.9386743753871567,
-          "C_struct_max": 0.9425975634937023,
-          "H_cov_mahal": 0.8713607268222177,
+          "C_struct_max": 0.9415651455709271,
+          "H_cov_mahal": 0.8674375387156721,
           "I_node_cov_max": 0.9386743753871567,
-          "K_forecast_max": 0.9596059113300492,
+          "K_forecast_max": 0.9793103448275863,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.9330049261083744
+          "HK_max": 0.9369458128078818,
+          "BCK_max": 1.0
         }
       },
       "client_mean_auroc": {
-        "B_node_max": 0.9657915165407271,
-        "C_struct_max": 0.9667036017078591,
-        "H_cov_mahal": 0.9507771748250884,
-        "I_node_cov_max": 0.9658139435967275,
-        "K_forecast_max": 0.957541938310783,
+        "B_node_max": 0.965784788423927,
+        "C_struct_max": 0.96633641666686,
+        "H_cov_mahal": 0.9489862120006402,
+        "I_node_cov_max": 0.9658004873631272,
+        "K_forecast_max": 0.9655909603919642,
         "BK_max": 1.0,
         "CK_max": 1.0,
-        "HK_max": 0.9773793103448277
+        "HK_max": 0.985024630541872,
+        "BCK_max": 1.0
       }
     },
     "machine8": {
       "excluded_nodes_node": [],
       "excluded_nodes_forecast": [
+        "total_quantity",
+        "total_deposit",
+        "total_weight",
+        "unique_categories",
         "reject_count",
         "has_reject",
         "cleaning_count",
-        "cleaning_duration",
-        "cleaning_begin_pixels",
         "cleaning_end_pixels",
+        "schlie\u00dfen_Weiche 3",
         "schlie\u00dfen_Weiche 7",
-        "\u00f6ffnen_Weiche 5",
-        "\u00f6ffnen_Weiche 6",
-        "\u00f6ffnen_Weiche 7",
+        "\u00f6ffnen_Weiche 3",
+        "\u00f6ffnen_Weiche 4",
+        "read SM_RingCamera 1",
         "read SM_RingCamera 2",
-        "read SM_RingCamera 3",
-        "read SM_RingCamera 4",
-        "read barcode_RingCamera 1",
-        "read barcode_RingCamera 2"
+        "read SM_RingCamera 6",
+        "read barcode_RingCamera 2",
+        "read barcode_RingCamera 4"
       ],
       "n_valid_cov_prototypes": 1,
       "num_prototypes": 16,
@@ -704,86 +750,85 @@
       "fault_types": {
         "bottle_recognition": {
           "n": 271,
-          "B_node_max": 0.9701541133058389,
-          "C_struct_max": 0.9842088126763622,
-          "H_cov_mahal": 1.0,
-          "I_node_cov_max": 0.9701541133058389,
-          "K_forecast_max": 0.8745387453874539,
+          "B_node_max": 0.9699370523116996,
+          "C_struct_max": 0.9749837204254396,
+          "H_cov_mahal": 0.9474169741697417,
+          "I_node_cov_max": 0.9699370523116996,
+          "K_forecast_max": 0.895858958589586,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.8868388683886839
+          "HK_max": 0.9540795407954079,
+          "BCK_max": 1.0
         },
         "mechanical_jam": {
           "n": 4,
-          "B_node_max": 0.9301470588235294,
-          "C_struct_max": 0.9044117647058824,
-          "H_cov_mahal": 0.900735294117647,
-          "I_node_cov_max": 0.9301470588235294,
-          "K_forecast_max": 0.638888888888889,
+          "B_node_max": 0.9301470588235293,
+          "C_struct_max": 0.8970588235294118,
+          "H_cov_mahal": 0.9595588235294118,
+          "I_node_cov_max": 0.9301470588235293,
+          "K_forecast_max": 0.6388888888888888,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.638888888888889
+          "HK_max": 0.75,
+          "BCK_max": 1.0
         },
         "compactor_status": {
           "n": 36,
           "B_node_max": 0.9464869281045751,
-          "C_struct_max": 0.9530228758169935,
-          "H_cov_mahal": 0.9522058823529412,
+          "C_struct_max": 0.9460784313725491,
+          "H_cov_mahal": 0.9170751633986929,
           "I_node_cov_max": 0.9464869281045751,
-          "K_forecast_max": 0.8765432098765432,
+          "K_forecast_max": 0.9382716049382717,
           "BK_max": 1.0,
-          "CK_max": 0.9506172839506173,
-          "HK_max": 0.8765432098765432
+          "CK_max": 0.9753086419753086,
+          "HK_max": 0.9444444444444444,
+          "BCK_max": 1.0
         },
         "crate_recognition": {
           "n": 53,
           "B_node_max": 0.8379578246392898,
-          "C_struct_max": 0.8421198668146505,
-          "H_cov_mahal": 0.8426748057713652,
+          "C_struct_max": 0.8540510543840178,
+          "H_cov_mahal": 0.837402885682575,
           "I_node_cov_max": 0.8379578246392898,
-          "K_forecast_max": 0.9245283018867925,
+          "K_forecast_max": 0.9329140461215933,
           "BK_max": 1.0,
-          "CK_max": 0.9245283018867925,
-          "HK_max": 0.9245283018867925
+          "CK_max": 0.949685534591195,
+          "HK_max": 0.9329140461215933,
+          "BCK_max": 1.0
         },
         "other": {
           "n": 8,
           "B_node_max": 0.9154411764705882,
-          "C_struct_max": 0.9264705882352942,
-          "H_cov_mahal": 0.9301470588235294,
+          "C_struct_max": 0.9191176470588236,
+          "H_cov_mahal": 0.895220588235294,
           "I_node_cov_max": 0.9154411764705882,
-          "K_forecast_max": 0.8888888888888888,
+          "K_forecast_max": 0.888888888888889,
           "BK_max": 1.0,
           "CK_max": 1.0,
-          "HK_max": 0.8888888888888888
+          "HK_max": 0.888888888888889,
+          "BCK_max": 1.0
         }
       },
       "client_mean_auroc": {
-        "B_node_max": 0.9200374202687642,
-        "C_struct_max": 0.9220467816498366,
-        "H_cov_mahal": 0.9251526082130965,
-        "I_node_cov_max": 0.9200374202687642,
-        "K_forecast_max": 0.8406776069857134,
+        "B_node_max": 0.9199940080699364,
+        "C_struct_max": 0.9182579353540484,
+        "H_cov_mahal": 0.9113348870031432,
+        "I_node_cov_max": 0.9199940080699364,
+        "K_forecast_max": 0.8589644774854458,
         "BK_max": 1.0,
-        "CK_max": 0.9750291171674819,
-        "HK_max": 0.8431376315859594
+        "CK_max": 0.9849988353133007,
+        "HK_max": 0.894065384050067,
+        "BCK_max": 1.0
       }
     },
     "machine9": {
       "excluded_nodes_node": [
-        "unique_categories",
-        "receipt_count"
+        "has_reject"
       ],
       "excluded_nodes_forecast": [
-        "total_quantity",
-        "total_deposit",
-        "unique_categories",
         "reject_count",
-        "cleaning_count",
-        "cleaning_duration",
-        "cleaning_begin_pixels",
-        "cleaning_end_pixels",
-        "receipt_count"
+        "has_reject",
+        "cleaning_count"
       ],
       "n_valid_cov_prototypes": 2,
       "num_prototypes": 16,
@@ -791,80 +836,87 @@
       "fault_types": {
         "bottle_recognition": {
           "n": 419,
-          "B_node_max": 0.9778773351987491,
-          "C_struct_max": 0.979559295531232,
-          "H_cov_mahal": 0.9887766438976215,
-          "I_node_cov_max": 0.9879639535840672,
-          "K_forecast_max": 0.7786676837020087,
-          "BK_max": 0.8993558776167472,
-          "CK_max": 0.9309687261632342,
-          "HK_max": 0.982032375625053
+          "B_node_max": 0.9889566702329027,
+          "C_struct_max": 0.9623076290017283,
+          "H_cov_mahal": 0.996780100403259,
+          "I_node_cov_max": 0.996780100403259,
+          "K_forecast_max": 0.789643190100856,
+          "BK_max": 0.8831256886176795,
+          "CK_max": 0.8658360878040512,
+          "HK_max": 0.9866090346639546,
+          "BCK_max": 0.8824476650563606
         },
         "mechanical_jam": {
           "n": 16,
-          "B_node_max": 0.9717133620689655,
-          "C_struct_max": 0.970905172413793,
-          "H_cov_mahal": 0.982489224137931,
-          "I_node_cov_max": 0.982489224137931,
-          "K_forecast_max": 0.7302631578947368,
-          "BK_max": 0.868421052631579,
-          "CK_max": 0.9035087719298245,
-          "HK_max": 0.9780701754385965
+          "B_node_max": 0.9962284482758621,
+          "C_struct_max": 0.9504310344827586,
+          "H_cov_mahal": 0.9994612068965517,
+          "I_node_cov_max": 0.9994612068965517,
+          "K_forecast_max": 0.7445175438596492,
+          "BK_max": 0.8640350877192983,
+          "CK_max": 0.8103070175438596,
+          "HK_max": 1.0,
+          "BCK_max": 0.8508771929824561
         },
         "compactor_status": {
           "n": 22,
-          "B_node_max": 0.9699255485893419,
-          "C_struct_max": 0.9821708463949843,
-          "H_cov_mahal": 0.9858934169278997,
-          "I_node_cov_max": 0.9845219435736677,
-          "K_forecast_max": 0.8165869218500797,
-          "BK_max": 0.8987240829346093,
-          "CK_max": 0.9784688995215312,
-          "HK_max": 0.9952153110047847
+          "B_node_max": 0.9770768025078369,
+          "C_struct_max": 0.9551332288401253,
+          "H_cov_mahal": 0.9919670846394985,
+          "I_node_cov_max": 0.9919670846394985,
+          "K_forecast_max": 0.8245614035087719,
+          "BK_max": 0.8843700159489633,
+          "CK_max": 0.8779904306220095,
+          "HK_max": 1.0,
+          "BCK_max": 0.8851674641148325
         },
         "crate_recognition": {
           "n": 48,
-          "B_node_max": 0.9812769396551724,
-          "C_struct_max": 0.9255567528735632,
-          "H_cov_mahal": 0.5123024425287357,
-          "I_node_cov_max": 0.9223688936781609,
-          "K_forecast_max": 0.920687134502924,
-          "BK_max": 0.920687134502924,
-          "CK_max": 0.8636695906432749,
-          "HK_max": 0.8516081871345029
+          "B_node_max": 0.9688397988505748,
+          "C_struct_max": 0.9866199712643678,
+          "H_cov_mahal": 0.47368893678160917,
+          "I_node_cov_max": 0.9384877873563219,
+          "K_forecast_max": 0.8559941520467836,
+          "BK_max": 0.8556286549707602,
+          "CK_max": 0.8622076023391813,
+          "HK_max": 0.8457602339181287,
+          "BCK_max": 0.8622076023391813
         },
         "other": {
           "n": 28,
-          "B_node_max": 0.9871459359605912,
-          "C_struct_max": 0.9889162561576357,
-          "H_cov_mahal": 0.9970751231527093,
-          "I_node_cov_max": 0.9970751231527094,
-          "K_forecast_max": 0.8859649122807017,
-          "BK_max": 0.93734335839599,
-          "CK_max": 0.9736842105263157,
-          "HK_max": 0.9943609022556391
+          "B_node_max": 0.9973830049261083,
+          "C_struct_max": 0.9916871921182266,
+          "H_cov_mahal": 0.9984605911330049,
+          "I_node_cov_max": 0.998460591133005,
+          "K_forecast_max": 0.8897243107769425,
+          "BK_max": 0.9223057644110276,
+          "CK_max": 0.9692982456140351,
+          "HK_max": 1.0,
+          "BCK_max": 0.9692982456140351
         }
       },
       "client_mean_auroc": {
-        "B_node_max": 0.9775878242945641,
-        "C_struct_max": 0.9694216646742417,
-        "H_cov_mahal": 0.8933073701289794,
-        "I_node_cov_max": 0.9748838276253073,
-        "K_forecast_max": 0.8264339620460902,
-        "BK_max": 0.90490630121637,
-        "CK_max": 0.9300600397568362,
-        "HK_max": 0.9602573902917152
+        "B_node_max": 0.985696944958657,
+        "C_struct_max": 0.9692358111414414,
+        "H_cov_mahal": 0.8920715839707846,
+        "I_node_cov_max": 0.9850313540857272,
+        "K_forecast_max": 0.8208881200586007,
+        "BK_max": 0.8818930423335457,
+        "CK_max": 0.8771278767846272,
+        "HK_max": 0.9664738537164166,
+        "BCK_max": 0.8899996340213733
       }
     }
   },
   "summary_mean_auroc_overall": {
-    "B_node_max": 0.9740992662059189,
-    "C_struct_max": 0.9748669080951287,
-    "H_cov_mahal": 0.9549231386619433,
-    "I_node_cov_max": 0.973807791247956,
-    "K_forecast_max": 0.9097218620787823,
-    "BK_max": 0.9762017502499478,
-    "CK_max": 0.974494903248913,
-    "HK_max": 0.9527420595134565
+    "B_node_max": 0.9753240104187352,
+    "C_struct_max": 0.9766777902917572,
+    "H_cov_mahal": 0.9480183818996933,
+    "I_node_cov_max": 0.975253369991156,
+    "K_forecast_max": 0.9191397731650228,
+    "BK_max": 0.9728776131567045,
+    "CK_max": 0.9701153244783529,
+    "HK_max": 0.96325079869459,
+    "BCK_max": 0.974004850425619
   }
 }

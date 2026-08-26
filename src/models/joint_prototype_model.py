@@ -455,7 +455,7 @@ class JointPrototypeV21(JointPrototypeV2):
 
 class JointPrototypeV21Forecast(JointPrototypeV21):
     """V21 + `ForecastHead`, for datasets with no declared physics edges
-    (e.g. Sielaff -- see `run_sielaff_v2_1.py`'s `prior_edges=None`).
+    (e.g. Sielaff -- see `run_sielaff_bck.py`'s `prior_edges=None`).
     Same signal K (`k_resid`) and cross-window pairing convention as
     `JointPrototypeV31Forecast` (see that class's and `ForecastHead`'s
     docstrings) -- just layered on V21 instead of V31, since V21 has no
@@ -474,12 +474,12 @@ class JointPrototypeV21Forecast(JointPrototypeV21):
                          prior_edges=prior_edges, top_k=top_k, node_weights=node_weights)
         self.forecast_h = forecast_h
         fe = prior_edges if forecast_prior_edges is self._NO_OVERRIDE else forecast_prior_edges
-        self.forecast_head = ForecastHead(num_nodes, window_size, forecast_h, embed_dim,
+        self.forecast_head = ForecastHead(num_nodes, forecast_h, embed_dim,
                                           top_k=top_k, prior_edges=fe)
 
     def forward(self, x, training_mode=False, x_future=None):
         out = super().forward(x, training_mode=training_mode)
-        x_hat_future = self.forecast_head(x)
+        x_hat_future = self.forecast_head(out["z"])
         out["x_hat_future"] = x_hat_future
         if x_future is not None:
             out["k_resid"] = (x_future - x_hat_future).pow(2).sum(dim=1)
@@ -690,27 +690,26 @@ class JointPrototypeV31(JointPrototypeV3):
 
 
 class ForecastHead(nn.Module):
-    """New signal K (`shared_forecast_head_proposal.md`): predicts each
-    node's OWN future raw values from a GDN-style learned cross-node
-    attention over the OTHER nodes' current raw-window encodings -- same
-    attention mechanism as `TrendGraphAttentionHead` (top-k by learned
-    embedding similarity, declared physics edges add an ADDITIVE learned-
-    strength bias to the attention logits, no hard edge restriction), but
-    operating in RAW feature space on a fresh small encoder, not on `z`/
-    `d = z - p*`. This is deliberate: the anomaly signal here is "how
-    wrong was the forecast vs. what actually happened," a temporal
-    prediction error, not a same-instant consistency check against a
-    prototype -- conflating it with the deviation space the other heads
-    use would confound two different axes (see
-    `shared_forecast_head_proposal.md`'s "two independent risk axes").
+    """Signal K: predicts each node's OWN future raw values from a
+    GDN-style learned cross-node attention over the OTHER nodes' CURRENT
+    embeddings -- same attention mechanism as `TrendGraphAttentionHead`
+    (top-k by learned embedding similarity, declared physics edges add an
+    ADDITIVE learned-strength bias to the attention logits, no hard edge
+    restriction). Takes the SAME `z` (SharedEncoder output) that B/C
+    consume, rather than re-encoding the raw window itself -- B and C
+    read `z` at the current instant (prototype distance / structural
+    consistency), K reads the same `z` and projects it forward in time;
+    all three now share one representation, differing only in what they
+    do with it (distributional distance, cross-node consistency, or
+    temporal prediction).
 
     Forecast target is a genuinely separate FUTURE window's
     non-overlapping tail segment, not an in-window prefix/suffix split:
-    the caller is responsible for pairing each input window `x_in`
-    (a full window, same as every other head's input) with the raw
+    the caller is responsible for pairing each input window (the one `z`
+    was encoded from, same as every other head's input) with the raw
     `stride`-length segment of raw time that immediately follows it in
     the SAME source sequence (robo3er: same robot, adjacent window index,
-    per `run_robo3er_forecast_v2.py`'s pairing logic) -- see that script's
+    per `run_robo3er_bck.py`'s pairing logic) -- see that script's
     docstring for why a hand-picked prefix/suffix split of one window
     (the v1 approach, since replaced) would leak most of the target
     through the window's own overlap with its stride-shifted successor
@@ -721,13 +720,12 @@ class ForecastHead(nn.Module):
     be a near-trivial persistence predictor and wouldn't exercise the
     cross-node relationship this signal is meant to test."""
 
-    def __init__(self, num_nodes: int, in_window: int, out_window: int, embed_dim: int,
+    def __init__(self, num_nodes: int, out_window: int, embed_dim: int,
                  top_k: int = None, prior_edges=None, prior_bias_init: float = 1.0):
         super().__init__()
         self.num_nodes = num_nodes
         self.out_window = out_window
         self.top_k = min(top_k, num_nodes - 1) if top_k is not None else num_nodes - 1
-        self.encoder = nn.Linear(in_window, embed_dim)  # raw-space, separate from SharedEncoder
         self.embeddings = nn.Embedding(num_nodes, embed_dim)
         nn.init.uniform_(self.embeddings.weight, -1.0, 1.0)
         self.attn_w = nn.Linear(embed_dim, embed_dim, bias=False)
@@ -752,20 +750,20 @@ class ForecastHead(nn.Module):
         _, topk_idx = sim.topk(self.top_k, dim=1)
         return topk_idx  # [N, top_k]
 
-    def forward(self, x_in):
-        """x_in: [B, in_window, N] raw feature window (prefix). Returns
-        x_hat_future [B, out_window, N] (per-node forecast of the
-        out_window raw values immediately following x_in)."""
-        B, T_in, N = x_in.shape
-        w = self.encoder(x_in.transpose(1, 2))  # [B, N, D]
-        wf = self.attn_w(w)
+    def forward(self, z):
+        """z: [B, N, D] SharedEncoder output (same `z` B/C consume).
+        Returns x_hat_future [B, out_window, N] (per-node forecast of the
+        out_window raw values immediately following the window `z` was
+        encoded from)."""
+        B, N, D = z.shape
+        wf = self.attn_w(z)
 
         neighbor_idx = self._topk_neighbors()  # [N, top_k], never self
         wf_neighbors = wf[:, neighbor_idx, :]  # [B, N, top_k, D]
         wf_self = wf.unsqueeze(2).expand(-1, -1, neighbor_idx.shape[1], -1)
 
         logits = self.attn_a(torch.cat([wf_self, wf_neighbors], dim=-1)).squeeze(-1)  # [B, N, top_k]
-        prior_bias = self.prior_mask[torch.arange(N, device=x_in.device).unsqueeze(1), neighbor_idx]
+        prior_bias = self.prior_mask[torch.arange(N, device=z.device).unsqueeze(1), neighbor_idx]
         logits = logits + self.prior_bias_strength * prior_bias.unsqueeze(0)
 
         alpha = F.softmax(F.leaky_relu(logits), dim=-1)
@@ -780,18 +778,15 @@ class ForecastHead(nn.Module):
 class JointPrototypeV31Forecast(JointPrototypeV31):
     """V31 + `ForecastHead`: adds signal K (`k_resid` [B,N], the per-node
     squared error between the forecast head's prediction and the actual
-    future). Purely additive on top of V31 -- B/C/E/H are computed
-    exactly as in V31, from the unmodified full-window SharedEncoder
-    path; the forecast head reads the FULL input window `x` (same input
-    every other head sees), never touching `z`/`d`/the memory/edge/typed
-    heads. See `ForecastHead`'s docstring and
-    `shared_forecast_head_proposal.md` for why this is scoped as an
-    independent additive signal rather than a backbone replacement.
+    future). B/C/E/H are computed exactly as in V31, from the unmodified
+    full-window SharedEncoder path; the forecast head reads that SAME `z`
+    (not the raw input `x`) and projects it forward in time -- see
+    `ForecastHead`'s docstring for why B/C/K now share one representation.
 
     Unlike v1 of this class (in-window prefix/suffix split, since
     replaced), `x_future` is NOT derived from `x` itself -- the caller
     must supply it (the paired next-window's non-overlapping tail
-    segment, per `run_robo3er_forecast_v2.py`'s pairing logic). Passing
+    segment, per `run_robo3er_bck.py`'s pairing logic). Passing
     `x_future=None` (e.g. for orphan windows with no valid pair, or when
     only `x_hat_future` is needed) skips `k_resid`.
 
@@ -814,7 +809,7 @@ class JointPrototypeV31Forecast(JointPrototypeV31):
                          prior_edges, edge_types, top_k=top_k, node_weights=node_weights)
         self.forecast_h = forecast_h
         fe = prior_edges if forecast_prior_edges is self._NO_OVERRIDE else forecast_prior_edges
-        self.forecast_head = ForecastHead(num_nodes, window_size, forecast_h, embed_dim,
+        self.forecast_head = ForecastHead(num_nodes, forecast_h, embed_dim,
                                           top_k=top_k, prior_edges=fe)
 
     def forward(self, x, training_mode=False, x_future=None):
@@ -825,7 +820,7 @@ class JointPrototypeV31Forecast(JointPrototypeV31):
         [B, forecast_h, N] and (if x_future is not None) k_resid [B, N]
         (per-node squared forecast error, raw feature space)."""
         out = super().forward(x, training_mode=training_mode)
-        x_hat_future = self.forecast_head(x)
+        x_hat_future = self.forecast_head(out["z"])
         out["x_hat_future"] = x_hat_future
         if x_future is not None:
             out["k_resid"] = (x_future - x_hat_future).pow(2).sum(dim=1)  # [B, N]

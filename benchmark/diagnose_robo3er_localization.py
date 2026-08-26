@@ -10,7 +10,7 @@ the physically correct node," per
 `diagnosis_interpretability_review.md`'s section 2 methodology table.
 
 Retrains JointPrototypeV31Forecast identically to
-`run_robo3er_forecast_v2.py --horizon-mult 10` (the horizon at which HK
+`run_robo3er_bck.py --horizon-mult 10` (the horizon at which HK
 peaked, 0.901 mean AUROC) rather than reloading a checkpoint, so the
 calibration stats (per-node median/IQR, per-prototype mu/cov_inv) are
 recomputed consistently in this script.
@@ -67,7 +67,7 @@ import torch
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT))
 import importlib.util
-spec = importlib.util.spec_from_file_location("robo3er_fc_v2", REPO_ROOT / "run_robo3er_forecast_v2.py")
+spec = importlib.util.spec_from_file_location("robo3er_bck", REPO_ROOT / "run_robo3er_bck.py")
 v2 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(v2)
 
@@ -164,7 +164,7 @@ def main(horizon_mult=10):
     fault_full = {name: data_scaled[np.where(targets == int(lid))[0]]
                   for lid, name in label_map.items() if int(lid) != 0}
 
-    print("training JointPrototypeV31Forecast (identical to run_robo3er_forecast_v2.py) ...")
+    print("training JointPrototypeV31Forecast (identical to run_robo3er_bck.py) ...")
     model = v2.JointPrototypeV31Forecast(
         num_nodes=num_nodes, window_size=v2.WINDOW_LEN, embed_dim=v2.EMBED_DIM,
         num_prototypes=v2.NUM_PROTOTYPES, prior_edges=prior_edges, edge_types=v2.EDGE_TYPES,

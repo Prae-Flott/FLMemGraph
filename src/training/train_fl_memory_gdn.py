@@ -37,7 +37,7 @@ from sklearn import metrics as sk_metrics
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
-sys.path.insert(0, str(REPO_ROOT / "src" / "robo3er"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "dataloaders" / "robo3er"))
 sys.path.insert(0, str(REPO_ROOT / "src" / "federated"))
 from fl_model import FLGDNMemory  # noqa: E402
 from fl_dataset import load_fl_clients  # noqa: E402

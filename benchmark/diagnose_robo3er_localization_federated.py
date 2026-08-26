@@ -9,9 +9,9 @@ be the federated variant going forward) and the 26-node
 `memory/joint-prototype-federated-results.md` ("Follow-up: removing
 cumulative/unbounded-quantity nodes (31 -> 26)").
 
-Built directly on `run_robo3er_forecast_v2_federated.py` (imported as a
+Built directly on `run_robo3er_bck_federated.py` (imported as a
 module, exactly as the centralized predecessor imports
-`run_robo3er_forecast_v2.py`) rather than the centralized script --
+`run_robo3er_bck.py`) rather than the centralized script --
 signal K/the forecast head has never been trained federated before this
 run (`memory/forecast-head-signal-k.md`'s "K has never been run
 federated" caveat); this script's federated training loop is that first
@@ -70,7 +70,7 @@ import torch
 REPO_ROOT = Path(__file__).resolve().parent
 OUT_DIR = REPO_ROOT.parent / "checkpoints" / "robo3er"
 
-spec = importlib.util.spec_from_file_location("robo3er_fc_v2_fed", REPO_ROOT / "run_robo3er_forecast_v2_federated.py")
+spec = importlib.util.spec_from_file_location("robo3er_bck_fed", REPO_ROOT / "run_robo3er_bck_federated.py")
 v2f = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(v2f)
 

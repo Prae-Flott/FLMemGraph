@@ -37,7 +37,7 @@ from sklearn import metrics as sk_metrics
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src" / "models"))
-sys.path.insert(0, str(REPO_ROOT / "src" / "robo3er"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "dataloaders" / "robo3er"))
 from gdn_model import GDN  # noqa: E402
 from kinematics import (  # noqa: E402
     fit_kinematic_params,

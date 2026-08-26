@@ -17,7 +17,7 @@ Architecture: `JointPrototypeV21Forecast` (same as the retracted script
 -- Sielaff has no declared physics edges, see
 `benchmark/datasets/sielaff_physics.md`), 10 real machines as 10
 federated clients, memory-only exchange (no encoder/decoder FedAvg, same
-as `run_sielaff_red_v2_1_federated.py`/`run_sielaff_forecast_v2_federated.py`).
+as `run_sielaff_red_v2_1_federated.py`/`run_sielaff_bck_federated.py`).
 `horizon_mult=10`, `WINDOW_LEN=8`/`STRIDE=2` (same window geometry as the
 red AUROC script -- `data/sielaff_red/` uses the identical 4h/1h-stride
 windowing as `data/sielaff/`).

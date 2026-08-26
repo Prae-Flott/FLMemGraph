@@ -6,7 +6,7 @@ pairwise combinations BK/CK/HK on Paderborn, federated (per
 B/C/K/BK/CK comparison started by `diagnose_robo3er_localization_federated.py`
 and `diagnose_sielaff_localization_federated.py`.
 
-Built on `run_paderborn_forecast_v2_federated.py` (imported as a module):
+Built on `run_paderborn_bck_federated.py` (imported as a module):
 K001-K006 healthy bearings as 6 federated clients, `JointPrototypeV31Forecast`
 with the 8 declared torque/speed/force<->vibration/current physics edges,
 FedAvg'd encoder/decoder. Every damaged bearing code is evaluated against
@@ -55,7 +55,7 @@ from sklearn.preprocessing import StandardScaler
 REPO_ROOT = Path(__file__).resolve().parent
 OUT_DIR = REPO_ROOT.parent / "checkpoints" / "paderborn"
 
-spec = importlib.util.spec_from_file_location("paderborn_fc_v2_fed", REPO_ROOT / "run_paderborn_forecast_v2_federated.py")
+spec = importlib.util.spec_from_file_location("paderborn_bck_fed", REPO_ROOT / "run_paderborn_bck_federated.py")
 v2f = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(v2f)
 

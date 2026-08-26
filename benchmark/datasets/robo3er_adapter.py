@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "src" / "robo3er"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "dataloaders" / "robo3er"))
 from dataset import load_robo3er, split_normal, fit_scaler, scale  # noqa: E402
 
 
