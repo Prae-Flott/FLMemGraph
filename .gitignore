@@ -12,21 +12,36 @@ __pycache__/
 venv/
 env/
 report/
-docs/
+docs/*
+!docs/img/
+!docs/img/**
 
 
-# Large data -- data/robo3er/data.npy alone is ~98MB, right at GitHub's
-# 100MB hard limit, and the rest of this directory (raw CSVs, .bak files)
-# adds up to 1GB+. Keep data out of git entirely; docs/PROJECT_OVERVIEW.md
-# documents how to regenerate/re-copy it from FL-bench.
-data/
+# Large data -- keep every dataset out of git except robo_fleet (MoboFleet,
+# this project's own dataset, published alongside the paper). The other
+# datasets (PUBearing/paderborn, ALFA, ME-AD, plus archived Sielaff/SMD raw
+# data) are large and/or third-party; regenerate them locally via the
+# benchmark/datasets/*_adapter.py / build_*.py scripts as needed.
+data/*
+!data/robo_fleet/
+!data/robo_fleet/**
 
-# Trained model weights -- large binaries, don't belong in git history.
-# Evaluation reports (*.json, *.csv) ARE tracked -- they're small and are
-# exactly the "project progress" record this checkpoints/ folder is for.
-checkpoints/**/*.pth
-checkpoints/**/*.pt
-checkpoints/**/*.ckpt
+# Trained model weights AND sweep/ablation reports -- checkpoints/ is full of
+# one-off experiment artifacts (calibration-mode sweeps, linkage comparisons,
+# dated reruns, etc.), not just the shipped BK-mainline result. None of it
+# belongs in the public repo; regenerate locally via the benchmark/run_*
+# scripts as needed. (Local-only, same treatment as data/ below.)
+checkpoints/
+
+# Internal research log (experiment write-ups, dead ends, calibration
+# history) -- useful locally, not meant for the public repo.
+memory/
+
+# Superseded/off-report code and artifacts moved aside during cleanup
+# (Sielaff/SMD datasets, ablation-only scripts, retired robo3er-era code,
+# stale registries/READMEs, old result dumps) -- kept for local history,
+# not part of the report and not meant for the public repo.
+archive/
 
 # OS / editor cruft
 .DS_Store

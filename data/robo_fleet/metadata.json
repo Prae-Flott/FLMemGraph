@@ -1,0 +1,616 @@
+{
+  "window_mode": "raw_10hz",
+  "window_size": 60,
+  "stride": 32,
+  "windows_per_label": {
+    "0": 3124,
+    "1": 1674,
+    "2": 1742,
+    "3": 1719,
+    "4": 1569
+  },
+  "label_source": "session_folder",
+  "label_map": {
+    "0": "normal",
+    "1": "caster_wheel_jam",
+    "2": "added_load_2.5kg",
+    "3": "drive_wheel_cable",
+    "4": "thumbtack_fault"
+  },
+  "class_names": {
+    "0": "normal",
+    "1": "caster_wheel_jam",
+    "2": "added_load_2.5kg",
+    "3": "drive_wheel_cable",
+    "4": "thumbtack_fault"
+  },
+  "client_names": [
+    "rob_00",
+    "rob_01",
+    "rob_02",
+    "rob_03"
+  ],
+  "robot_map": {
+    "0": "rob_00",
+    "1": "rob_01",
+    "2": "rob_02",
+    "3": "rob_03"
+  },
+  "feature_columns": [
+    "wheel_vels_velocity_left",
+    "wheel_vels_velocity_right",
+    "odom_odo_orient_x",
+    "odom_odo_orient_y",
+    "odom_odo_orient_z",
+    "odom_odo_orient_w",
+    "odom_odo_lintw_x",
+    "odom_odo_lintw_y",
+    "odom_odo_lintw_z",
+    "odom_odo_angtw_x",
+    "odom_odo_angtw_y",
+    "odom_odo_angtw_z",
+    "imu_imu_orient_x",
+    "imu_imu_orient_y",
+    "imu_imu_orient_z",
+    "imu_imu_orient_w",
+    "imu_imu_angvel_x",
+    "imu_imu_angvel_y",
+    "imu_imu_angvel_z",
+    "imu_imu_acc_x",
+    "imu_imu_acc_y",
+    "imu_imu_acc_z",
+    "wheel_status_current_ma_left",
+    "wheel_status_current_ma_right",
+    "wheel_status_pwm_left",
+    "wheel_status_pwm_right"
+  ],
+  "feature_mean": [
+    3.4254086017608643,
+    3.8657784461975098,
+    -0.0020442306995391846,
+    -0.0004968581488355994,
+    -0.03068835660815239,
+    0.6195189952850342,
+    0.12475035339593887,
+    -0.0005550829228013754,
+    -1.4983532992118853e-07,
+    4.68614962301217e-05,
+    -0.00045870800386182964,
+    0.0653287023305893,
+    -0.0020883509423583746,
+    -0.00039413964259438217,
+    -0.09311897307634354,
+    0.6018821597099304,
+    6.112429400673136e-05,
+    -0.0005088328616693616,
+    0.06532073020935059,
+    -0.005565647501498461,
+    -0.0038622356951236725,
+    0.017665034160017967,
+    106.04721069335938,
+    111.58114624023438,
+    9819.212890625,
+    11194.185546875
+  ],
+  "feature_std": [
+    2.616366386413574,
+    2.3499412536621094,
+    0.005501605570316315,
+    0.005853842478245497,
+    0.7033447027206421,
+    0.3472462594509125,
+    0.07652710378170013,
+    0.003759325947612524,
+    9.46812069742009e-05,
+    0.01903606578707695,
+    0.032565150409936905,
+    0.32426854968070984,
+    0.005532502196729183,
+    0.005828873720020056,
+    0.7105433344841003,
+    0.3521832227706909,
+    0.02183699421584606,
+    0.04180031269788742,
+    0.32586050033569336,
+    0.31545281410217285,
+    0.22361423075199127,
+    0.8380163311958313,
+    110.0569839477539,
+    114.13804626464844,
+    9162.94921875,
+    7826.0078125
+  ],
+  "fault_localization_domains": {
+    "_description": "User-supplied mechanical-domain ground truth (not derived from data) for each fault type -- treated as ONE flat domain set per fault (no direct/indirect split given), used to score root-cause-localization hit rate (does the model's top-k most-anomalous node set intersect this domain) in benchmark/diagnose_robo_pdm_test_localization_federated.py. Compare against `top_statistical_features` above, which is what the RAW DATA actually says is most different from normal -- the two disagree for caster_wheel_jam and right_drive_wheel_cable (see that script's docstring and this session's analysis).",
+    "_source": "benchmark/diagnose_robo_pdm_test_localization_federated.py (DOMAIN dict)",
+    "domains": {
+      "caster_wheel_jam": [
+        "wheel_status_current_ma_left",
+        "wheel_status_current_ma_right",
+        "wheel_status_pwm_left",
+        "wheel_status_pwm_right",
+        "imu_imu_acc_z",
+        "imu_imu_acc_x",
+        "imu_imu_acc_y"
+      ],
+      "right_side_added_load_2.5kg": [
+        "imu_imu_angvel_y",
+        "wheel_status_current_ma_left",
+        "wheel_status_current_ma_right",
+        "wheel_status_pwm_left",
+        "wheel_status_pwm_right",
+        "imu_imu_orient_y",
+        "imu_imu_orient_x"
+      ],
+      "right_drive_wheel_cable": [
+        "imu_imu_angvel_z",
+        "odom_odo_angtw_z",
+        "wheel_status_current_ma_left",
+        "wheel_status_current_ma_right",
+        "wheel_status_pwm_left",
+        "wheel_status_pwm_right",
+        "imu_imu_acc_z",
+        "imu_imu_acc_x"
+      ],
+      "thumbtack_fault": [
+        "imu_imu_acc_x",
+        "imu_imu_acc_y",
+        "imu_imu_acc_z",
+        "imu_imu_angvel_x",
+        "imu_imu_angvel_y",
+        "imu_imu_angvel_z",
+        "wheel_status_current_ma_left",
+        "wheel_status_current_ma_right",
+        "wheel_status_pwm_left",
+        "wheel_status_pwm_right"
+      ]
+    }
+  },
+  "standardized": true,
+  "num_features": 26,
+  "num_classes": 5,
+  "num_samples": 9828,
+  "num_clients": 4,
+  "num_agents": 4,
+  "session_meta": {
+    "rob_00/fault_1.Caster Wheel Jam/map_inside/fault_group1_5min": {
+      "client": "rob_00",
+      "label": 1,
+      "n_rows": 3559,
+      "n_windows": 110
+    },
+    "rob_00/fault_1.Caster Wheel Jam/map_inside/fault_group2_5min": {
+      "client": "rob_00",
+      "label": 1,
+      "n_rows": 3269,
+      "n_windows": 101
+    },
+    "rob_00/fault_1.Caster Wheel Jam/map_outside/fault_group3_5min": {
+      "client": "rob_00",
+      "label": 1,
+      "n_rows": 3107,
+      "n_windows": 96
+    },
+    "rob_00/fault_1.Caster Wheel Jam/map_outside/fault_group4_5min": {
+      "client": "rob_00",
+      "label": 1,
+      "n_rows": 3107,
+      "n_windows": 96
+    },
+    "rob_00/fault_2.Added Load_2.5kg/left_load_2.5kg/map_inside/fault_group2_5min": {
+      "client": "rob_00",
+      "label": 2,
+      "n_rows": 3568,
+      "n_windows": 110
+    },
+    "rob_00/fault_2.Added Load_2.5kg/left_load_2.5kg/map_outside/fault_group4_5min": {
+      "client": "rob_00",
+      "label": 2,
+      "n_rows": 3300,
+      "n_windows": 102
+    },
+    "rob_00/fault_2.Added Load_2.5kg/right_load_2.5kg/map_inside/fault_group1_5min": {
+      "client": "rob_00",
+      "label": 2,
+      "n_rows": 3513,
+      "n_windows": 108
+    },
+    "rob_00/fault_2.Added Load_2.5kg/right_load_2.5kg/map_outside/fault_group3_5min": {
+      "client": "rob_00",
+      "label": 2,
+      "n_rows": 3604,
+      "n_windows": 111
+    },
+    "rob_00/fault_3.Drive Wheel Cable/Left Wheel Cable/map_inside/fault_group2_5min": {
+      "client": "rob_00",
+      "label": 3,
+      "n_rows": 3491,
+      "n_windows": 108
+    },
+    "rob_00/fault_3.Drive Wheel Cable/Left Wheel Cable/map_outside/fault_group3_5min": {
+      "client": "rob_00",
+      "label": 3,
+      "n_rows": 4192,
+      "n_windows": 130
+    },
+    "rob_00/fault_3.Drive Wheel Cable/Right Wheel Cable/map_inside/fault_group1_4min": {
+      "client": "rob_00",
+      "label": 3,
+      "n_rows": 2524,
+      "n_windows": 78
+    },
+    "rob_00/fault_3.Drive Wheel Cable/Right Wheel Cable/map_outside/fault_group4_5min": {
+      "client": "rob_00",
+      "label": 3,
+      "n_rows": 4833,
+      "n_windows": 150
+    },
+    "rob_00/fault_4.Thumbtack Fault/left_wheel/map_inside/fault_group1_5min": {
+      "client": "rob_00",
+      "label": 4,
+      "n_rows": 3037,
+      "n_windows": 94
+    },
+    "rob_00/fault_4.Thumbtack Fault/left_wheel/map_outside/fault_group4_5min": {
+      "client": "rob_00",
+      "label": 4,
+      "n_rows": 2971,
+      "n_windows": 91
+    },
+    "rob_00/fault_4.Thumbtack Fault/right_wheel/map_inside/fault_group2_5min": {
+      "client": "rob_00",
+      "label": 4,
+      "n_rows": 3202,
+      "n_windows": 99
+    },
+    "rob_00/fault_4.Thumbtack Fault/right_wheel/map_outside/fault_group3_5min": {
+      "client": "rob_00",
+      "label": 4,
+      "n_rows": 3428,
+      "n_windows": 106
+    },
+    "rob_00/normal/map_inside_20min": {
+      "client": "rob_00",
+      "label": 0,
+      "n_rows": 12252,
+      "n_windows": 382
+    },
+    "rob_00/normal/map_outside_20min": {
+      "client": "rob_00",
+      "label": 0,
+      "n_rows": 12889,
+      "n_windows": 401
+    },
+    "rob_01/fault_1.Caster Wheel Jam/map_inside/fault_group1_5min": {
+      "client": "rob_01",
+      "label": 1,
+      "n_rows": 3211,
+      "n_windows": 99
+    },
+    "rob_01/fault_1.Caster Wheel Jam/map_inside/fault_group2_5min": {
+      "client": "rob_01",
+      "label": 1,
+      "n_rows": 3545,
+      "n_windows": 109
+    },
+    "rob_01/fault_1.Caster Wheel Jam/map_outside/fault_group3_5min": {
+      "client": "rob_01",
+      "label": 1,
+      "n_rows": 4080,
+      "n_windows": 126
+    },
+    "rob_01/fault_1.Caster Wheel Jam/map_outside/fault_group4_5min": {
+      "client": "rob_01",
+      "label": 1,
+      "n_rows": 3432,
+      "n_windows": 106
+    },
+    "rob_01/fault_2.Added Load_2.5kg/left_load_2.5kg/map_inside/fault_group2_5min": {
+      "client": "rob_01",
+      "label": 2,
+      "n_rows": 3095,
+      "n_windows": 95
+    },
+    "rob_01/fault_2.Added Load_2.5kg/left_load_2.5kg/map_outside/fault_group4_5min": {
+      "client": "rob_01",
+      "label": 2,
+      "n_rows": 3395,
+      "n_windows": 105
+    },
+    "rob_01/fault_2.Added Load_2.5kg/right_load_2.5kg/map_inside/fault_group1_5min": {
+      "client": "rob_01",
+      "label": 2,
+      "n_rows": 3510,
+      "n_windows": 108
+    },
+    "rob_01/fault_2.Added Load_2.5kg/right_load_2.5kg/map_outside/fault_group3_5min": {
+      "client": "rob_01",
+      "label": 2,
+      "n_rows": 3207,
+      "n_windows": 99
+    },
+    "rob_01/fault_3.Drive Wheel Cable/Left Wheel Cable/map_inside/fault_group2_5min": {
+      "client": "rob_01",
+      "label": 3,
+      "n_rows": 3048,
+      "n_windows": 94
+    },
+    "rob_01/fault_3.Drive Wheel Cable/Left Wheel Cable/map_outside/fault_group3_5min": {
+      "client": "rob_01",
+      "label": 3,
+      "n_rows": 3679,
+      "n_windows": 114
+    },
+    "rob_01/fault_3.Drive Wheel Cable/Right Wheel Cable/map_inside/fault_group1_5min": {
+      "client": "rob_01",
+      "label": 3,
+      "n_rows": 3101,
+      "n_windows": 96
+    },
+    "rob_01/fault_3.Drive Wheel Cable/Right Wheel Cable/map_outside/fault_group4_5min": {
+      "client": "rob_01",
+      "label": 3,
+      "n_rows": 3544,
+      "n_windows": 109
+    },
+    "rob_01/fault_4.Thumbtack Fault/left_wheel/map_inside/fault_group2_5min": {
+      "client": "rob_01",
+      "label": 4,
+      "n_rows": 3019,
+      "n_windows": 93
+    },
+    "rob_01/fault_4.Thumbtack Fault/left_wheel/map_outside/fault_group4_5min": {
+      "client": "rob_01",
+      "label": 4,
+      "n_rows": 3235,
+      "n_windows": 100
+    },
+    "rob_01/fault_4.Thumbtack Fault/right_wheel/map_inside/fault_group1_5min": {
+      "client": "rob_01",
+      "label": 4,
+      "n_rows": 3107,
+      "n_windows": 96
+    },
+    "rob_01/fault_4.Thumbtack Fault/right_wheel/map_outside/fault_group3_5min": {
+      "client": "rob_01",
+      "label": 4,
+      "n_rows": 3131,
+      "n_windows": 96
+    },
+    "rob_01/normal/map_inside_20min": {
+      "client": "rob_01",
+      "label": 0,
+      "n_rows": 12492,
+      "n_windows": 389
+    },
+    "rob_01/normal/map_outside/group1_10min": {
+      "client": "rob_01",
+      "label": 0,
+      "n_rows": 6251,
+      "n_windows": 194
+    },
+    "rob_01/normal/map_outside/group2_10min": {
+      "client": "rob_01",
+      "label": 0,
+      "n_rows": 6781,
+      "n_windows": 211
+    },
+    "rob_02/fault_1.Caster Wheel Jam/map_inside/fault_group1_5min": {
+      "client": "rob_02",
+      "label": 1,
+      "n_rows": 3574,
+      "n_windows": 110
+    },
+    "rob_02/fault_1.Caster Wheel Jam/map_inside/fault_group2_5min": {
+      "client": "rob_02",
+      "label": 1,
+      "n_rows": 3154,
+      "n_windows": 97
+    },
+    "rob_02/fault_1.Caster Wheel Jam/map_outside/fault_group3_5min": {
+      "client": "rob_02",
+      "label": 1,
+      "n_rows": 3120,
+      "n_windows": 96
+    },
+    "rob_02/fault_1.Caster Wheel Jam/map_outside/fault_group4_5min": {
+      "client": "rob_02",
+      "label": 1,
+      "n_rows": 3379,
+      "n_windows": 104
+    },
+    "rob_02/fault_2.Added Load_2.5kg/left_load_2.5kg/map_inside/fault_group2_5min": {
+      "client": "rob_02",
+      "label": 2,
+      "n_rows": 3214,
+      "n_windows": 99
+    },
+    "rob_02/fault_2.Added Load_2.5kg/left_load_2.5kg/map_outside/fault_group4_5min": {
+      "client": "rob_02",
+      "label": 2,
+      "n_rows": 4609,
+      "n_windows": 143
+    },
+    "rob_02/fault_2.Added Load_2.5kg/right_load_2.5kg/map_inside/fault_group1_5min": {
+      "client": "rob_02",
+      "label": 2,
+      "n_rows": 3464,
+      "n_windows": 107
+    },
+    "rob_02/fault_2.Added Load_2.5kg/right_load_2.5kg/map_outside/fault_group3_5min": {
+      "client": "rob_02",
+      "label": 2,
+      "n_rows": 3044,
+      "n_windows": 94
+    },
+    "rob_02/fault_3.Drive Wheel Cable/Left Wheel Cable/map_inside/fault_group2_5min": {
+      "client": "rob_02",
+      "label": 3,
+      "n_rows": 3330,
+      "n_windows": 103
+    },
+    "rob_02/fault_3.Drive Wheel Cable/Left Wheel Cable/map_outside/fault_group4_5min": {
+      "client": "rob_02",
+      "label": 3,
+      "n_rows": 3607,
+      "n_windows": 111
+    },
+    "rob_02/fault_3.Drive Wheel Cable/Right Wheel Cable/map_inside/fault_group1_5min": {
+      "client": "rob_02",
+      "label": 3,
+      "n_rows": 3054,
+      "n_windows": 94
+    },
+    "rob_02/fault_3.Drive Wheel Cable/Right Wheel Cable/map_outside/fault_group3_5min": {
+      "client": "rob_02",
+      "label": 3,
+      "n_rows": 4696,
+      "n_windows": 145
+    },
+    "rob_02/fault_4.Thumbtack Fault/left_wheel/map_inside/fault_group1_5min": {
+      "client": "rob_02",
+      "label": 4,
+      "n_rows": 3090,
+      "n_windows": 95
+    },
+    "rob_02/fault_4.Thumbtack Fault/left_wheel/map_outside/fault_group3_5min": {
+      "client": "rob_02",
+      "label": 4,
+      "n_rows": 3652,
+      "n_windows": 113
+    },
+    "rob_02/fault_4.Thumbtack Fault/right_wheel/map_inside/fault_group2_5min": {
+      "client": "rob_02",
+      "label": 4,
+      "n_rows": 3141,
+      "n_windows": 97
+    },
+    "rob_02/fault_4.Thumbtack Fault/right_wheel/map_outside/fault_group4_5min": {
+      "client": "rob_02",
+      "label": 4,
+      "n_rows": 3092,
+      "n_windows": 95
+    },
+    "rob_02/normal/map_inside_20min": {
+      "client": "rob_02",
+      "label": 0,
+      "n_rows": 12314,
+      "n_windows": 383
+    },
+    "rob_02/normal/map_outside_20min": {
+      "client": "rob_02",
+      "label": 0,
+      "n_rows": 13568,
+      "n_windows": 423
+    },
+    "rob_03/fault_1.Caster Wheel Jam/map_inside/fault_group1_5min": {
+      "client": "rob_03",
+      "label": 1,
+      "n_rows": 3290,
+      "n_windows": 101
+    },
+    "rob_03/fault_1.Caster Wheel Jam/map_inside/fault_group2_5min": {
+      "client": "rob_03",
+      "label": 1,
+      "n_rows": 3265,
+      "n_windows": 101
+    },
+    "rob_03/fault_1.Caster Wheel Jam/map_outside/fault_group3_5min": {
+      "client": "rob_03",
+      "label": 1,
+      "n_rows": 3052,
+      "n_windows": 94
+    },
+    "rob_03/fault_1.Caster Wheel Jam/map_outside/fault_group4_5min": {
+      "client": "rob_03",
+      "label": 1,
+      "n_rows": 4155,
+      "n_windows": 128
+    },
+    "rob_03/fault_2.Added Load_2.5kg/left_load_2.5kg/map_inside/fault_group2_5min": {
+      "client": "rob_03",
+      "label": 2,
+      "n_rows": 3430,
+      "n_windows": 106
+    },
+    "rob_03/fault_2.Added Load_2.5kg/left_load_2.5kg/map_outside/fault_group4_5min": {
+      "client": "rob_03",
+      "label": 2,
+      "n_rows": 4429,
+      "n_windows": 137
+    },
+    "rob_03/fault_2.Added Load_2.5kg/right_load_2.5kg/map_inside/fault_group1_5min": {
+      "client": "rob_03",
+      "label": 2,
+      "n_rows": 3429,
+      "n_windows": 106
+    },
+    "rob_03/fault_2.Added Load_2.5kg/right_load_2.5kg/map_outside/fault_group3_5min": {
+      "client": "rob_03",
+      "label": 2,
+      "n_rows": 3641,
+      "n_windows": 112
+    },
+    "rob_03/fault_3.Drive Wheel Cable/Left Wheel Cable/map_inside/fault_group2_5min": {
+      "client": "rob_03",
+      "label": 3,
+      "n_rows": 3384,
+      "n_windows": 104
+    },
+    "rob_03/fault_3.Drive Wheel Cable/Left Wheel Cable/map_outside/fault_group4_5min": {
+      "client": "rob_03",
+      "label": 3,
+      "n_rows": 2596,
+      "n_windows": 80
+    },
+    "rob_03/fault_3.Drive Wheel Cable/Right Wheel Cable/map_inside/fault_group1_5min": {
+      "client": "rob_03",
+      "label": 3,
+      "n_rows": 3370,
+      "n_windows": 104
+    },
+    "rob_03/fault_3.Drive Wheel Cable/Right Wheel Cable/map_outside/fault_group3_5min": {
+      "client": "rob_03",
+      "label": 3,
+      "n_rows": 3201,
+      "n_windows": 99
+    },
+    "rob_03/fault_4.Thumbtack Fault/left_wheel/map_inside/fault_group2_5min": {
+      "client": "rob_03",
+      "label": 4,
+      "n_rows": 3089,
+      "n_windows": 95
+    },
+    "rob_03/fault_4.Thumbtack Fault/left_wheel/map_outside/fault_group3_5min": {
+      "client": "rob_03",
+      "label": 4,
+      "n_rows": 3260,
+      "n_windows": 101
+    },
+    "rob_03/fault_4.Thumbtack Fault/right_wheel/map_inside/fault_group_5min": {
+      "client": "rob_03",
+      "label": 4,
+      "n_rows": 3243,
+      "n_windows": 100
+    },
+    "rob_03/fault_4.Thumbtack Fault/right_wheel/map_outside/fault_group4_5min": {
+      "client": "rob_03",
+      "label": 4,
+      "n_rows": 3187,
+      "n_windows": 98
+    },
+    "rob_03/normal/map_inside_20min": {
+      "client": "rob_03",
+      "label": 0,
+      "n_rows": 12329,
+      "n_windows": 384
+    },
+    "rob_03/normal/map_outside_20min": {
+      "client": "rob_03",
+      "label": 0,
+      "n_rows": 11474,
+      "n_windows": 357
+    }
+  },
+  "source_note": "Same robot/sensor family as data/robo3er/ and data/robo_pdm_test/, extracted from data/robo_pdm/ raw session CSVs (see extraction step) down to the same 26 kinematic_core+actuation feature columns as data/robo_pdm_test/metadata.json, then windowed by build_robo_fleet.py. Clients are the 4 physical robots (rob_00..rob_03), like robo3er -- NOT fault-type groups like robo_pdm_test/ALFA, since robo_fleet's raw layout is naturally robot-grouped."
+}

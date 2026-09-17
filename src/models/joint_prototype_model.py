@@ -44,15 +44,36 @@ import torch.nn.functional as F
 
 
 class SharedEncoder(nn.Module):
-    """One Linear(window_size -> D), shared across every node (channel-
-    independent, PatchTST-style) -- same as fl_model.SharedEncoder."""
+    """Linear(window_size -> hidden) -> ReLU -> Linear(hidden -> D), shared
+    across every node (channel-independent, PatchTST-style). PROMOTED TO
+    MAINLINE (this session) from `NonlinearSharedEncoder`, an experiment-
+    only class duplicated in `experiment_paderborn_bk_bhk_encoder.py`/
+    `experiment_alfa_bk_bhk_encoder.py`/`experiment_robo_pdm_test_
+    nonlinear_encoder.py` -- those scripts monkey-patched this variant onto
+    freshly-constructed models specifically because a single Linear (this
+    class's ORIGINAL, now-replaced form, still described as "lightweight
+    linear projection" in `report/030_methodology.tex` Sec 3.1 -- that text
+    is now stale and needs updating) cannot represent a feature's per-
+    window VARIANCE (a quadratic function of the raw input), and this
+    project's own Cohen's-d ranking found variance, not mean, is the
+    strongest discriminating statistic for exactly the fault types
+    (`caster_wheel_jam`, `drive_wheel_cable`, `thumbtack_fault`) whose PCA
+    scatter (`plot_robo_pdm_test_embeddings_pca.py`,
+    `plot_robo_fleet_embeddings_pca.py`) showed heavy normal/fault overlap
+    under the old linear encoder -- `added_load_2.5kg`, whose PCA already
+    separated cleanly under the linear encoder, was the one fault type NOT
+    expected to need this. `hidden_dim` defaults to `2*embed_dim`, matching
+    the experiment scripts' own default."""
 
-    def __init__(self, window_size: int, embed_dim: int):
+    def __init__(self, window_size: int, embed_dim: int, hidden_dim: int = None):
         super().__init__()
-        self.proj = nn.Linear(window_size, embed_dim)
+        hidden_dim = hidden_dim or embed_dim * 2
+        self.net = nn.Sequential(
+            nn.Linear(window_size, hidden_dim), nn.ReLU(), nn.Linear(hidden_dim, embed_dim),
+        )
 
     def forward(self, x):  # x: [B, T, N] -> z: [B, N, D]
-        return self.proj(x.transpose(1, 2))
+        return self.net(x.transpose(1, 2))
 
 
 class JointPrototypeMemory(nn.Module):
@@ -70,32 +91,24 @@ class JointPrototypeMemory(nn.Module):
         self.codebook = nn.Parameter(torch.randn(num_prototypes, num_nodes, embed_dim) * 0.02)
         self.register_buffer("usage_count", torch.zeros(num_prototypes))
 
-        # Per-prototype (+ global fallback) mean/var of d_node, populated once per
-        # federated round by `load_shrinkage_stats()` (server-computed, empirical-
-        # Bayes-blended per-client statistic -- see federated_memory.compute_shrinkage_stats)
-        # and read by `dev_zscore()`. This is the "shrinkage" calib mode of
-        # memory/calib-in-prototype-ab.md -- the two other calibration paths that
-        # branch explored (offline per-prototype ScoreCalibrationHead, online EMA)
-        # were dropped after that investigation concluded shrinkage was the one worth
-        # keeping (see that doc for the full comparison); these buffers are what's left
-        # of the EMA-buffer mechanism shrinkage's load_shrinkage_stats() repurposes.
-        self.register_buffer("dev_mean", torch.zeros(num_prototypes, num_nodes))
-        self.register_buffer("dev_var", torch.ones(num_prototypes, num_nodes))
-        self.register_buffer("dev_valid", torch.zeros(num_prototypes, dtype=torch.bool))
-        self.register_buffer("dev_global_mean", torch.zeros(num_nodes))
-        self.register_buffer("dev_global_var", torch.ones(num_nodes))
-        self.register_buffer("dev_global_valid", torch.zeros(1, dtype=torch.bool))
-
     def forward(self, z, node_weights=None):
         """z: [B, N, D]. Returns dict with:
         idx [B] (matched prototype index), p_star [B, N, D] (matched
         prototype, straight-through for gradient), d_proto [B] (global joint
-        distance to the matched prototype = weighted mean of d_node),
+        distance to the matched prototype = sum of d_node, node_weights
+        permitting an optional per-node reweighting -- uniformly 1 by
+        default, see `node_weights` above),
         d_node [B, N] (per-node squared distance to the matched prototype's
         component; no attention, purely per-node amplitude deviation)."""
         B, N, D = z.shape
         if node_weights is None:
-            node_weights = torch.ones(N, device=z.device) / N
+            # Per-node weight in the joint distance sum below -- a hook for
+            # injecting a prior on which sensors matter more when matching a
+            # prototype (e.g. down-weighting a noisy channel). Uniformly 1
+            # (no prior) this round: every node contributes its raw squared
+            # distance unweighted, matching report Eq. (retrieval)'s plain
+            # sum. Revisit if/when per-node priors are added.
+            node_weights = torch.ones(N, device=z.device)
 
         diff = z.unsqueeze(1) - self.codebook.unsqueeze(0)  # [B, M, N, D]
         sq_dist = diff.pow(2).sum(-1)  # [B, M, N]
@@ -121,100 +134,13 @@ class JointPrototypeMemory(nn.Module):
     def codebook_utilization(self):
         return float((self.usage_count > 0).float().mean())
 
-    def dev_zscore(self, raw: np.ndarray, idx: np.ndarray) -> np.ndarray:
-        """raw: [B, num_nodes] numpy, idx: [B] numpy matched-prototype
-        indices. Returns mean/std z-scored [B, num_nodes], numpy, against
-        `dev_mean`/`dev_var` (populated by `load_shrinkage_stats()` each
-        round) -- "shrinkage" calib mode's drop-in replacement for
-        `zscore(x, calib_x)`'s first stage. Falls back to the global
-        dev stats for prototypes `load_shrinkage_stats()` didn't mark
-        valid this round (e.g. a personalized slot with zero local
-        traffic)."""
-        valid = self.dev_valid.cpu().numpy()[idx]
-        cmean = self.dev_mean.cpu().numpy()[idx]
-        cstd = np.sqrt(self.dev_var.cpu().numpy()[idx])
-        gmean = self.dev_global_mean.cpu().numpy()[None, :]
-        gstd = np.sqrt(self.dev_global_var.cpu().numpy())[None, :]
-        mean = np.where(valid[:, None], cmean, gmean)
-        std = np.where(valid[:, None], cstd, gstd)
-        return (raw - mean) / np.maximum(std, 1e-8)
-
     def load_memory(self, prototypes: torch.Tensor):
         """Overwrite this client's codebook with a server-broadcast [M, N, D]
         tensor (`federated_memory.align_and_split`'s P_G,n) and reset usage
-        counts for the new round -- same convention as `fl_model.FLGDNMemory.load_memory`.
-
-        Also resets `dev_mean`/`dev_var`/`dev_valid` (+ global fallback)
-        to scratch. Since the codebook is a completely different set of
-        vectors after each `load_memory()` call, slot index `m`'s "meaning"
-        changes every round -- stale per-round deviation stats indexed
-        purely by `m` would otherwise get blended into `compute_shrinkage_stats`'s
-        pooling under a codebook geometry that no longer exists. (This reset
-        was originally added to fix an analogous bug in the now-removed
-        online-EMA calibration path -- see [[calib-in-prototype-ab]]'s "Bug
-        fix" section for that history -- but the reset itself is still
-        needed here since `load_shrinkage_stats()` is called fresh every
-        round and shouldn't inherit anything from the previous round's
-        codebook.)"""
+        counts for the new round -- same convention as `fl_model.FLGDNMemory.load_memory`."""
         with torch.no_grad():
             self.codebook.copy_(prototypes.to(self.codebook.device))
         self.usage_count.zero_()
-        self.dev_mean.zero_()
-        self.dev_var.fill_(1.0)
-        self.dev_valid.zero_()
-        self.dev_global_mean.zero_()
-        self.dev_global_var.fill_(1.0)
-        self.dev_global_valid.zero_()
-
-    @torch.no_grad()
-    def load_shrinkage_stats(self, mean: np.ndarray, var: np.ndarray, valid: np.ndarray):
-        """"shrinkage" calib mode of `memory/calib-in-prototype-ab.md` --
-        empirical-Bayes per-client, per-prototype shrinkage of `d_node`
-        deviation statistics, the successor to the reverted `federated_ema`
-        (one fused stat shared identically by every client in a cluster,
-        which let large clients overwrite small ones') and to two other
-        calibration paths (offline per-prototype calibration, online EMA)
-        that branch also explored and dropped -- see that doc for the full
-        comparison and the reasoning behind keeping only this one.
-
-        Loads server-computed, ALREADY-BLENDED per-client `(mean, var)`
-        (`federated_memory.compute_shrinkage_stats`'s output -- each row is
-        this client's own local statistic pulled partway toward a fleet-wide
-        pooled prior, weighted by this client's own per-prototype sample
-        count this round) into `dev_mean`/`dev_var`/`dev_valid`, which
-        `dev_zscore()` reads for scoring.
-
-        Call once per round, right after `load_memory()` (which already
-        reset these buffers to scratch) and after this round's one-shot
-        local dev-stats pass. A shared slot's `valid` is True whenever ANY
-        client had data this round (this client's own local `n` may be 0
-        and the slot is still valid, since the blend already fell back
-        fully to the fleet prior in that case); a personalized slot is
-        valid only when THIS client's own `n > 0` (no fleet borrowing
-        applies there -- see `compute_shrinkage_stats`'s docstring)."""
-        device = self.dev_mean.device
-        valid_t = torch.tensor(valid, dtype=torch.bool, device=device)
-        mean_t = torch.tensor(mean, dtype=torch.float32, device=device)
-        var_t = torch.tensor(var, dtype=torch.float32, device=device).clamp(min=1e-6)
-
-        self.dev_mean = torch.where(valid_t.unsqueeze(1), mean_t, self.dev_mean)
-        self.dev_var = torch.where(valid_t.unsqueeze(1), var_t, self.dev_var)
-        self.dev_valid = valid_t
-
-        if bool(valid_t.any()):
-            # client-local (not federated) global fallback for any slot that's still
-            # invalid (e.g. a personalized slot this client never routed traffic to
-            # this round) -- same "rarely hit" role dev_zscore()'s global fallback
-            # already plays; unweighted mean/var pool over valid slots since a
-            # per-slot n weighting isn't meaningful here (some valid slots' n is 0,
-            # by design, once the fleet prior alone made them valid).
-            mean_v = mean_t[valid_t]
-            var_v = var_t[valid_t]
-            g_mean = mean_v.mean(dim=0)
-            g_var = (var_v.mean(dim=0) + ((mean_v - g_mean.unsqueeze(0)) ** 2).mean(dim=0)).clamp(min=1e-6)
-            self.dev_global_mean = g_mean
-            self.dev_global_var = g_var
-            self.dev_global_valid[0] = True
 
 
 class DeviationCovarianceHead(nn.Module):
@@ -408,9 +334,12 @@ class JointPrototypeV2(nn.Module):
         self.edge_head = TrendGraphAttentionHead(num_nodes, embed_dim, top_k=top_k,
                                                  prior_edges=prior_edges)
         self.decoder = nn.Linear(embed_dim, window_size)  # training-only
+        # Per-node weight passed through to JointPrototypeMemory.forward's
+        # joint distance sum -- a hook for a per-node prior, not exercised
+        # this round: uniformly 1 (see JointPrototypeMemory.forward).
         self.register_buffer(
             "node_weights",
-            node_weights if node_weights is not None else torch.ones(num_nodes) / num_nodes,
+            node_weights if node_weights is not None else torch.ones(num_nodes),
         )
 
     def forward(self, x, training_mode=False):
@@ -643,9 +572,12 @@ class JointPrototypeV3(nn.Module):
         self.typed_head = TypedRelationAnomalyHead(num_nodes, prior_edges, edge_types,
                                                    embed_dim)
         self.decoder = nn.Linear(embed_dim, window_size)  # training-only
+        # Per-node weight passed through to JointPrototypeMemory.forward's
+        # joint distance sum -- a hook for a per-node prior, not exercised
+        # this round: uniformly 1 (see JointPrototypeMemory.forward).
         self.register_buffer(
             "node_weights",
-            node_weights if node_weights is not None else torch.ones(num_nodes) / num_nodes,
+            node_weights if node_weights is not None else torch.ones(num_nodes),
         )
 
     def forward(self, x, training_mode=False):

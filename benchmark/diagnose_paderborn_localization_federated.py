@@ -94,6 +94,29 @@ def masked_argmax(z, reliable):
     return np.argmax(z_masked, axis=1)
 
 
+def combo_conf(scalars, per_node_arrays, reliable_masks, T=1.0):
+    """Confidence-weighted (softmax) combination, matching
+    `federated_train_eval.smooth_max`'s semantics -- NOT hard max-routing. Each
+    contributing signal's window-level scalar sets a softmax weight
+    (`T -> 0` recovers hard-max winner-take-all; `T -> inf` recovers a
+    plain unweighted mean), and instead of picking one signal's own
+    argmax node outright, the signals' PER-NODE arrays are blended by
+    those weights first -- the localization decision is read off the
+    blended deviation profile, not off whichever signal happened to have
+    the single largest scalar. A node only competes in the combined
+    argmax if reliable for every contributing signal (intersection of
+    `reliable_masks`)."""
+    if len(scalars[0]) == 0:
+        return np.zeros(0, dtype=int)
+    stacked_scalar = np.stack(scalars, axis=1)  # [n, k]
+    w = np.exp((stacked_scalar - stacked_scalar.max(axis=1, keepdims=True)) / T)
+    w /= w.sum(axis=1, keepdims=True)
+    stacked_pernode = np.stack(per_node_arrays, axis=0)  # [k, n, num_nodes]
+    combined = np.einsum("nk,knd->nd", w, stacked_pernode)  # [n, num_nodes]
+    reliable = np.all(np.stack(reliable_masks, axis=0), axis=0)
+    return masked_argmax(combined, reliable)
+
+
 def window_forecast(model, arr_scaled, horizon_mult, stride):
     windows, file_id, n_positions = v2f.make_windows(arr_scaled)
     n_files = len(arr_scaled)
@@ -102,11 +125,11 @@ def window_forecast(model, arr_scaled, horizon_mult, stride):
         return np.zeros((0, model.num_nodes), dtype=np.float32), np.zeros(0, dtype=int)
     x_in = windows[vi]
     x_future = v2f.gather_future(windows, chains, stride)
-    k_resid = v2f.forecast_scores(model, x_in, x_future)
+    k_resid = v2f.forecast_scores(model, x_in, x_future, v2f.DEVICE)
     return k_resid, file_id[vi]
 
 
-def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
+def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, linkage="single"):
     torch.manual_seed(v2f.SEED)
     np.random.seed(v2f.SEED)
     num_nodes = len(v2f.NODE_NAMES)
@@ -142,38 +165,31 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
     for model in models[1:]:
         model.load_state_dict(shared_init, strict=False)
 
+    def local_train_step(c, model):
+        fit_windows, fit_file_id, fit_n_pos = v2f.make_windows(c["fit"])
+        fit_vi, fit_chains = v2f.build_chains(len(c["fit"]), fit_n_pos, horizon_mult)
+        fit_in = fit_windows[fit_vi]
+        fit_future = v2f.gather_future(fit_windows, fit_chains, v2f.WINDOW_STRIDE)
+        v2f.train_local(model, fit_in, fit_future, v2f.LOCAL_EPOCHS, v2f.DEVICE, lr=v2f.LR, beta=v2f.BETA,
+                         lambda_edge=v2f.LAMBDA_EDGE, lambda_typed=v2f.LAMBDA_TYPED,
+                         lambda_forecast=v2f.LAMBDA_FORECAST, batch_size=v2f.BATCH_SIZE)
+        return len(fit_in)
+
     print(f"\nfederated training: {v2f.ROUNDS} rounds x {v2f.LOCAL_EPOCHS} local epochs, "
           f"horizon_mult={horizon_mult} ...")
-    for rnd in range(1, v2f.ROUNDS + 1):
-        fit_counts = []
-        for c, model in zip(clients, models):
-            fit_windows, fit_file_id, fit_n_pos = v2f.make_windows(c["fit"])
-            fit_vi, fit_chains = v2f.build_chains(len(c["fit"]), fit_n_pos, horizon_mult)
-            fit_in = fit_windows[fit_vi]
-            fit_future = v2f.gather_future(fit_windows, fit_chains, v2f.WINDOW_STRIDE)
-            v2f.train_local(model, fit_in, fit_future, v2f.LOCAL_EPOCHS)
-            fit_counts.append(len(fit_in))
-
-        codebooks = [m.memory.codebook.detach().clone() for m in models]
-        usage_counts = [m.memory.usage_count.detach().clone() for m in models]
-        P_G, diag = v2f.align_and_split(codebooks, usage_counts, gamma=v2f.GAMMA, delta=v2f.DELTA)
-        print(f"  round {rnd}: shared_clusters={diag.get('num_multi_client_clusters')}")
-        for model, p_g in zip(models, P_G):
-            model.memory.load_memory(p_g)
-        if v2f.SYNC_ENCODER_DECODER:
-            avg = v2f.fedavg_state_dict([m.state_dict() for m in models], fit_counts, prefixes=("encoder.", "decoder."))
-            for model in models:
-                model.load_state_dict(avg, strict=False)
+    v2f.run_federated_rounds(
+        clients, models, local_train_step, v2f.ROUNDS, v2f.GAMMA, v2f.DELTA,
+        sync_encoder_decoder=v2f.SYNC_ENCODER_DECODER, linkage=linkage)
 
     print("\ncalibrating cov_head per client ...")
     calib_stats = []
     cov_min = max(v2f.MIN_PROTO_SAMPLES, num_nodes + 1)
     for c, model in zip(clients, models):
         calib_windows, _, _ = v2f.make_windows(c["calib"])
-        _, d_node_b, resid_struct_b, _, calib_idx_w, _, d_mahal_b = v2f.per_sample_scores(model, calib_windows)
+        _, d_node_b, resid_struct_b, _, calib_idx_w, _, d_mahal_b = v2f.per_sample_scores(model, calib_windows, v2f.DEVICE)
         model.cov_head.set_calibration(d_node_b, calib_idx_w, min_samples=cov_min)
         # recompute d_mahal now that calibration is set
-        _, d_node_calib, resid_struct_calib, _, calib_idx_c, _, d_mahal_calib = v2f.per_sample_scores(model, calib_windows)
+        _, d_node_calib, resid_struct_calib, _, calib_idx_c, _, d_mahal_calib = v2f.per_sample_scores(model, calib_windows, v2f.DEVICE)
 
         k_resid_calib, _ = window_forecast(model, c["calib"], horizon_mult, v2f.WINDOW_STRIDE)
 
@@ -215,7 +231,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
         for c, model, st in zip(clients, models, calib_stats):
             arr_scaled = c["scaler"].transform(arr.reshape(-1, num_nodes)).reshape(arr.shape).astype(np.float32)
             windows, file_id, _ = v2f.make_windows(arr_scaled)
-            _, d_node_f, resid_struct_f, _, idx_f, _, d_mahal_f = v2f.per_sample_scores(model, windows)
+            _, d_node_f, resid_struct_f, _, idx_f, _, d_mahal_f = v2f.per_sample_scores(model, windows, v2f.DEVICE)
 
             z_node_f = zn(d_node_f, st["node_median"], st["node_iqr"])
             z_struct_f = zn(resid_struct_f, st["struct_median"], st["struct_iqr"])
@@ -254,18 +270,19 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
                 b_at_k = z_node_f.max(axis=1)[vi_k]
                 c_at_k = z_struct_f.max(axis=1)[vi_k]
                 h_at_k = z_mahal_win[vi_k]
-                argmax_b_at_k = argmax_b[vi_k]
-                argmax_c_at_k = argmax_c[vi_k]
-                argmax_h_at_k = argmax_h[vi_k]
+                b_pernode_at_k = z_node_f[vi_k]
+                c_pernode_at_k = z_struct_f[vi_k]
+                h_pernode_at_k = contrib_h_f[vi_k]
                 k_scalar = z_k_f.max(axis=1)
 
-                def combo(scalar_a, argmax_a, scalar_k, argmax_k_):
-                    a_wins = scalar_a >= scalar_k
-                    return np.where(a_wins, argmax_a, argmax_k_)
-
-                add("BK", combo(b_at_k, argmax_b_at_k, k_scalar, argmax_k))
-                add("CK", combo(c_at_k, argmax_c_at_k, k_scalar, argmax_k))
-                add("HK", combo(h_at_k, argmax_h_at_k, k_scalar, argmax_k))
+                add("BK", combo_conf([b_at_k, k_scalar], [b_pernode_at_k, z_k_f],
+                                      [st["node_reliable"], st["k_reliable"]]))
+                add("CK", combo_conf([c_at_k, k_scalar], [c_pernode_at_k, z_k_f],
+                                      [st["struct_reliable"], st["k_reliable"]]))
+                add("HK", combo_conf([h_at_k, k_scalar], [h_pernode_at_k, z_k_f],
+                                      [st["node_reliable"], st["k_reliable"]]))
+                add("BCK", combo_conf([b_at_k, c_at_k, k_scalar], [b_pernode_at_k, c_pernode_at_k, z_k_f],
+                                       [st["node_reliable"], st["struct_reliable"], st["k_reliable"]]))
 
     results = {}
     for cat, sigs in pooled.items():
@@ -286,7 +303,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None):
     results["_config"] = {
         "num_nodes": num_nodes, "node_names": v2f.NODE_NAMES, "horizon_mult": horizon_mult,
         "rounds": v2f.ROUNDS, "local_epochs": v2f.LOCAL_EPOCHS, "reliability_ratio": RELIABILITY_RATIO,
-        "sync_encoder_decoder": v2f.SYNC_ENCODER_DECODER,
+        "sync_encoder_decoder": v2f.SYNC_ENCODER_DECODER, "linkage": linkage,
     }
     suffix = out_suffix if out_suffix is not None else f"h{horizon_mult}"
     out_path = OUT_DIR / f"paderborn_diagnosis_localization_federated_{suffix}.json"
@@ -300,5 +317,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--horizon-mult", type=int, default=10)
     parser.add_argument("--out-suffix", type=str, default=None)
+    parser.add_argument("--linkage", type=str, default="single", choices=["single", "complete"])
     args = parser.parse_args()
-    main(horizon_mult=args.horizon_mult, out_suffix=args.out_suffix)
+    main(horizon_mult=args.horizon_mult, out_suffix=args.out_suffix, linkage=args.linkage)
