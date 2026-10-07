@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal K) on
+FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal PD) on
 ME-AD, treating each of its 16 operation codes as a federated client --
 see `src/dataloaders/me_ad/me_ad_adapter.py`'s module docstring for the full
 dataset description, client-definition rationale (real, independently-
@@ -37,7 +37,7 @@ or used here as of 2026-09-12's switch away from the declared-edge
 **2026-09-12: switched from `JointPrototypeV31Forecast` to `V21Forecast`,
 dropping the declared-physics-edge `typed_head`/signal-E machinery
 project-wide** -- a controlled ablation on robo_fleet found it worth only
-~0.005 BHK_max, and the same simpler no-declared-edges architecture
+~0.005 FD_JD_PD_max, and the same simpler no-declared-edges architecture
 ALFA/SMD already used is now the one mainline everywhere -- see
 `memory/v21-mainline-switch.md`.
 
@@ -725,7 +725,7 @@ def main_ufedhy_baseline(out_suffix=None, hyper_embed_dim=32, hyper_hidden_dim=6
 def main_faithful_baseline(baseline, out_suffix=None, num_clusters=2, num_prototypes=NUM_PROTOTYPES,
                             horizon_mult=4):
     """FedAvg / IFCAAE / Fed-ExDNN, each with its OWN minimal architecture
-    and own single anomaly score (no B/H/K/BK/BHK) -- see
+    and own single anomaly score (no FD/JD/PD/FD+PD/FD+JD+PD) -- see
     `src/models/baseline_models.py`'s module docstring. No forecast
     chains needed (none of these three baselines forecast): plain
     per-cycle windows only."""

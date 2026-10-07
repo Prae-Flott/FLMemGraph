@@ -5,8 +5,6 @@ Official implementation accompanying the paper *"Federated Representation Learni
 **Yongxu Ren<sup>1</sup>, Junfu Zhang<sup>1</sup>, Felix Deichsel<sup>2</sup>, Jürgen Seiler<sup>2</sup>, André Kaup<sup>2</sup>, Philipp Beckerle<sup>1</sup>**
 <sup>1</sup>Chair of Autonomous Systems and Mechatronics, FAU Erlangen-Nürnberg &nbsp;·&nbsp; <sup>2</sup>Chair of Multimedia Communications and Signal Processing, FAU Erlangen-Nürnberg
 
-[BibTeX](#citation)
-
 ---
 
 ## Abstract
@@ -16,7 +14,7 @@ Reliable fault monitoring in robotic and automated fleets is hindered by scarce 
 ## Overview
 
 <p align="center">
-  <img src="docs/img/pipeline_draw.svg" alt="FedRLMem pipeline overview" width="850">
+  <img src="docs/img/pipeline_draw.png" alt="FedRLMem pipeline overview" width="850">
 </p>
 
 Each client encodes multivariate sensor time series with a shared encoder, models inter-feature dependencies through an attention-based graph predictor (GDN-style forecasting), and maintains a local discrete prototype memory (VQ-VAE-style codebook) over complete operating states. Only the local codebook and per-prototype usage counts — never raw data or sample-level embeddings — are uploaded to the server, which performs cross-client prototype alignment (cosine-similarity graph + single-linkage BFS clustering) to build a fleet-wide shared memory that is broadcast back alongside the FedAvg'd encoder/predictor weights, while personalized local prototypes are preserved. At inference, faults are scored from three complementary signals:
@@ -108,7 +106,7 @@ Run the corresponding builder before training on a dataset for the first time (s
 
 ## Reproducing the Results
 
-Each `benchmark/run_<dataset>_bck_federated.py` script shares the same federated train/eval loop (`src/federated/federated_train_eval.py`) and reports the `B` (feature deviation), `H` (joint/Mahalanobis deviation), `K` (prediction deviation), and fused `BHK` detection scores as a JSON report under `checkpoints/<dataset>/`.
+Each `benchmark/run_<dataset>_bck_federated.py` script shares the same federated train/eval loop (`src/federated/federated_train_eval.py`) and reports the `FD` (feature deviation), `JD` (joint/Mahalanobis deviation), `PD` (prediction deviation), and fused `FD+JD+PD` detection scores as a JSON report under `checkpoints/<dataset>/`.
 
 ```bash
 # MoboFleet (own fleet dataset used in the paper's main results)
@@ -134,19 +132,6 @@ python3 benchmark/compare_baselines.py
 Common flags across scripts: `--horizon-mult M` (forecast horizon multiplier), `--num-prototypes N` (memory size `M`), `--out-suffix NAME` (report tag), `--baseline {ours,fedavg,ifcaae,fedexdnn,fedpro,fedcpg,ufedhy}` where supported. Run any script with `--help` for the full list.
 
 Hyperparameter and non-IID sensitivity sweeps used for the paper's figures/tables (prototype-budget grid search, linkage-threshold `δ`, quantity-/scenario-skew) are under `benchmark/experiment_*.py` and `benchmark/sweep_*.py`.
-
-## Citation
-
-If you use this code or the MoboFleet dataset, please cite:
-
-```bibtex
-@inproceedings{ren2026fedrlmem,
-  title     = {Federated Representation Learning with Memory for Fault Detection and Localization in Robotic and Automated Fleets},
-  author    = {Ren, Yongxu and Zhang, Junfu and Deichsel, Felix and Seiler, J\"urgen and Kaup, Andr\'e and Beckerle, Philipp},
-  booktitle = {(manuscript in preparation)},
-  year      = {2026}
-}
-```
 
 ## Acknowledgment
 

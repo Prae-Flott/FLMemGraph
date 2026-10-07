@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EXPERIMENT (not mainline): quantity-skew non-IID sweep for the BHK
+EXPERIMENT (not mainline): quantity-skew non-IID sweep for the FD+JD+PD
 mainline on robo_fleet.
 
 `run_robo_fleet_bck_federated.py`'s 4 real per-robot clients already come
@@ -54,7 +54,7 @@ m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 
 REAL_BUILD_CLIENTS = m.build_clients
-SIGNALS = ["B_node_max", "H_cov_mahal", "BH_max", "K_forecast_max", "BK_max", "BHK_max"]
+SIGNALS = ["FD_max", "JD_mahal", "FD_JD_max", "PD_max", "FD_PD_max", "FD_JD_PD_max"]
 
 
 def make_skewed_build_clients(alpha, min_fit, seed):

@@ -1,5 +1,5 @@
 """
-FL baseline registry for the current (V3.1/BK-mainline) pipeline -- see
+FL baseline registry for the current (V3.1/FD+PD-mainline) pipeline -- see
 `docs/baseline_selection_for_benchmark.md` for the selection rationale.
 Supersedes `archive/benchmark/baselines/registry.py` (pre-V3.1, described
 now-deleted model classes).
@@ -10,7 +10,7 @@ deliberately NOT this project's B/H/K-producing `JointPrototypeV31Forecast`/
 `V21Forecast` backbone, so no baseline can accidentally inherit a
 relational/memory/forecast signal its own algorithm was never designed to
 have. Compare each baseline's single AUROC directly against `ours`'s
-`BHK_max`/`BHK_lw` (the project mainline) -- see
+`FD_JD_PD_max`/`FD_JD_PD_lw` (the project mainline) -- see
 `benchmark/compare_baselines.py`.
 
 `status`: "implemented" (runnable now, in this repo) or "planned".
@@ -144,7 +144,7 @@ BASELINES = {
                 "(`fedpro.retrieve_and_vote`/`confidence_ensemble`, Eq. 8-10). Reports BOTH "
                 "the native multi-class `accuracy` metric (paper's own metric) AND a bridged "
                 "binary anomaly score `1 - y_en[normal_class]` scored per-(client, fault-type) "
-                "AUROC for comparability with `ours`'s BHK -- but this AUROC is NOT "
+                "AUROC for comparability with `ours`'s FD+JD+PD -- but this AUROC is NOT "
                 "apples-to-apples with the other three baselines' fit-on-healthy AUROC: "
                 "FedPRO sees every fault type as a labeled training class, an easier task.",
         "results": {"robo_fleet": "0.976 (accuracy 0.834)", "paderborn": "0.965 (accuracy 0.617)", "alfa": "0.681 (accuracy 0.829)", "me_ad": "0.616 (accuracy 0.575)"},

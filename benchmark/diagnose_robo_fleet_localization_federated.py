@@ -31,7 +31,7 @@ top-k):
      (`combo_topk`, mirrors `combo_conf`'s softmax-weighting semantics
      but keeps the whole top-k set instead of collapsing to one argmax).
      BHK (B+H+K) is the actual shipped project mainline combo
-     (`BHK_max = smooth_max(B, H, K)` in `run_robo_fleet_bck_federated.py`'s
+     (`FD_JD_PD_max = smooth_max(B, H, K)` in `run_robo_fleet_bck_federated.py`'s
      own detection report / `federated_train_eval.add_forecast_scores`) -- BCK
      (B+C+K, swapping in C for H) is kept alongside it for comparison
      only, it is NOT the mainline signal.
@@ -333,7 +333,7 @@ def main(horizon_mult=10, out_suffix=None, linkage="single", topk=3, num_prototy
 
             add(fault_name, "BK", combo_topk([b_paired, k_scalar_paired], [b_pernode_paired, z_k_f],
                                               [st["node_reliable"], st["k_reliable"]], topk))
-            # BHK: the actual shipped mainline signal (`BHK_max = smooth_max(B, H, K)`
+            # BHK: the actual shipped mainline signal (`FD_JD_PD_max = smooth_max(B, H, K)`
             # in `federated_train_eval.add_forecast_scores`) -- NOT BCK (which swaps in C for
             # H and was never the mainline combo), see fl-baseline-comparison.md.
             add(fault_name, "BHK", combo_topk([b_paired, h_paired, k_scalar_paired],

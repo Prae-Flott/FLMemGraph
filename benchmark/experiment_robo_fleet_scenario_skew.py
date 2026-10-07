@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 EXPERIMENT (not mainline): SCENARIO-skew (indoor/outdoor) non-IID sweep
-for the BHK mainline on robo_fleet, complementing
+for the FD+JD+PD mainline on robo_fleet, complementing
 `experiment_robo_fleet_quantity_skew.py`'s data-VOLUME skew with a
 data-COMPOSITION skew: instead of controlling how MUCH normal training
 data each client gets, this controls what MIX of scenarios it comes
@@ -74,7 +74,7 @@ m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 
 REAL_BUILD_CLIENTS = m.build_clients
-SIGNALS = ["B_node_max", "H_cov_mahal", "BH_max", "K_forecast_max", "BK_max", "BHK_max"]
+SIGNALS = ["FD_max", "JD_mahal", "FD_JD_max", "PD_max", "FD_PD_max", "FD_JD_PD_max"]
 SESSION_NAMES = json.load(open(REPO_ROOT.parent / "data" / "robo_fleet" / "window_session_names.json"))
 MIN_SCENARIO = 20
 

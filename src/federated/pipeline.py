@@ -14,7 +14,7 @@ so there is exactly one place that knows "which dataset uses which
 script" and one CLI for all of them.
 
 Mainline defaults (both overridable per call, never removed as options):
-  - combined score: BK = smooth_max(B_node_max, K_forecast_max)
+  - combined score: FD+PD = smooth_max(FD_max, PD_max) (CLI shorthand `BK`)
   - clustering: linkage="single" (BFS connected components,
     `federated_memory.align_and_split`'s original behavior)
   - forecast_head (K) IS FedAvg'd whenever the dataset syncs
@@ -23,12 +23,14 @@ Mainline defaults (both overridable per call, never removed as options):
     original memory-only exchange (it never syncs encoder/decoder, so this
     is inert for it either way).
 
-Every dataset reports ONLY B/K/BK as of the 2026-09-02 BK-only trim (see
-`federated_train_eval.py`'s module docstring) -- the earlier C/E/F/H/I/J/CK/HK/BCK
-signals are retired from every detection report (`paderborn`'s
-full ablation scoring code is snapshotted verbatim in
+Every dataset reports ONLY B(=FD)/K(=PD)/BK(=FD+PD) as of the 2026-09-02
+trim (see `federated_train_eval.py`'s module docstring) -- the earlier
+C/E/F/H/I/J/CK/HK/BCK signals are retired from every detection report
+(`paderborn`'s full ablation scoring code is snapshotted verbatim in
 `archive/src/federated/legacy_scores.py`; `sielaff`/`alfa` were trimmed
-in place, same convention). `--signal` selects which column this module
+in place, same convention). `--signal` (kept as the short `B`/`K`/`BK`
+flags below, matching the keys the localization scripts still store
+their per-fault-type hit rates under) selects which column this module
 prints as the headline number (default `BK`, the only non-B/K signal left);
 `linkage="complete"` remains an opt-in alternative to the default
 single-linkage BFS.
@@ -79,7 +81,7 @@ DATASET_SCRIPTS = {
 # tried in order (differs per dataset's script -- see module docstring).
 _SUMMARY_KEYS = ("summary_mean_auroc_overall", "summary_mean_auroc")
 _SIGNAL_TO_REPORT_KEY = {
-    "B": "B_node_max", "K": "K_forecast_max", "BK": "BK_max",
+    "B": "FD_max", "K": "PD_max", "BK": "FD_PD_max",
 }
 
 

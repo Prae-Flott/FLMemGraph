@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal K) on
+FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal PD) on
 Paderborn, treating K001-K006 as 6 federated clients. Per
 `memory/benchmark-policy-federated-only.md`: the federated variant of
 `run_paderborn_bck.py`'s per-file cross-window pairing route
@@ -8,15 +8,15 @@ Paderborn, treating K001-K006 as 6 federated clients. Per
 protocol (`JointPrototypeMemory` codebook exchanged via `align_and_split`,
 FedAvg'd encoder/decoder AND `forecast_head` via `SYNC_ENCODER_DECODER`).
 
-PROJECT MAINLINE (finalized 2026-08-30, BHK computed since always despite
-an earlier docstring's stale "BK-only" claim -- see `federated_train_eval.py`'s
+PROJECT MAINLINE (finalized 2026-08-30, FD+JD+PD computed since always despite
+an earlier docstring's stale "FD+PD-only" claim -- see `federated_train_eval.py`'s
 module docstring; **2026-09-12: switched from `JointPrototypeV31Forecast`
 to `V21Forecast`, dropping the declared-physics-edge `typed_head`/signal-E
 machinery project-wide** -- a controlled ablation on robo_fleet found it
-worth only ~0.005 BHK_max, and the same simpler no-declared-edges
+worth only ~0.005 FD_JD_PD_max, and the same simpler no-declared-edges
 architecture ALFA/SMD already used is now the one mainline everywhere --
 see `memory/v21-mainline-switch.md`): this script reports
-`B_node_max`/`H_cov_mahal`/`BH_max`/`K_forecast_max`/`BK_max`/`BHK_max`.
+`FD_max`/`JD_mahal`/`FD_JD_max`/`PD_max`/`FD_PD_max`/`FD_JD_PD_max`.
 `edge_head` (generic cross-node attention residual, signal C) and
 `cov_head` are still trained/scored; `cov_head` also remains available on
 the saved model for `diagnose_paderborn_localization_federated.py`
@@ -585,7 +585,7 @@ def main_ufedhy_baseline(out_suffix=None, hyper_embed_dim=32, hyper_hidden_dim=6
 
 def main_faithful_baseline(baseline, out_suffix=None, num_clusters=2, num_prototypes=NUM_PROTOTYPES):
     """FedAvg / IFCAAE / Fed-ExDNN, each with its OWN minimal architecture
-    and own single anomaly score (no B/H/K/BK/BHK) -- see
+    and own single anomaly score (no FD/JD/PD/FD+PD/FD+JD+PD) -- see
     `src/models/baseline_models.py`'s module docstring. No forecast
     chains needed (none of these three baselines forecast): plain
     per-file windows only."""
@@ -794,7 +794,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, linkage="sin
     h_loss = [calib_data[c["code"]][2] for c in clients]  # d_mahal_med
     k_loss = [float(calib_data[c["code"]][1].mean()) if len(calib_data[c["code"]][1]) else float("nan") for c in clients]
     lw_ready = all(not np.isnan(v) for v in k_loss)
-    client_lw_weights = (confidence_weights_from_losses({"B": b_loss, "H": h_loss, "K": k_loss})
+    client_lw_weights = (confidence_weights_from_losses({"FD": b_loss, "JD": h_loss, "PD": k_loss})
                           if lw_ready else None)
     if client_lw_weights is None:
         print("  [loss-weighted fusion] skipped: at least one client has no forecast-pairing calib windows")
@@ -842,8 +842,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, linkage="sin
             forecast_score_n = np.zeros(0)
         scores_n = add_forecast_scores(base_n, forecast_score_n, mask_n)
         if client_lw_weights is not None and len(forecast_score_n):
-            b_lw_n, h_lw_n = base_n["B_node_max"][mask_n], base_n["H_cov_mahal"][mask_n]
-            scores_n["BHK_lw"] = loss_weighted_combo({"B": b_lw_n, "H": h_lw_n, "K": forecast_score_n},
+            b_lw_n, h_lw_n = base_n["FD_max"][mask_n], base_n["JD_mahal"][mask_n]
+            scores_n["FD_JD_PD_lw"] = loss_weighted_combo({"FD": b_lw_n, "JD": h_lw_n, "PD": forecast_score_n},
                                                        client_lw_weights[ci])
         normal_scores_per_client.append(scores_n)
 
@@ -881,8 +881,8 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, linkage="sin
                 forecast_score_f = np.zeros(0)
             scores_fault = add_forecast_scores(base_f, forecast_score_f, mask_f)
             if client_lw_weights is not None and len(forecast_score_f):
-                b_lw_f, h_lw_f = base_f["B_node_max"][mask_f], base_f["H_cov_mahal"][mask_f]
-                scores_fault["BHK_lw"] = loss_weighted_combo({"B": b_lw_f, "H": h_lw_f, "K": forecast_score_f},
+                b_lw_f, h_lw_f = base_f["FD_max"][mask_f], base_f["JD_mahal"][mask_f]
+                scores_fault["FD_JD_PD_lw"] = loss_weighted_combo({"FD": b_lw_f, "JD": h_lw_f, "PD": forecast_score_f},
                                                                 client_lw_weights[ci])
 
             for key in rows:

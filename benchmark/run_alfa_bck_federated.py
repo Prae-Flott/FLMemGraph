@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal K) on
+FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal PD) on
 ALFA's 6 fault-type clients (engine/aileron/rudder/elevator/
 aileron_rudder_combo/no_failure -- see `src/dataloaders/alfa/dataset.py`'s
 module docstring for why clients are fault-type groups here and not
@@ -8,9 +8,9 @@ physical units), trained/evaluated on `data/alfa/` (built by
 `src/dataloaders/alfa/build_alfa.py` -- run that first). Window labels:
 0=normal, 1..5=fault type (see `data/alfa/metadata.json`'s `class_names`).
 
-PROJECT MAINLINE (BK-only trim 2026-09-02, see
+PROJECT MAINLINE (FD+PD-only trim 2026-09-02, see
 `src/federated/federated_train_eval.py`'s module docstring): reports ONLY
-`B_node_max`/`K_forecast_max`/`BK_max` (`BK` via `smooth_max`,
+`FD_max`/`PD_max`/`FD_PD_max` (FD+PD via `smooth_max`,
 `SMOOTH_MAX_T`) -- the earlier C/H/BCK columns are retired from this
 detection report; `edge_head`/`cov_head` are still trained but no longer
 scored here (`diagnose_alfa_localization_federated.py` calibrates and uses
@@ -631,7 +631,7 @@ def main_ufedhy_baseline(out_suffix=None, hyper_embed_dim=32, hyper_hidden_dim=6
 
 def main_faithful_baseline(baseline, out_suffix=None, num_clusters=2, num_prototypes=NUM_PROTOTYPES):
     """FedAvg / IFCAAE / Fed-ExDNN, each with its OWN minimal architecture
-    and own single anomaly score (no B/H/K/BK/BHK) -- see
+    and own single anomaly score (no FD/JD/PD/FD+PD/FD+JD+PD) -- see
     `src/models/baseline_models.py`'s module docstring. No forecast
     pairing/chains needed (none of these three baselines forecast): plain
     per-client fit/calib/fault windows only."""
@@ -819,7 +819,7 @@ def main(horizon_mult=1, out_suffix=None, num_prototypes=NUM_PROTOTYPES, linkage
         else:
             k_loss.append(float("nan"))
     lw_ready = all(not np.isnan(v) for v in k_loss)
-    client_lw_weights = confidence_weights_from_losses({"B": b_loss, "H": h_loss, "K": k_loss}) if lw_ready else None
+    client_lw_weights = confidence_weights_from_losses({"FD": b_loss, "JD": h_loss, "PD": k_loss}) if lw_ready else None
     if client_lw_weights is None:
         print("  [loss-weighted fusion] skipped: at least one client has no forecast-pairing calib windows")
     else:
@@ -878,21 +878,21 @@ def main(horizon_mult=1, out_suffix=None, num_prototypes=NUM_PROTOTYPES, linkage
         z_node_normal_proto = zscore_prototype(d_node_normal, idx_normal, node_proto_stats)
         b_normal_full = z_node_normal_proto[:, reliable_mask].max(axis=1)
         h_normal_full = (d_mahal_normal - d_mahal_med) / d_mahal_iqr
-        base_normal = {"B_node_max": b_normal_full, "H_cov_mahal": h_normal_full,
-                        "BH_max": smooth_max(np.stack([b_normal_full, h_normal_full], axis=1), SMOOTH_MAX_T)}
+        base_normal = {"FD_max": b_normal_full, "JD_mahal": h_normal_full,
+                        "FD_JD_max": smooth_max(np.stack([b_normal_full, h_normal_full], axis=1), SMOOTH_MAX_T)}
 
         if has_forecast:
-            b_masked, h_masked = base_normal["B_node_max"][mask_n], base_normal["H_cov_mahal"][mask_n]
+            b_masked, h_masked = base_normal["FD_max"][mask_n], base_normal["JD_mahal"][mask_n]
             # K is also now the per-prototype version.
             z_forecast_normal_proto = zscore_prototype(k_resid_normal, idx_normal[mask_n], k_proto_stats)
             k_normal = z_forecast_normal_proto[:, forecast_mask].max(axis=1)
             scores_normal = dict(base_normal)
-            scores_normal["K_forecast_max"] = k_normal
-            scores_normal["BK_max"] = smooth_max(np.stack([b_masked, k_normal], axis=1), SMOOTH_MAX_T)
-            scores_normal["BHK_max"] = smooth_max(np.stack([b_masked, h_masked, k_normal], axis=1), SMOOTH_MAX_T)
+            scores_normal["PD_max"] = k_normal
+            scores_normal["FD_PD_max"] = smooth_max(np.stack([b_masked, k_normal], axis=1), SMOOTH_MAX_T)
+            scores_normal["FD_JD_PD_max"] = smooth_max(np.stack([b_masked, h_masked, k_normal], axis=1), SMOOTH_MAX_T)
             if client_lw_weights is not None:
-                scores_normal["BHK_lw"] = loss_weighted_combo(
-                    {"B": b_masked, "H": h_masked, "K": k_normal}, client_lw_weights[ci])
+                scores_normal["FD_JD_PD_lw"] = loss_weighted_combo(
+                    {"FD": b_masked, "JD": h_masked, "PD": k_normal}, client_lw_weights[ci])
         else:
             scores_normal = dict(base_normal)
 
@@ -916,8 +916,8 @@ def main(horizon_mult=1, out_suffix=None, num_prototypes=NUM_PROTOTYPES, linkage
             z_node_f_proto = zscore_prototype(d_node_f, idx_f, node_proto_stats)
             b_f_full = z_node_f_proto[:, reliable_mask].max(axis=1)
             h_f_full = (d_mahal_f - d_mahal_med) / d_mahal_iqr
-            base_f = {"B_node_max": b_f_full, "H_cov_mahal": h_f_full,
-                      "BH_max": smooth_max(np.stack([b_f_full, h_f_full], axis=1), SMOOTH_MAX_T)}
+            base_f = {"FD_max": b_f_full, "JD_mahal": h_f_full,
+                      "FD_JD_max": smooth_max(np.stack([b_f_full, h_f_full], axis=1), SMOOTH_MAX_T)}
 
             mask_f = np.zeros(len(fault_idx), dtype=bool)
             if has_forecast:
@@ -930,21 +930,21 @@ def main(horizon_mult=1, out_suffix=None, num_prototypes=NUM_PROTOTYPES, linkage
                 else:
                     fault_future = future_f_raw
                 k_resid_f = forecast_scores(model, fault_in, fault_future)
-                b_f_masked, h_f_masked = base_f["B_node_max"][mask_f], base_f["H_cov_mahal"][mask_f]
+                b_f_masked, h_f_masked = base_f["FD_max"][mask_f], base_f["JD_mahal"][mask_f]
                 if len(k_resid_f):
                     z_forecast_f_proto = zscore_prototype(k_resid_f, idx_f[mask_f], k_proto_stats)
                     k_f = z_forecast_f_proto[:, forecast_mask].max(axis=1)
                 else:
                     k_f = np.zeros(0)
                 scores_fault = dict(base_f)
-                scores_fault["K_forecast_max"] = k_f
-                scores_fault["BK_max"] = (smooth_max(np.stack([b_f_masked, k_f], axis=1), SMOOTH_MAX_T)
+                scores_fault["PD_max"] = k_f
+                scores_fault["FD_PD_max"] = (smooth_max(np.stack([b_f_masked, k_f], axis=1), SMOOTH_MAX_T)
                                            if len(k_f) else np.zeros(0))
-                scores_fault["BHK_max"] = (smooth_max(np.stack([b_f_masked, h_f_masked, k_f], axis=1), SMOOTH_MAX_T)
+                scores_fault["FD_JD_PD_max"] = (smooth_max(np.stack([b_f_masked, h_f_masked, k_f], axis=1), SMOOTH_MAX_T)
                                             if len(k_f) else np.zeros(0))
                 if client_lw_weights is not None and len(k_f):
-                    scores_fault["BHK_lw"] = loss_weighted_combo(
-                        {"B": b_f_masked, "H": h_f_masked, "K": k_f}, client_lw_weights[ci])
+                    scores_fault["FD_JD_PD_lw"] = loss_weighted_combo(
+                        {"FD": b_f_masked, "JD": h_f_masked, "PD": k_f}, client_lw_weights[ci])
             else:
                 scores_fault = dict(base_f)
 
@@ -956,7 +956,7 @@ def main(horizon_mult=1, out_suffix=None, num_prototypes=NUM_PROTOTYPES, linkage
             print(f"  {c.client_name:<22}{name:<28}n={len(fault_idx):<5}"
                   + "  ".join(f"{k}=auroc:{v['auroc']:.3f}" for k, v in metrics.items()))
 
-        if rows["B_node_max"]:
+        if rows["FD_max"]:
             client_report["client_mean_metrics"] = {
                 k: {m: float(np.mean([row[m] for row in v])) for m in ("auroc", "auprc", "precision", "f1")}
                 for k, v in rows.items() if v

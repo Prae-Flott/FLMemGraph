@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal K) on
+FEDERATED JointPrototypeV21Forecast (V2.1 + ForecastHead, signal PD) on
 robo_fleet's 4 real robots (`rob_00`..`rob_03`) as 4 federated clients --
 the own-fleet dataset from `report/040_experiment.tex` (4 iRobot Create3
 units, 26 recorded ROS2-topic features, 4 induced mechanical faults),
@@ -12,11 +12,11 @@ loader family, `data_dir` pointed at `data/robo_fleet` instead -- see
 that loader is dataset-directory-agnostic), differing only in client
 count (4 vs. 5) and DATA_DIR/OUT_DIR.
 
-Reports `B_node_max`/`H_cov_mahal`/`BH_max`/`K_forecast_max`/`BK_max`/
-`BHK_max` -- H (`cov_head`'s Mahalanobis prototype-deviation signal) is
+Reports `FD_max`/`JD_mahal`/`FD_JD_max`/`PD_max`/`FD_PD_max`/
+`FD_JD_PD_max` -- JD (`cov_head`'s Mahalanobis prototype-deviation signal) is
 calibrated and scored here (not just in the localization diagnose
-script), matching the BHK-mainline promotion in
-`src/federated/federated_train_eval.py`. `forecast_head` (K) IS FedAvg'd whenever
+script), matching the FD+JD+PD-mainline promotion in
+`src/federated/federated_train_eval.py`. `forecast_head` (PD) IS FedAvg'd whenever
 `SYNC_ENCODER_DECODER=True` (the shipped default here) -- its own
 parameters (`attn_w`/`embeddings`/`attn_a`/`out_proj`) match the
 `("encoder.", "decoder.", "forecast_head.")` FedAvg prefix filter.
@@ -26,7 +26,7 @@ scored in this detection report. **2026-09-12: switched from
 `JointPrototypeV31Forecast` to `V21Forecast`, dropping the declared-
 physics-edge `typed_head`/signal-E machinery project-wide** -- a
 controlled ablation (`lambda_edge=lambda_typed=0` vs. the shipped
-`0.5/0.5`, same V31 model) found it worth only ~0.005 BHK_max here, and
+`0.5/0.5`, same V31 model) found it worth only ~0.005 FD_JD_PD_max here, and
 the same simpler architecture ALFA/SMD already used (no declared edges)
 is now the one mainline across every dataset -- see
 `memory/v21-mainline-switch.md`.
@@ -629,7 +629,7 @@ def main_ufedhy_baseline(out_suffix=None, hyper_embed_dim=32, hyper_hidden_dim=6
 
 def main_faithful_baseline(baseline, out_suffix=None, num_clusters=2, num_prototypes=NUM_PROTOTYPES):
     """FedAvg / IFCAAE / Fed-ExDNN, each with its OWN minimal architecture
-    and own single anomaly score (no B/H/K/BK/BHK) -- see
+    and own single anomaly score (no FD/JD/PD/FD+PD/FD+JD+PD) -- see
     `src/models/baseline_models.py`'s module docstring and
     `benchmark/baselines/registry.py`. No forecast pairing/chains needed
     (none of these three baselines forecast): plain per-client fit/calib/
@@ -838,7 +838,7 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, linkage="sin
         h_loss.append(d_mahal_med)  # median d_mahal on calib = H's own fit quality
         k_loss.append(float(k_resid_calib.mean()) if len(k_resid_calib) else float("nan"))
     lw_ready = all(not np.isnan(v) for v in k_loss)
-    client_lw_weights = (confidence_weights_from_losses({"B": b_loss, "H": h_loss, "K": k_loss})
+    client_lw_weights = (confidence_weights_from_losses({"FD": b_loss, "JD": h_loss, "PD": k_loss})
                           if lw_ready else None)
     if client_lw_weights is None:
         print("  [loss-weighted fusion] skipped: at least one client has no forecast-pairing calib windows")
@@ -881,9 +881,9 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, linkage="sin
             forecast_score_normal = np.zeros(0)
         scores_normal = add_forecast_scores(base_normal, forecast_score_normal, mask_n)
         if client_lw_weights is not None and len(forecast_score_normal):
-            b_lw_n, h_lw_n = base_normal["B_node_max"][mask_n], base_normal["H_cov_mahal"][mask_n]
-            scores_normal["BHK_lw"] = loss_weighted_combo(
-                {"B": b_lw_n, "H": h_lw_n, "K": forecast_score_normal}, client_lw_weights[c.client_id])
+            b_lw_n, h_lw_n = base_normal["FD_max"][mask_n], base_normal["JD_mahal"][mask_n]
+            scores_normal["FD_JD_PD_lw"] = loss_weighted_combo(
+                {"FD": b_lw_n, "JD": h_lw_n, "PD": forecast_score_normal}, client_lw_weights[c.client_id])
 
         client_report = {"robot_name": c.robot_name, "fault_types": {}}
         rows = {k: [] for k in scores_normal}
@@ -914,9 +914,9 @@ def main(horizon_mult=10, use_forecast_prior=True, out_suffix=None, linkage="sin
                 forecast_score_f = np.zeros(0)
             scores_fault = add_forecast_scores(base_f, forecast_score_f, mask_f)
             if client_lw_weights is not None and len(forecast_score_f):
-                b_lw_f, h_lw_f = base_f["B_node_max"][mask_f], base_f["H_cov_mahal"][mask_f]
-                scores_fault["BHK_lw"] = loss_weighted_combo(
-                    {"B": b_lw_f, "H": h_lw_f, "K": forecast_score_f}, client_lw_weights[c.client_id])
+                b_lw_f, h_lw_f = base_f["FD_max"][mask_f], base_f["JD_mahal"][mask_f]
+                scores_fault["FD_JD_PD_lw"] = loss_weighted_combo(
+                    {"FD": b_lw_f, "JD": h_lw_f, "PD": forecast_score_f}, client_lw_weights[c.client_id])
 
             metrics = {}
             for key in scores_normal:

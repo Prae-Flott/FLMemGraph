@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Grid search NUM_PROTOTYPES in [2, 20] on robo_fleet, comparing the global
-vs. per-prototype ("proto") B/K/BH/BK/BHK signals at each value -- follow-up
+vs. per-prototype ("proto") FD/PD/FD+JD/FD+PD/FD+JD+PD signals at each value -- follow-up
 to the single NUM_PROTOTYPES=2 result showing per-prototype conditioning
 slightly HURT on robo_fleet (unlike Paderborn's clear win), hypothesized to
 be because too few prototypes collapse federated alignment onto one shared
@@ -31,8 +31,8 @@ spec = importlib.util.spec_from_file_location("robo_fleet_bck_fed", Path(__file_
 v2f = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(v2f)
 
-SIGNALS = ["B_node_max", "B_node_max_proto", "K_forecast_max", "K_forecast_max_proto",
-           "BH_max", "BH_proto_max", "BK_max", "BK_proto_max", "BHK_max", "BHK_proto_max"]
+SIGNALS = ["FD_max", "FD_max_proto", "PD_max", "PD_max_proto",
+           "FD_JD_max", "FD_JD_proto_max", "FD_PD_max", "FD_PD_proto_max", "FD_JD_PD_max", "FD_JD_PD_proto_max"]
 
 
 def main(lo=2, hi=20):
@@ -48,8 +48,8 @@ def main(lo=2, hi=20):
         with open(OUT_PATH, "w") as f:
             json.dump(results, f, indent=2)
         print(f"[sweep] M={m} done, num_shared_prototypes={row['num_shared_prototypes_final_round']} "
-              f"B_auroc={row['signals'].get('B_node_max', {}).get('auroc')} "
-              f"B_proto_auroc={row['signals'].get('B_node_max_proto', {}).get('auroc')}")
+              f"B_auroc={row['signals'].get('FD_max', {}).get('auroc')} "
+              f"B_proto_auroc={row['signals'].get('FD_max_proto', {}).get('auroc')}")
 
     print(f"\n{'M':<5}{'shared':<8}" + "".join(f"{s:<14}" for s in SIGNALS))
     for row in results:

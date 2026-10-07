@@ -1,12 +1,12 @@
 """
-PROJECT MAINLINE (finalized 2026-08-30, BK-only trim 2026-09-02 for public
-release): the shipped combined anomaly score is **BK = smooth_max(
-B_node_max, K_forecast_max)** with **single-linkage BFS** connected
+PROJECT MAINLINE (finalized 2026-08-30, FD+PD-only trim 2026-09-02 for public
+release): the shipped combined anomaly score is **FD+PD = smooth_max(
+FD_max, PD_max)** with **single-linkage BFS** connected
 components (`federated_memory.align_and_split`'s `linkage="single"`, the
 original/default behavior) -- this is now the ONLY detection score this
 module computes. The earlier C/E/F/H/I/J signals and CK/HK/BCK combinations
 (see `memory/scoring-signals-B-C-E-H.md`, `memory/forecast-head-signal-k.md`
-for the ablation results that justified picking BK) are retired from the
+for the ablation results that justified picking FD+PD) are retired from the
 active pipeline; a verbatim snapshot of the code that produced them lives in
 `archive/src/federated/legacy_scores.py` for anyone who wants to reproduce
 that comparison. `linkage="complete"` remains available as an opt-in
@@ -242,18 +242,18 @@ def loss_weighted_combo(zscores: dict, weights: dict):
     poorly-calibrated for a given client, since noise inflates magnitude
     without correlating with true anomaly -- see the ALFA `elevator`
     case in `memory/robo-fleet-num-prototypes-sweep.md`'s discussion,
-    where H's small-sample-covariance noise got amplified by `smooth_max`
-    on NORMAL windows and dragged BHK below B alone). This function
+    where JD's small-sample-covariance noise got amplified by `smooth_max`
+    on NORMAL windows and dragged FD+JD+PD below FD alone). This function
     instead uses ONE FIXED weight per signal per CLIENT, set by how well
     that signal was learned on that client's OWN calib split RELATIVE TO
     OTHER CLIENTS (`confidence_weights_from_losses`'s cross-client
-    z-scoring) -- a client whose H calibration is unreliable (e.g. too
+    z-scoring) -- a client whose JD calibration is unreliable (e.g. too
     few calib windows per prototype for a stable covariance estimate)
-    gets a uniformly LOW H weight for every window it scores, rather than
-    H's per-window noise being free to hijack the softmax weight on
+    gets a uniformly LOW JD weight for every window it scores, rather than
+    JD's per-window noise being free to hijack the softmax weight on
     whichever normal window happens to spike. All arrays in `zscores`
     must already be the same length (the caller is responsible for
-    slicing every signal to a common mask, e.g. K's forecast-pairing
+    slicing every signal to a common mask, e.g. PD's forecast-pairing
     subset) and `weights` should sum to ~1 across its keys (guaranteed by
     `confidence_weights_from_losses`)."""
     total = None
@@ -264,43 +264,43 @@ def loss_weighted_combo(zscores: dict, weights: dict):
 
 
 def base_scores(node_score):
-    """Wraps B into the dict-shaped interface `add_h_score`/`add_forecast_scores`
+    """Wraps FD into the dict-shaped interface `add_h_score`/`add_forecast_scores`
     expect. The full B/C/E/F/I/J version (and CK/HK/BCK) is archived verbatim
     in `archive/src/federated/legacy_scores.py` for anyone reproducing the
-    retired ablation comparison; H (`add_h_score` below) was promoted BACK
-    out of that archive into the active mainline (BHK, see module docstring)."""
-    return {"B_node_max": node_score}
+    retired ablation comparison; JD (`add_h_score` below) was promoted BACK
+    out of that archive into the active mainline (FD+JD+PD, see module docstring)."""
+    return {"FD_max": node_score}
 
 
 def add_h_score(base, h_score, T=1.0):
-    """Adds H (`H_cov_mahal`, `cov_head`'s prototype-conditioned Mahalanobis
+    """Adds JD (`JD_mahal`, `cov_head`'s prototype-conditioned Mahalanobis
     deviation signal, already median/IQR-normalized by the caller -- see
-    `DeviationCovarianceHead`) and `BH_max = smooth_max(B, H)` to a
+    `DeviationCovarianceHead`) and `FD_JD_max = smooth_max(FD, JD)` to a
     `base_scores`-shaped dict. `h_score` must be FULL-length (same
-    unmasked convention as `B_node_max`) -- call this BEFORE
-    `add_forecast_scores`, which then also emits `BHK_max` automatically
-    once it sees `H_cov_mahal` already present in `base`."""
+    unmasked convention as `FD_max`) -- call this BEFORE
+    `add_forecast_scores`, which then also emits `FD_JD_PD_max` automatically
+    once it sees `JD_mahal` already present in `base`."""
     out = dict(base)
-    out["H_cov_mahal"] = h_score
-    out["BH_max"] = smooth_max(np.stack([base["B_node_max"], h_score], axis=1), T)
+    out["JD_mahal"] = h_score
+    out["FD_JD_max"] = smooth_max(np.stack([base["FD_max"], h_score], axis=1), T)
     return out
 
 
 def add_forecast_scores(base, forecast_score, mask, T=1.0):
-    """B (and H, if present) stay FULL-length (unmasked) in the output --
-    only K/BK/BHK use the forecast-pairing-masked subset. `base` here is
+    """FD (and JD, if present) stay FULL-length (unmasked) in the output --
+    only PD/FD+PD/FD+JD+PD use the forecast-pairing-masked subset. `base` here is
     the FULL, unmasked score dict; `mask` (over the same index order) is
     applied to a LOCAL copy only, never written back onto the full-length
-    B/H entries themselves. `BHK_max` is only added if `add_h_score` was
-    already called on `base` (i.e. `H_cov_mahal` is present) -- callers
-    that never calibrate `cov_head` simply keep getting B/K/BK, unchanged."""
-    b = base["B_node_max"][mask]
+    FD/JD entries themselves. `FD_JD_PD_max` is only added if `add_h_score` was
+    already called on `base` (i.e. `JD_mahal` is present) -- callers
+    that never calibrate `cov_head` simply keep getting FD/PD/FD+PD, unchanged."""
+    b = base["FD_max"][mask]
     out = dict(base)
-    out["K_forecast_max"] = forecast_score
-    out["BK_max"] = smooth_max(np.stack([b, forecast_score], axis=1), T)
-    if "H_cov_mahal" in base:
-        h = base["H_cov_mahal"][mask]
-        out["BHK_max"] = smooth_max(np.stack([b, h, forecast_score], axis=1), T)
+    out["PD_max"] = forecast_score
+    out["FD_PD_max"] = smooth_max(np.stack([b, forecast_score], axis=1), T)
+    if "JD_mahal" in base:
+        h = base["JD_mahal"][mask]
+        out["FD_JD_PD_max"] = smooth_max(np.stack([b, h, forecast_score], axis=1), T)
     return out
 
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Compare each FL baseline's own single anomaly score against our BHK
+Compare each FL baseline's own single anomaly score against our FD+JD+PD
 mainline's AUROC -- see `benchmark/baselines/registry.py` for what each
 baseline is (each has its own minimal architecture and own score; only
-`ours` produces the B/H/K/BK/BHK breakdown).
+`ours` produces the FD/JD/PD/FD+PD/FD+JD+PD breakdown).
 
 Usage:
     python3 compare_baselines.py --dataset {robo_fleet,paderborn,alfa,me_ad}
@@ -53,7 +53,7 @@ def load_report(dataset, baseline):
 
 
 def main(dataset):
-    print(f"\n=== {dataset}: baseline AUROC vs. our BHK mainline ===")
+    print(f"\n=== {dataset}: baseline AUROC vs. our FD+JD+PD mainline ===")
     print(f"  {'method':<16}{'score':<16}{'AUROC':>10}{'AUPRC':>10}{'Precision':>12}{'F1':>10}")
 
     ours = load_report(dataset, "ours")
@@ -61,7 +61,7 @@ def main(dataset):
         print("  [skip] ours: no report found")
     else:
         summary = ours.get("summary_mean_auroc_overall", {})
-        for key in ("BHK_max", "BHK_lw"):
+        for key in ("FD_JD_PD_max", "FD_JD_PD_lw"):
             m = summary.get(key)
             if m is None:
                 continue

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M-grid AUROC (BHK_max) + shared-prototype-count dual-axis line plots,
+"""M-grid AUROC (FD_JD_PD_max) + shared-prototype-count dual-axis line plots,
 one PNG per dataset, sized/fonted for a later 2x2 composite in a paper."""
 import matplotlib
 matplotlib.use("Agg")
