@@ -9,6 +9,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
+.venv_tts/
 venv/
 env/
 report/
@@ -36,6 +37,10 @@ checkpoints/
 # Internal research log (experiment write-ups, dead ends, calibration
 # history) -- useful locally, not meant for the public repo.
 memory/
+
+# ICRA presentation prep (script, slide drafts, raw/recorded video clips) --
+# large media files and unpolished drafts, not meant for the public repo.
+pre/
 
 # Superseded/off-report code and artifacts moved aside during cleanup
 # (Sielaff/SMD datasets, ablation-only scripts, retired robo3er-era code,
